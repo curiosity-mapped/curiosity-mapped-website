@@ -12,7 +12,6 @@
 <title>Curiosity Mapped</title>
 <meta name="description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
 
-<!-- TODO before publishing: replace with the real GitHub Pages / custom domain URL. -->
 <link rel="canonical" href="https://curiositymapped.com/">
 
 <meta name="color-scheme" content="light dark">
@@ -24,12 +23,24 @@
 <meta property="og:title" content="Curiosity Mapped">
 <meta property="og:description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
 <meta property="og:url" content="https://curiositymapped.com/">
-<!-- twitter:card is `summary`, not `summary_large_image`: there is no og:image yet,
-     and a large-image card with no image renders as a broken card. -->
-<meta name="twitter:card" content="summary">
+<meta property="og:locale" content="en_US">
+<!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
+<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Curiosity Mapped &mdash; follow the curiosity, map what you find, see where it leads.">
+<!-- Safe now that a 1200x630 image exists; a large-image card without one renders broken. -->
+<meta name="twitter:card" content="summary_large_image">
 
 <!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<!-- iOS ignores rel=icon entirely and masks this into its own squircle. -->
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 
 <script>
   /* Runs before first paint, so the stored choice never flashes the wrong theme.
@@ -72,7 +83,8 @@
       "@id": "https://curiositymapped.com/#org",
       "name": "Curiosity Mapped",
       "url": "https://curiositymapped.com/",
-      "slogan": "Mapping knowledge. Empowering curiosity. Inspiring discovery."
+      "slogan": "Mapping knowledge. Empowering curiosity. Inspiring discovery.",
+      "logo": "https://curiositymapped.com/assets/icon-512.png"
     }
   ]
 }
@@ -91,14 +103,14 @@
   <nav class="nav" aria-label="Primary">
     <p class="visually-hidden">Navigation is not yet available. These sections are coming soon.</p>
     <ul class="nav__list">
-      <li><span class="nav__item" aria-disabled="true">Journal</span></li>
-      <li><span class="nav__item" aria-disabled="true">Tools</span></li>
-      <li><span class="nav__item" aria-disabled="true">Reference</span></li>
-      <li><span class="nav__item" aria-disabled="true">About</span></li>
+      <li><span class="nav__item">Journal</span></li>
+      <li><span class="nav__item">Tools</span></li>
+      <li><span class="nav__item">Reference</span></li>
+      <li><span class="nav__item">About</span></li>
     </ul>
   </nav>
 
-  <button class="toggle" type="button" id="theme-toggle" aria-pressed="false">
+  <button class="toggle" type="button" id="theme-toggle" aria-label="Switch theme">
     <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       <circle cx="12" cy="12" r="4"></circle>
@@ -156,10 +168,11 @@
   <div class="footer__inner">
     <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
     <nav class="footer__legal" aria-label="Footer">
-      <span aria-disabled="true">About</span>
-      <span aria-disabled="true">Contact</span>
-      <span aria-disabled="true">Privacy</span>
-      <span aria-disabled="true">Accessibility</span>
+      <p class="visually-hidden">These pages are not published yet.</p>
+      <span>About</span>
+      <span>Contact</span>
+      <span>Privacy</span>
+      <span>Accessibility</span>
     </nav>
     <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
   </div>

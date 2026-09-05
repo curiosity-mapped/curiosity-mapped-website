@@ -1,0 +1,5 @@
+# https://curiositymapped.com/
+User-agent: *
+Allow: /
+
+Sitemap: https://curiositymapped.com/sitemap.xml

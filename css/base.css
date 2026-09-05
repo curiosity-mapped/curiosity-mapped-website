@@ -40,6 +40,18 @@
     border-radius: var(--radius-sm);
   }
 
+  /*
+   * body is the flex column, so <main> is the item that has to absorb the spare
+   * height. Without this the footer stops wherever the content happens to end on
+   * a viewport taller than the page, and .hero's own `flex: 1` never sees any
+   * free space to claim, because its parent was never given any.
+   */
+  main {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
   /* The destination is a region, not a control, so it takes focus silently. */
   main:focus { outline: none; }
 }

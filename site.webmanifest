@@ -1,0 +1,14 @@
+{
+  "name": "Curiosity Mapped",
+  "short_name": "Curiosity",
+  "description": "Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#02090e",
+  "theme_color": "#02090e",
+  "icons": [
+    { "src": "/assets/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/assets/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

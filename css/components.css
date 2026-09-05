@@ -41,6 +41,9 @@
     line-height: 1.18;
     text-transform: uppercase;
     color: var(--text);
+    /* Inert on the home page, where this is a <span>; on every other page the
+       wordmark is the link home and must not pick up default underlining. */
+    text-decoration: none;
   }
   .wordmark__line { font-weight: 600; letter-spacing: var(--track-wide); }
   .wordmark__line--wide {
@@ -242,6 +245,14 @@
     cursor: pointer;
     transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
+  /*
+   * The header right-aligns its last item via .nav's auto margin. On a page with
+   * no nav the toggle has to do it itself; giving BOTH an auto margin would split
+   * the free space between them and strand the nav mid-header, so it is a
+   * modifier rather than a rule on .toggle.
+   */
+  .toggle--end { margin-inline-start: auto; }
+
   .toggle:hover { color: var(--text); border-color: var(--edge); }
   .toggle svg { width: 1em; height: 1em; }
 
@@ -282,6 +293,30 @@
     from { opacity: 0; transform: translate3d(0, 8px, 0); }
     to   { opacity: 1; transform: none; }
   }
+
+  /* ---------- 404 ---------- */
+
+  /*
+   * The one real link on the site so far, so it is styled as a control rather
+   * than as body text: it reuses the toggle's pill geometry, including the 44px
+   * minimum target, and does not depend on .js being present the way .toggle does.
+   */
+  .backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    min-height: 44px;
+    padding: var(--s-2) var(--s-5);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--t--1);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .backlink:hover { color: var(--accent); border-color: var(--accent); }
 
   /*
    * Print: animations do not run, so `animation-fill-mode: both` could otherwise
