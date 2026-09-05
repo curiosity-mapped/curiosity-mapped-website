@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Cascade layer order is declared in the document, not in the stylesheet, so it
+     can never depend on the order rules happen to appear in. -->
+<style>@layer tokens, base, components, utilities;</style>
+
+<title>Curiosity Mapped</title>
+<meta name="description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
+
+<!-- TODO before publishing: replace with the real GitHub Pages / custom domain URL. -->
+<link rel="canonical" href="https://curiositymapped.com/">
+
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#02090e" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Curiosity Mapped">
+<meta property="og:title" content="Curiosity Mapped">
+<meta property="og:description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
+<meta property="og:url" content="https://curiositymapped.com/">
+<!-- twitter:card is `summary`, not `summary_large_image`: there is no og:image yet,
+     and a large-image card with no image renders as a broken card. -->
+<meta name="twitter:card" content="summary">
+
+<!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+
+<script>
+  /* Runs before first paint, so the stored choice never flashes the wrong theme.
+     localStorage *throws* in a private window or with site data blocked (it does
+     not return null), and an uncaught throw here would leave the page unstyled.
+     Placed above the stylesheet links: a parser-blocking script that follows a
+     <link rel="stylesheet"> waits on that sheet to load before it runs. */
+  try {
+    var t = localStorage.getItem('cm-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+
+<!-- Listed in layer order for readability only. The @layer statement above already
+     fixes the cascade, so these four sheets may land in any order. -->
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/utilities.css">
+
+<!-- Behaviour only; the pre-paint theme boot above must stay inline. -->
+<script src="js/main.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://curiositymapped.com/#website",
+      "url": "https://curiositymapped.com/",
+      "name": "Curiosity Mapped",
+      "description": "Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser.",
+      "publisher": { "@id": "https://curiositymapped.com/#org" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://curiositymapped.com/#org",
+      "name": "Curiosity Mapped",
+      "url": "https://curiositymapped.com/",
+      "slogan": "Mapping knowledge. Empowering curiosity. Inspiring discovery."
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="header">
+  <span class="wordmark">
+    <span class="wordmark__line">Curiosity</span>
+    <span class="wordmark__line wordmark__line--wide">Mapped</span>
+  </span>
+
+  <nav class="nav" aria-label="Primary">
+    <p class="visually-hidden">Navigation is not yet available. These sections are coming soon.</p>
+    <ul class="nav__list">
+      <li><span class="nav__item" aria-disabled="true">Journal</span></li>
+      <li><span class="nav__item" aria-disabled="true">Tools</span></li>
+      <li><span class="nav__item" aria-disabled="true">Reference</span></li>
+      <li><span class="nav__item" aria-disabled="true">About</span></li>
+    </ul>
+  </nav>
+
+  <button class="toggle" type="button" id="theme-toggle" aria-pressed="false">
+    <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <span id="theme-label">Dark</span>
+  </button>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__sweep" aria-hidden="true"></div>
+
+    <p class="hero__kicker rise" style="--i:0">Survey in progress</p>
+
+    <h1 class="hero__title rise" id="hero-title" style="--i:1">Curiosity Mapped</h1>
+
+    <p class="motto rise" style="--i:2">
+      Follow the curiosity.<br>
+      Map what you find.<br>
+      See where it leads.
+    </p>
+
+    <p class="hero__note rise" style="--i:3">
+      The map is still being drawn. Journal, Tools, and Reference are blank squares
+      for now, which is the interesting part. Check back soon.
+    </p>
+  </section>
+
+  <section class="ahead" aria-labelledby="ahead-title">
+    <div class="ahead__inner">
+      <h2 class="ahead__title" id="ahead-title">What&rsquo;s ahead</h2>
+      <ul class="cards">
+        <li class="card card--journal rise" style="--i:4">
+          <span class="card__label">Journal</span>
+          <p class="card__text">Writing on science, technology, and complex systems, published when finished rather than on a cadence.</p>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools rise" style="--i:5">
+          <span class="card__label">Tools</span>
+          <p class="card__text">Calculators and converters that run entirely in your browser. There is no server to send anything to.</p>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--reference rise" style="--i:6">
+          <span class="card__label">Reference</span>
+          <p class="card__text">Knowledge that sticks, organised so it can be found again: straight answers on pages that load instantly.</p>
+          <span class="card__soon">Coming soon</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
+    <nav class="footer__legal" aria-label="Footer">
+      <span aria-disabled="true">About</span>
+      <span aria-disabled="true">Contact</span>
+      <span aria-disabled="true">Privacy</span>
+      <span aria-disabled="true">Accessibility</span>
+    </nav>
+    <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
+  </div>
+</footer>
+</body>
+</html>

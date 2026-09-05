@@ -1,0 +1,231 @@
+@layer tokens {
+  /*
+   * TIER 1: the raw ramps. Ported unchanged from the reference palette so the
+   * measured contrast floors below still hold. Only entries this page actually
+   * uses are carried over.
+   */
+  :root {
+    --green-200: #cbe9a8;
+    --green-300: #b9e87f;
+    --green-400: #addc91;
+    --green-600: #5f7253;
+    --green-700: #456339;
+    --green-800: #354c2c;
+    --green-900: #23331d;
+
+    --ink-100: #d6dade;
+    --ink-300: #9aa0a6;
+    --ink-500: #586570;
+    --ink-600: #4a5257;
+    --ink-700: #343d45;
+    --ink-800: #16202a;
+    --ink-900: #0a1117;
+    --ink-950: #02090e;
+
+    --paper-050: #ffffff;
+    --paper-100: #fbfcfa;
+    --paper-200: #f3f5ee;
+    --paper-300: #e7eade;
+    --paper-400: #c2c9bd;
+    --paper-500: #7e8783;
+
+    --blue-300: #6ba8ec;
+    --blue-700: #2b5f9e;
+    --orange-300: #f5a24a;
+    --orange-400: #f5851f;
+    --orange-700: #a8500a;
+  }
+
+  /*
+   * TIER 2: semantic roles. The only colour names the rules below may use.
+   *
+   * Light is authored on bare :root, so a page with CSS only partly applied, or
+   * printed, still falls back to dark ink on a light ground.
+   *
+   * The dark block is written TWICE on purpose. A media query cannot express
+   * "the reader picked dark while the OS says light", so the stored choice needs
+   * a selector of its own.
+   *
+   * Contrast floors held from the reference palette:
+   *   --text, --text-dim   7.0:1 (AAA)   --accent          6.0:1
+   *   category accents     4.5:1 (AA)    --edge, --focus   3.0:1
+   */
+  :root {
+    --bg: var(--paper-100);
+    --surface: var(--paper-050);
+    --surface-sunk: var(--paper-200);
+
+    --text: var(--ink-900);
+    --text-dim: var(--ink-600);
+
+    --rule: var(--paper-300);
+    --edge: var(--paper-500);
+    --focus: var(--green-700);
+
+    --accent: var(--green-700);
+    --on-accent: var(--paper-050);
+
+    --journal: var(--green-700);
+    --tools: var(--blue-700);
+    --reference: var(--orange-700);
+
+    /*
+     * `transparent` in daylight, and that is the whole trick: emissive rules
+     * carry `drop-shadow(0 0 6px var(--glow))` unconditionally, so it becomes a
+     * no-op here. No rule anywhere below branches on theme.
+     */
+    --glow: transparent;
+
+    --grid-line: var(--ink-800);
+    --grid-opacity: 0.055;
+    --sweep: color-mix(in srgb, var(--green-700) 18%, transparent);
+
+    --selection: var(--green-200);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --bg: var(--ink-950);
+      --surface: var(--ink-900);
+      --surface-sunk: var(--ink-900);
+
+      --text: #ffffff;
+      --text-dim: var(--ink-300);
+
+      --rule: var(--ink-800);
+      --edge: var(--ink-500);
+      --focus: var(--green-300);
+
+      --accent: var(--green-300);
+      --on-accent: var(--ink-950);
+
+      --journal: var(--green-300);
+      --tools: var(--blue-300);
+      --reference: var(--orange-400);
+
+      --glow: color-mix(in srgb, var(--green-300) 35%, transparent);
+
+      --grid-line: var(--ink-100);
+      --grid-opacity: 0.09;
+      --sweep: color-mix(in srgb, var(--green-300) 14%, transparent);
+
+      --selection: var(--green-800);
+      color-scheme: dark;
+    }
+  }
+
+  /* Duplicated deliberately; see the note above. */
+  :root[data-theme='dark'] {
+    --bg: var(--ink-950);
+    --surface: var(--ink-900);
+    --surface-sunk: var(--ink-900);
+
+    --text: #ffffff;
+    --text-dim: var(--ink-300);
+
+    --rule: var(--ink-800);
+    --edge: var(--ink-500);
+    --focus: var(--green-300);
+
+    --accent: var(--green-300);
+    --on-accent: var(--ink-950);
+
+    --journal: var(--green-300);
+    --tools: var(--blue-300);
+    --reference: var(--orange-400);
+
+    --glow: color-mix(in srgb, var(--green-300) 35%, transparent);
+
+    --grid-line: var(--ink-100);
+    --grid-opacity: 0.09;
+    --sweep: color-mix(in srgb, var(--green-300) 14%, transparent);
+
+    --selection: var(--green-800);
+    color-scheme: dark;
+  }
+
+  /* A third tier re-pointing the same roles. No rule below knows it exists. */
+  @media (prefers-contrast: more) {
+    :root {
+      --text: #000000;
+      --text-dim: var(--ink-800);
+      --rule: var(--paper-400);
+      --edge: var(--ink-600);
+      --accent: var(--green-900);
+      --focus: var(--green-900);
+      --journal: var(--green-900);
+      --tools: #123a63;
+      --reference: #7a3a06;
+      --glow: transparent;
+      --grid-opacity: 0;
+    }
+    :root:not([data-theme='light']),
+    :root[data-theme='dark'] {
+      --text: #ffffff;
+      --text-dim: var(--ink-100);
+      --rule: var(--ink-700);
+      --edge: var(--ink-300);
+      --accent: var(--green-200);
+      --focus: var(--green-200);
+      --journal: var(--green-200);
+      --tools: #a8ccf4;
+      --reference: var(--orange-300);
+      --glow: transparent;
+      --grid-opacity: 0;
+    }
+  }
+
+  /* TIER 3: type, space, shape. */
+  :root {
+    --font-display: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --track-tight: -0.015em;
+    --track-wide: 0.08em;
+    --track-wordmark: 0.22em;
+
+    --t--1: clamp(0.83rem, 0.81rem + 0.11vw, 0.89rem);
+    --t-0: clamp(1rem, 0.97rem + 0.16vw, 1.09rem);
+    --t-1: clamp(1.2rem, 1.13rem + 0.35vw, 1.42rem);
+    --t-2: clamp(1.44rem, 1.31rem + 0.64vw, 1.85rem);
+    --t-5: clamp(2.4rem, 1.85rem + 2.75vw, 3.9rem);
+
+    --leading-tight: 1.15;
+    --leading-snug: 1.35;
+    --leading-body: 1.65;
+
+    --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem;
+    --s-5: 1.5rem;  --s-6: 2rem;   --s-7: 3rem;    --s-8: 4.5rem;
+
+    --measure: 60ch;
+    --width-page: 72rem;
+    --gutter: clamp(1rem, 4vw, 2.5rem);
+    --header-h: 4.5rem;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-pill: 999px;
+
+    --shadow-sm: 0 1px 2px rgb(2 9 14 / 0.06);
+    --dur-fast: 140ms;
+    --dur: 240ms;
+    --dur-slow: 1200ms;
+    --stagger: 70ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  /* Motion is zeroed at the token level, so no rule below needs to know.
+     --stagger is zeroed alongside the durations: zeroing duration alone would
+     still hold each element invisible until its delay elapsed, which is the
+     staggered fade-in a reduced-motion reader asked not to see. */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --dur-fast: 1ms;
+      --dur: 1ms;
+      --dur-slow: 1ms;
+      --stagger: 0ms;
+    }
+  }
+}

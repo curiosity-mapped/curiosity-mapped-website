@@ -1,0 +1,45 @@
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--t-0);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-tight);
+    text-wrap: balance;
+  }
+
+  p { margin: 0; text-wrap: pretty; }
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  ::selection { background: var(--selection); color: var(--text); }
+
+  /*
+   * One focus treatment for the whole page. `outline`, not `box-shadow`, so it
+   * survives overflow:hidden and forced-colors mode.
+   */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* The destination is a region, not a control, so it takes focus silently. */
+  main:focus { outline: none; }
+}
