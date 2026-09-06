@@ -9,6 +9,7 @@ Live at **https://curiositymapped.com/**
 
 ```
 index.html          the page
+privacy.html        privacy policy; the template for any indexable page
 404.html            not-found page (GitHub Pages serves it for any missing path)
 css/tokens.css      colour / type / space tokens, and the light + dark + high-contrast ramps
 css/base.css        element defaults
@@ -84,6 +85,12 @@ them:
 
 - `index.html` — `link[rel=canonical]`, `og:url`, `og:image`, and the `@id`/`url`
   fields in the JSON-LD block.
+- `privacy.html` — its own `canonical` and `og:url`. Copy its head as the starting
+  point for a new indexable page; `404.html` is the `noindex` variant, and only
+  `index.html` carries the JSON-LD graph.
+- `index.html` and `privacy.html` share the `.footer__legal` nav. Publishing one of
+  its remaining spans means turning it into an `<a>` in both files and rewording the
+  visually-hidden line above them, which explains why the rest are inert.
 - `sitemap.xml` — add each new page, and bump `lastmod`.
 - `robots.txt` — only the `Sitemap:` line is absolute.
 

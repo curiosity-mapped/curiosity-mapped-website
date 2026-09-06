@@ -190,6 +190,9 @@
     --t-0: clamp(1rem, 0.97rem + 0.16vw, 1.09rem);
     --t-1: clamp(1.2rem, 1.13rem + 0.35vw, 1.42rem);
     --t-2: clamp(1.44rem, 1.31rem + 0.64vw, 1.85rem);
+    --t-3: clamp(1.73rem, 1.58rem + 0.75vw, 2.22rem);
+    /* --t-4 stays unclaimed: nothing on the site sits between a page title and
+       the hero display size, and an unused step is a step that drifts. */
     --t-5: clamp(2.4rem, 1.85rem + 2.75vw, 3.9rem);
 
     --leading-tight: 1.15;
