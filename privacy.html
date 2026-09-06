@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Cascade layer order is declared in the document, not in the stylesheet, so it
+     can never depend on the order rules happen to appear in. -->
+<style>@layer tokens, base, components, utilities;</style>
+
+<title>Privacy Policy &mdash; Curiosity Mapped</title>
+<meta name="description" content="What information Curiosity Mapped collects when you visit, how analytics, cookies, and advertising are used, and the privacy choices available to you.">
+
+<link rel="canonical" href="https://curiositymapped.com/privacy.html">
+
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#02090e" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Curiosity Mapped">
+<meta property="og:title" content="Privacy Policy &mdash; Curiosity Mapped">
+<meta property="og:description" content="What information Curiosity Mapped collects when you visit, how analytics, cookies, and advertising are used, and the privacy choices available to you.">
+<meta property="og:url" content="https://curiositymapped.com/privacy.html">
+<meta property="og:locale" content="en_US">
+<!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
+<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Curiosity Mapped &mdash; follow the curiosity, map what you find, see where it leads.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<script>
+  /* Same pre-paint theme boot as the home page; see index.html for why it is inline. */
+  try {
+    var t = localStorage.getItem('cm-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/utilities.css">
+
+<script src="/js/main.js" defer></script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="header">
+  <a class="wordmark" href="/">
+    <span class="wordmark__line">Curiosity</span>
+    <span class="wordmark__line wordmark__line--wide">Mapped</span>
+  </a>
+
+  <button class="toggle toggle--end" type="button" id="theme-toggle" aria-label="Switch theme">
+    <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <span id="theme-label">Dark</span>
+  </button>
+</header>
+
+<main id="main" tabindex="-1">
+  <!--
+    The stagger stops after the title and the date. .rise fills backwards, so
+    carrying it down a document this long would leave the tail invisible for
+    seconds on first paint.
+  -->
+  <article class="legal" aria-labelledby="privacy-title">
+    <h1 class="legal__title rise" id="privacy-title" style="--i:0">Privacy Policy</h1>
+
+    <p class="legal__meta rise" style="--i:1">Effective Date: September 5, 2026</p>
+
+    <p>Curiosity Mapped, operated by <strong>Curiosity Mapped, LLC</strong> (&ldquo;Curiosity Mapped,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), respects your privacy.</p>
+
+    <p>This Privacy Policy explains what information may be collected when you visit or use the Curiosity Mapped website, how that information may be used and shared, and the choices that may be available to you.</p>
+
+    <p>Curiosity Mapped is designed to provide useful information and browser-based tools while collecting as little information as reasonably necessary to operate, understand, improve, secure, and support the website.</p>
+
+    <h2 id="information-we-collect">1. Information We Collect</h2>
+
+    <p>You can browse Curiosity Mapped and use many of its tools without creating an account or directly providing personal information.</p>
+
+    <p>Depending on how you use the website, information may be collected automatically by Curiosity Mapped or by third-party services that operate on or in connection with the website.</p>
+
+    <h3 id="collected-automatically">Information collected automatically</h3>
+
+    <p>Information associated with your visit may include:</p>
+
+    <ul>
+      <li>Pages or content you view</li>
+      <li>The date and time of your visit</li>
+      <li>Interactions with pages and tools</li>
+      <li>The website or page that referred you to Curiosity Mapped</li>
+      <li>Browser type and version</li>
+      <li>Operating system and device information</li>
+      <li>Screen or browser characteristics</li>
+      <li>Approximate geographic information</li>
+      <li>Information associated with your IP address</li>
+      <li>Cookie identifiers and similar technologies</li>
+      <li>Information about interactions with advertisements, where advertising is enabled</li>
+      <li>Other technical information associated with your visit</li>
+    </ul>
+
+    <p>We use this information primarily for website operation, analytics, security, performance measurement, improvement of our content and tools, and, where applicable, advertising.</p>
+
+    <p>Curiosity Mapped does not require you to provide your name, email address, or other directly identifying information simply to browse the website or use tools that operate entirely within your browser.</p>
+
+    <h2 id="information-you-provide">2. Information You Voluntarily Provide</h2>
+
+    <p>Some features may allow you to voluntarily provide information, such as through a contact form, newsletter subscription, donation, account, feedback form, or similar feature.</p>
+
+    <p>When you voluntarily provide information, we may use it for the purpose for which it was provided, such as:</p>
+
+    <ul>
+      <li>Responding to an inquiry</li>
+      <li>Delivering a newsletter or other requested communication</li>
+      <li>Processing a transaction</li>
+      <li>Providing a requested service</li>
+      <li>Responding to feedback</li>
+      <li>Maintaining records necessary to operate the service</li>
+    </ul>
+
+    <p>If a feature requires information that is not described in this Privacy Policy, we may provide additional information at or before the point where that information is collected.</p>
+
+    <p>Curiosity Mapped does not currently require an account to access the website&rsquo;s general content or browser-based tools.</p>
+
+    <h2 id="google-analytics">3. Google Analytics</h2>
+
+    <p>Curiosity Mapped uses <strong>Google Analytics</strong>, a web analytics service provided by Google, to understand how visitors use the website.</p>
+
+    <p>Google Analytics may collect information about website visits and interactions, including information about:</p>
+
+    <ul>
+      <li>Pages viewed</li>
+      <li>Interactions with the website</li>
+      <li>Device and browser characteristics</li>
+      <li>Approximate geographic information</li>
+      <li>How visitors arrive at and navigate the website</li>
+      <li>Other information associated with website usage</li>
+    </ul>
+
+    <p>Google Analytics uses IP addresses at the time information is collected to derive geographic information, but Google states that IP addresses are not retained in Google Analytics reporting data.</p>
+
+    <p>We use Google Analytics to understand:</p>
+
+    <ul>
+      <li>Which pages and tools are used</li>
+      <li>How visitors discover Curiosity Mapped</li>
+      <li>How visitors navigate the website</li>
+      <li>Which content and tools are useful</li>
+      <li>How the website performs</li>
+      <li>How we can improve the website</li>
+    </ul>
+
+    <p>We do not intentionally configure Google Analytics to collect information such as your name, email address, passwords, or other information that directly identifies you.</p>
+
+    <p>Google processes information collected through Google Analytics according to its own policies and terms.</p>
+
+    <p>You can learn more about Google&rsquo;s privacy practices and how Google uses information from sites and apps that use its services through <a href="https://policies.google.com/privacy" rel="noopener">Google&rsquo;s privacy resources</a>.</p>
+
+    <h2 id="cookies">4. Cookies and Similar Technologies</h2>
+
+    <p>Curiosity Mapped and third-party services used on the website may use cookies, local storage, pixels, web beacons, and similar technologies.</p>
+
+    <p>These technologies may be used for purposes including:</p>
+
+    <ul>
+      <li>Website functionality</li>
+      <li>Remembering preferences</li>
+      <li>Analytics and measurement</li>
+      <li>Understanding website usage</li>
+      <li>Security and fraud prevention</li>
+      <li>Advertising and advertising measurement, where applicable</li>
+      <li>Limiting advertising frequency, where applicable</li>
+    </ul>
+
+    <p>Google Analytics uses cookies and similar technologies for analytics purposes.</p>
+
+    <p>If advertising is enabled, advertising providers may also use cookies and similar technologies for purposes such as delivering advertisements, measuring advertising performance, preventing fraud, limiting advertising frequency, and personalizing advertisements where permitted.</p>
+
+    <p>The specific technologies used by Curiosity Mapped may change as the website, tools, and third-party services evolve.</p>
+
+    <p>You can generally control or delete cookies through your browser settings. Browser privacy controls, tracking protection, and content-blocking tools may also limit certain technologies. Disabling or restricting cookies and similar technologies may affect some website functionality.</p>
+
+    <p>Where applicable law or third-party platform requirements require consent before certain cookies or technologies are used, Curiosity Mapped will use appropriate consent mechanisms.</p>
+
+    <h2 id="browser-based-tools">5. Browser-Based Tools</h2>
+
+    <p>Many Curiosity Mapped tools are designed to operate entirely within your web browser.</p>
+
+    <p>When a tool operates entirely within your browser, information you enter into the tool is processed locally by your device rather than transmitted to a Curiosity Mapped server for that tool&rsquo;s processing.</p>
+
+    <p>For example, information entered into a browser-based calculator, converter, formatter, or similar utility may remain on your device while the tool performs its operation.</p>
+
+    <p>Curiosity Mapped does not need to receive or store information entered into a tool that operates entirely within your browser in order for that tool to perform its intended function.</p>
+
+    <p>However, using a browser-based tool does not necessarily mean that no information is collected about your visit. The webpage containing the tool may use analytics, advertising, security, or other third-party services that independently collect information about the visit.</p>
+
+    <p>If a particular tool requires information to be transmitted to a server, that tool may provide additional information about how the information is handled.</p>
+
+    <h2 id="advertising">6. Advertising</h2>
+
+    <p>Curiosity Mapped may display advertising provided by third-party advertising providers, including <strong>Google AdSense</strong>.</p>
+
+    <p>Advertising may be introduced or changed as Curiosity Mapped develops. If advertising is enabled, advertising providers may use cookies, IP addresses, advertising identifiers, web beacons, local storage, and similar technologies to:</p>
+
+    <ul>
+      <li>Serve advertisements</li>
+      <li>Measure advertising performance</li>
+      <li>Prevent fraud and abuse</li>
+      <li>Limit advertising frequency</li>
+      <li>Determine which advertisements are shown</li>
+      <li>Personalize advertisements where permitted</li>
+    </ul>
+
+    <p>Google requires publishers using its advertising products to disclose relevant data collection and the use of technologies such as cookies, web beacons, IP addresses, and other identifiers.</p>
+
+    <p>Depending on your location, applicable law, and your privacy choices, advertisements may be personalized, non-personalized, or otherwise limited.</p>
+
+    <p>Where legally required, Curiosity Mapped will request consent before using certain cookies, local storage, or personal information for advertising and related purposes.</p>
+
+    <p>For users in the European Economic Area, the United Kingdom, and Switzerland, Google may require publishers serving personalized advertisements to use a Google-certified consent management platform integrated with the IAB Europe&rsquo;s Transparency and Consent Framework.</p>
+
+    <p>If Curiosity Mapped introduces advertising or changes its advertising partners, this Privacy Policy may be updated to reflect those practices.</p>
+
+    <p>You may also be able to manage certain advertising personalization preferences through <a href="https://adssettings.google.com/" rel="noopener">Google&rsquo;s advertising controls</a>.</p>
+
+    <h2 id="how-we-use-information">7. How We Use Information</h2>
+
+    <p>Information collected through Curiosity Mapped may be used to:</p>
+
+    <ul>
+      <li>Operate and maintain the website</li>
+      <li>Provide website functionality and tools</li>
+      <li>Understand how visitors use the website</li>
+      <li>Measure website traffic and performance</li>
+      <li>Improve content, calculators, converters, and other tools</li>
+      <li>Diagnose technical problems</li>
+      <li>Improve reliability and security</li>
+      <li>Detect and help prevent abuse, fraud, or other misuse</li>
+      <li>Measure and support advertising, where applicable</li>
+      <li>Communicate with you when you voluntarily provide contact information</li>
+      <li>Process transactions that you voluntarily initiate</li>
+      <li>Comply with applicable legal obligations</li>
+    </ul>
+
+    <p>We seek to use information for legitimate business and operational purposes consistent with this Privacy Policy.</p>
+
+    <h2 id="how-information-is-shared">8. How Information Is Shared</h2>
+
+    <p>Curiosity Mapped may share information with third-party service providers when reasonably necessary to operate, analyze, secure, improve, or monetize the website.</p>
+
+    <p>These providers may include services for:</p>
+
+    <ul>
+      <li>Website analytics</li>
+      <li>Advertising</li>
+      <li>Website hosting and infrastructure</li>
+      <li>Security and fraud prevention</li>
+      <li>Communications</li>
+      <li>Payment processing</li>
+      <li>Other website functionality</li>
+    </ul>
+
+    <p>Third-party services may independently collect or process information according to their own privacy policies and terms.</p>
+
+    <p>Curiosity Mapped does not sell personal information for monetary consideration.</p>
+
+    <p>However, certain advertising or online tracking practices may be considered &ldquo;sale,&rdquo; &ldquo;sharing,&rdquo; targeted advertising, or another regulated form of disclosure under particular privacy laws. Where applicable, Curiosity Mapped will provide the rights and choices required by those laws.</p>
+
+    <p>Curiosity Mapped may also disclose information when reasonably necessary to:</p>
+
+    <ul>
+      <li>Comply with applicable law or legal process</li>
+      <li>Protect the rights, property, or safety of Curiosity Mapped or others</li>
+      <li>Detect, investigate, or prevent fraud, security incidents, or abuse</li>
+      <li>Enforce applicable agreements or policies</li>
+    </ul>
+
+    <h2 id="data-retention">9. Data Retention</h2>
+
+    <p>Curiosity Mapped seeks to retain information only for as long as reasonably necessary for the purposes described in this Privacy Policy.</p>
+
+    <p>Retention periods may vary depending on the type of information, the purpose for which it was collected, applicable legal requirements, and the service involved.</p>
+
+    <p>Information collected by third-party services, such as Google Analytics or advertising providers, may be retained according to those providers&rsquo; respective policies and configuration settings.</p>
+
+    <p>Where practical, Curiosity Mapped will configure third-party services to retain information only for as long as reasonably necessary for the intended purpose.</p>
+
+    <h2 id="your-privacy-choices">10. Your Privacy Choices</h2>
+
+    <p>Depending on where you live and which services you use, you may have several ways to control information collection and use.</p>
+
+    <h3 id="choices-browser">Browser controls</h3>
+
+    <p>Most modern browsers allow you to view, delete, block, or restrict cookies and similar technologies.</p>
+
+    <p>You may also use browser privacy controls, tracking protection, content blockers, or similar technologies.</p>
+
+    <h3 id="choices-analytics">Google Analytics</h3>
+
+    <p>Google provides a <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google Analytics Opt-out Browser Add-on</a> that can prevent Google Analytics from using information about your visits for Google Analytics measurement on supported websites.</p>
+
+    <h3 id="choices-advertising">Google advertising</h3>
+
+    <p>If Google advertising is used, you may be able to manage certain advertising personalization preferences through <a href="https://adssettings.google.com/" rel="noopener">Google&rsquo;s advertising controls</a>.</p>
+
+    <h3 id="choices-rights">Privacy rights</h3>
+
+    <p>Depending on your location and applicable law, you may have rights regarding personal information, which may include the right to:</p>
+
+    <ul>
+      <li>Know or access information collected about you</li>
+      <li>Request correction of inaccurate information</li>
+      <li>Request deletion of certain information</li>
+      <li>Restrict or object to certain processing</li>
+      <li>Opt out of certain advertising, sale, sharing, or profiling activities</li>
+      <li>Withdraw consent where processing is based on consent</li>
+      <li>Exercise applicable rights without unlawful discrimination</li>
+    </ul>
+
+    <p>The availability and scope of these rights vary by jurisdiction and may be subject to legal exceptions.</p>
+
+    <p>To exercise an applicable privacy right, contact Curiosity Mapped using the contact information provided in the <a href="#contact"><strong>Contact</strong></a> section below.</p>
+
+    <p>We may need to request information reasonably necessary to verify and process a privacy request.</p>
+
+    <h2 id="childrens-privacy">11. Children&rsquo;s Privacy</h2>
+
+    <p>Curiosity Mapped is not specifically directed toward children under the age of 13, and we do not knowingly collect personal information from children under 13.</p>
+
+    <p>If you believe that a child has provided personal information to Curiosity Mapped, please contact us using the contact information provided below so that appropriate steps can be taken.</p>
+
+    <h2 id="third-party-websites">12. Third-Party Websites and Services</h2>
+
+    <p>Curiosity Mapped may contain links to websites, services, or resources operated by third parties.</p>
+
+    <p>Curiosity Mapped is not responsible for the privacy practices, content, security, or policies of third-party websites or services.</p>
+
+    <p>Third-party services integrated into or linked from Curiosity Mapped may collect and process information according to their own privacy policies and terms.</p>
+
+    <p>We encourage you to review the privacy policies of third-party services before providing them with personal information.</p>
+
+    <h2 id="data-security">13. Data Security</h2>
+
+    <p>We take reasonable administrative, technical, and organizational measures designed to protect information associated with the operation of the website.</p>
+
+    <p>However, no website, internet transmission, or electronic storage system can be guaranteed to be completely secure.</p>
+
+    <h2 id="changes">14. Changes to This Privacy Policy</h2>
+
+    <p>We may update this Privacy Policy from time to time as Curiosity Mapped, its services, technologies, third-party providers, or applicable legal requirements change.</p>
+
+    <p>When we make material changes, we will update the <strong>Effective Date</strong> at the beginning of this Privacy Policy.</p>
+
+    <p>Where appropriate, we may provide additional notice of significant changes through the website or other reasonable means.</p>
+
+    <p>We encourage visitors to periodically review this page to remain informed about how information is handled.</p>
+
+    <h2 id="contact">15. Contact</h2>
+
+    <p>If you have questions, concerns, or requests regarding this Privacy Policy or Curiosity Mapped&rsquo;s privacy practices, please contact:</p>
+
+    <p><strong>Curiosity Mapped, LLC</strong><br>
+    <strong>Privacy Contact:</strong> <a href="mailto:curiositymapped@gmail.com">curiositymapped@gmail.com</a></p>
+
+    <p>We will make reasonable efforts to respond to privacy-related inquiries and requests within the time required by applicable law.</p>
+
+    <hr>
+
+    <h3 id="third-party-resources">Third-Party Privacy Resources</h3>
+
+    <p>The following third parties may provide services used by Curiosity Mapped:</p>
+
+    <ul>
+      <li><a href="https://policies.google.com/privacy" rel="noopener">Google Privacy Policy</a></li>
+      <li><a href="https://marketingplatform.google.com/about/analytics/" rel="noopener">Google Analytics</a></li>
+      <li><a href="https://www.google.com/adsense/start/" rel="noopener">Google AdSense</a></li>
+      <li><a href="https://adssettings.google.com/" rel="noopener">Google Ads Settings</a></li>
+      <li><a href="https://policies.google.com/technologies/partner-sites" rel="noopener">Google: How it uses information from sites or apps that use its services</a></li>
+    </ul>
+
+    <p>Please refer to the applicable third party&rsquo;s current privacy policy and terms for information about its independent data practices.</p>
+
+    <p class="legal__colophon"><strong>Curiosity Mapped, LLC</strong><br>United States</p>
+
+    <p class="legal__updated">Last Updated: September 5, 2026</p>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
+    <nav class="footer__legal" aria-label="Footer">
+      <p class="visually-hidden">Only the Privacy page is published so far; the others are coming soon.</p>
+      <span>About</span>
+      <span>Contact</span>
+      <a href="/privacy.html" aria-current="page">Privacy</a>
+      <span>Accessibility</span>
+    </nav>
+    <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
+  </div>
+</footer>
+</body>
+</html>
