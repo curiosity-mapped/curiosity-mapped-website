@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Insert (or replace) the Google Analytics tag immediately after the first <head>
-# in every .html file in the repository.
+# in every .html file under docs/, the directory GitHub Pages publishes.
 #
 #   scripts/apply-gtag.sh              apply the ID below to every page
 #   scripts/apply-gtag.sh G-OTHERID    apply a different measurement ID
@@ -27,6 +27,10 @@ if [ $# -gt 0 ]; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Only the published tree is rewritten. ROOT stays the repo root so that the
+# paths reported below read "docs/index.html" rather than a bare "index.html".
+SITE="$ROOT/docs"
 
 # The block written into each page. The trailing marker is not part of Google's
 # snippet; it is what makes the region unambiguous to replace on the next run.
@@ -143,6 +147,6 @@ while IFS= read -r -d '' file; do
     mv "$tmp" "$file"; tmp=""
     echo "${action}$rel"
   fi
-done < <(find "$ROOT" -name '*.html' -not -path '*/.git/*' -print0 | sort -z)
+done < <(find "$SITE" -name '*.html' -print0 | sort -z)
 
 exit "$skipped"
