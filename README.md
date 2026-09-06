@@ -16,6 +16,7 @@ css/base.css        element defaults
 css/components.css  the blocks on the page
 css/utilities.css   last layer, so it wins
 js/main.js          theme toggle and footer year; the page works without it
+scripts/apply-gtag.sh  inserts or replaces the Google Analytics tag in every page
 assets/             og image and raster icons
 CNAME               custom domain, read by GitHub Pages
 .nojekyll           serve files as-is instead of running them through Jekyll
@@ -93,6 +94,12 @@ them:
   visually-hidden line above them, which explains why the rest are inert.
 - `sitemap.xml` — add each new page, and bump `lastmod`.
 - `robots.txt` — only the `Sitemap:` line is absolute.
+- The Google Analytics tag is per-file, since nothing templates the head. Run
+  `./scripts/apply-gtag.sh` after adding a page; it inserts the tag directly after `<head>`
+  in every `.html` file, replacing a tag that is already there rather than duplicating it, so
+  it is safe to run at any time. The measurement ID is the `GTAG_ID` constant at the top of
+  the script — change it there and re-run, or pass a different one as an argument. `-n`
+  reports what would change without writing.
 
 `assets/og.png` is 1200×630 and is referenced by absolute URL, because crawlers do
 not resolve relative `og:image` values. If the wordmark or palette changes, that
