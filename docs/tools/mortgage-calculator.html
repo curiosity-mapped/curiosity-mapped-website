@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZT7DLXEBG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6ZT7DLXEBG');
+</script>
+<!-- End Google tag -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Cascade layer order is declared in the document, not in the stylesheet, so it
+     can never depend on the order rules happen to appear in. -->
+<style>@layer tokens, base, components, utilities;</style>
+
+<title>Mortgage Calculator | Curiosity Mapped</title>
+<meta name="description" content="Work out a monthly mortgage payment and see exactly how the formula produces it: the periodic rate, the amortization schedule, and what principal and interest do and do not cover. Runs entirely in your browser.">
+
+<link rel="canonical" href="https://curiositymapped.com/tools/mortgage-calculator.html">
+
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#02090e" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Curiosity Mapped">
+<meta property="og:title" content="Mortgage Calculator | Curiosity Mapped">
+<meta property="og:description" content="Work out a monthly mortgage payment and see exactly how the formula produces it: the periodic rate, the amortization schedule, and what principal and interest do and do not cover. Runs entirely in your browser.">
+<meta property="og:url" content="https://curiositymapped.com/tools/mortgage-calculator.html">
+<meta property="og:locale" content="en_US">
+<!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
+<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Curiosity Mapped: follow the curiosity, map what you find, see where it leads.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<script>
+  /* Same pre-paint theme boot as the home page; see index.html for why it is inline. */
+  try {
+    var t = localStorage.getItem('cm-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<!-- The only page that loads this one, so the other pages pay nothing for it. -->
+<link rel="stylesheet" href="/css/calculator.css">
+<link rel="stylesheet" href="/css/utilities.css">
+
+<script src="/js/main.js" defer></script>
+<!-- Kept separate from main.js, which is on every page and must not grow. -->
+<script src="/js/mortgage.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://curiositymapped.com/tools/mortgage-calculator.html#app",
+      "url": "https://curiositymapped.com/tools/mortgage-calculator.html",
+      "name": "Mortgage Calculator",
+      "description": "Work out a monthly mortgage payment and see exactly how the formula produces it: the periodic rate, the amortization schedule, and what principal and interest do and do not cover.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript for live results; the worked example and the formula are readable without it.",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "isPartOf": { "@id": "https://curiositymapped.com/#website" },
+      "publisher": { "@id": "https://curiositymapped.com/#org" },
+      "breadcrumb": { "@id": "https://curiositymapped.com/tools/mortgage-calculator.html#breadcrumb" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://curiositymapped.com/tools/mortgage-calculator.html#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://curiositymapped.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://curiositymapped.com/tools/" },
+        { "@type": "ListItem", "position": 3, "name": "Mortgage Calculator" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://curiositymapped.com/tools/mortgage-calculator.html#faq",
+      "isPartOf": { "@id": "https://curiositymapped.com/tools/mortgage-calculator.html#app" },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How is a monthly mortgage payment calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The annual interest rate is divided by twelve to get a monthly periodic rate, and the term in years is multiplied by twelve to get the number of payments. Those two numbers and the loan amount go into the level-payment formula, which returns the one figure that stays the same every month for a fixed-rate loan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is the interest rate the same thing as the APR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The interest rate, sometimes called the note rate, is what the balance actually accrues and it is what this calculator asks for. The APR is a broader cost measure that folds certain fees and prepaid charges into a single annual figure under a regulator-defined method. Where fees exist, the APR is generally higher than the note rate. Entering an APR here would overstate the payment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my first mortgage payment almost all interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Interest is charged on the balance outstanding, and the balance is at its largest on the first day. The payment is a fixed amount, so whatever the interest does not consume goes to principal. As the balance falls, the interest portion falls with it and the principal portion grows to fill the gap, which is why the split reverses over the life of the loan even though the payment never changes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does a longer mortgage term cost more?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "At the same interest rate, yes. A longer term lowers the monthly payment because the principal is spread over more payments, but it leaves a larger balance outstanding for longer, so more total interest accrues. In practice longer-term loans are also often priced at higher rates, which widens the gap further."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are property taxes and insurance included in the monthly payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not in the figure the mortgage formula produces. That figure is principal and interest only. Most lenders collect property tax and homeowners insurance alongside it into an escrow account, so the amount actually debited each month is larger. This calculator keeps the two figures visibly separate and never merges them into a single number."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much is PMI, and why does this calculator not work it out?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "There is no universal formula for private mortgage insurance. The premium depends on the loan-to-value band, the credit score, the coverage percentage, the loan purpose, the occupancy, the debt-to-income ratio, and the individual insurer's rate card. A calculator that produced a confident PMI figure from the loan-to-value alone would be manufacturing precision it does not have, so this one asks for the figure your lender quoted instead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do biweekly payments really save money?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "They save money, but not for the reason usually given. Twenty-six half-payments a year is thirteen monthly payments rather than twelve, so a biweekly schedule quietly makes one extra payment a year. The saving comes from prepaying principal, not from any change in how interest is calculated. Sending one-twelfth extra each month achieves almost exactly the same thing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the last payment on the schedule a different amount?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Each month's interest is rounded to the cent before it is subtracted from the payment, so the principal reduction is a fraction of a cent away from what the unrounded formula assumed. Over hundreds of payments that difference accumulates, and it has to land somewhere. It lands on the final payment, which is why this schedule shows that payment at its true amount rather than repeating the level figure and claiming the balance reached zero."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is anything I type here sent anywhere?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The calculation runs entirely in your browser, there is no server request behind it, and nothing is saved between visits. The page itself uses Google Analytics, which collects information about the visit in the way described in the site's privacy policy, but no figure you enter into the calculator is ever included in that."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="header">
+  <a class="wordmark" href="/">
+    <span class="wordmark__line">Curiosity</span>
+    <span class="wordmark__line wordmark__line--wide">Mapped</span>
+  </a>
+
+  <nav class="nav" aria-label="Primary">
+    <p class="visually-hidden">Only Tools is published so far; the other sections are coming soon.</p>
+    <ul class="nav__list">
+      <li><span class="nav__item">Journal</span></li>
+      <li><a class="nav__item nav__item--link" href="/tools/">Tools</a></li>
+      <li><span class="nav__item">Reference</span></li>
+      <li><span class="nav__item">About</span></li>
+    </ul>
+  </nav>
+
+  <button class="toggle" type="button" id="theme-toggle" aria-label="Switch theme">
+    <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <span id="theme-label">Dark</span>
+  </button>
+</header>
+
+<main id="main" tabindex="-1">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb__list">
+      <li class="breadcrumb__item"><a href="/">Home</a></li>
+      <li class="breadcrumb__item"><a href="/tools/">Tools</a></li>
+      <li class="breadcrumb__item"><span aria-current="page">Mortgage Calculator</span></li>
+    </ol>
+  </nav>
+
+  <!--
+    The stagger stops after the title and the lede, for the same reason it does on
+    privacy.html: .rise fills backwards, so carrying it down a document this long
+    would hold the tail invisible for seconds on first paint.
+  -->
+  <article class="prose" aria-labelledby="page-title">
+    <h1 class="prose__title rise" id="page-title" style="--i:0">Mortgage Calculator</h1>
+
+    <p class="prose__lede rise" style="--i:1">
+      Work out a monthly mortgage payment, and see exactly which arithmetic produced
+      it. The formula is above the calculator rather than hidden behind it, and every
+      figure the page reports comes from the schedule it shows you.
+    </p>
+
+    <p>
+      This calculator answers one question precisely: for a fixed-rate loan of a given
+      size, at a given rate, over a given term, what is the level monthly payment that
+      retires it? That figure is <strong>principal and interest</strong>, and it is the
+      only number the mortgage formula produces. Property tax, homeowners insurance,
+      mortgage insurance, and association dues are real costs of owning a home, but
+      they are added on afterwards and they are kept visibly separate here.
+    </p>
+
+    <p>
+      It runs entirely in your browser. There is no server behind it and nothing you
+      type is transmitted anywhere.
+    </p>
+
+    <!-- ============================ 1. the maths ============================ -->
+
+    <section aria-labelledby="how-the-math-works">
+      <h2 id="how-the-math-works">How a mortgage payment is calculated</h2>
+
+      <p>
+        A fixed-rate mortgage is a <em>level-payment amortizing loan</em>: you pay the
+        same amount every month, each payment covers the interest that has accrued
+        since the last one, and whatever is left over reduces the balance. The payment
+        that makes the balance land on exactly zero at the end of the term is the one
+        the formula below returns.
+      </p>
+
+      <figure class="formula">
+        <math display="block">
+          <semantics>
+            <mrow>
+              <mi>M</mi>
+              <mo>=</mo>
+              <mfrac>
+                <mrow><mi>P</mi><mo>&#x2062;</mo><mi>i</mi></mrow>
+                <mrow>
+                  <mn>1</mn><mo>&#x2212;</mo>
+                  <msup>
+                    <mrow><mo>(</mo><mn>1</mn><mo>+</mo><mi>i</mi><mo>)</mo></mrow>
+                    <mrow><mo>&#x2212;</mo><mi>n</mi></mrow>
+                  </msup>
+                </mrow>
+              </mfrac>
+            </mrow>
+            <annotation encoding="application/x-tex">M = \frac{P i}{1 - (1 + i)^{-n}}</annotation>
+          </semantics>
+        </math>
+        <figcaption class="visually-hidden">
+          The monthly payment equals the principal multiplied by the monthly periodic
+          rate, divided by one minus the quantity one plus the monthly periodic rate
+          raised to the power of negative the number of payments.
+        </figcaption>
+      </figure>
+
+      <div class="params">
+        <table class="table">
+          <caption>Every symbol in the formula, and the value it currently holds in the calculator below.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Symbol</th>
+              <th scope="col">What it is</th>
+              <th scope="col">Your value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">M</th>
+              <td>The level monthly payment, covering principal and interest</td>
+              <td><span class="params__value" id="p-payment">$1,918.56 a month</span></td>
+            </tr>
+            <tr>
+              <th scope="row">P</th>
+              <td>The principal, the amount actually financed</td>
+              <td><span class="params__value" id="p-loan">$320,000</span></td>
+            </tr>
+            <tr>
+              <th scope="row">i</th>
+              <td>The periodic rate: the annual rate divided by twelve</td>
+              <td><span class="params__value" id="p-rate">0.500% a month</span></td>
+            </tr>
+            <tr>
+              <th scope="row">n</th>
+              <td>The number of payments: the term in years multiplied by twelve</td>
+              <td><span class="params__value" id="p-count">360 payments</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The rate the formula wants is the <strong>nominal annual interest rate</strong>,
+        the one a lender quotes on the note. It is not the APR, which is a
+        broader cost measure that folds certain fees into a single annual figure, and it
+        is not the effective annual rate either. Dividing the quoted rate by twelve is a
+        <em>convention</em> for how monthly mortgage interest is computed in the United
+        States, not a mathematical derivation: 6% &divide; 12 = 0.5% a month compounds
+        to 6.168% over a year, and the true monthly equivalent of a 6% effective annual
+        rate would be 0.4868%, not 0.5%. Mortgages use the convention. This calculator
+        follows it, and says so.
+      </p>
+    </section>
+
+    <!-- ============================ 2. calculator ============================ -->
+
+    <section class="calc" aria-labelledby="calculator">
+      <h2 id="calculator">Calculate your mortgage</h2>
+
+      <div class="calc__layout">
+        <div>
+          <form class="calc__form" id="calc-form" novalidate>
+            <fieldset class="fieldset">
+              <legend class="fieldset__legend">The loan</legend>
+
+              <div class="field">
+                <label class="field__label" for="home-price">Home price ($)</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="home-price" name="home-price" type="text"
+                         inputmode="decimal" autocomplete="off" value="400000"
+                         aria-describedby="home-price-error">
+                </div>
+                <p class="field__error" id="home-price-error" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="down-payment">Down payment</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="down-payment" name="down-payment" type="text"
+                         inputmode="decimal" autocomplete="off" value="80000"
+                         aria-describedby="down-payment-error">
+                </div>
+                <fieldset class="fieldset">
+                  <legend class="visually-hidden">Down payment unit</legend>
+                  <div class="units">
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="down-unit" id="down-unit-dollar" value="dollar" checked>
+                      <label class="units__label" for="down-unit-dollar">Dollars</label>
+                    </span>
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="down-unit" id="down-unit-percent" value="percent">
+                      <label class="units__label" for="down-unit-percent">Percent</label>
+                    </span>
+                  </div>
+                </fieldset>
+                <p class="field__readout" id="ltv-readout">Loan-to-value: 80%</p>
+                <p class="field__error" id="down-payment-error" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="loan-amount">Loan amount ($): the <em>P</em> in the formula</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="loan-amount" name="loan-amount" type="text"
+                         inputmode="decimal" autocomplete="off" value="320000"
+                         aria-describedby="loan-amount-hint loan-amount-error">
+                </div>
+                <p class="field__hint" id="loan-amount-hint">
+                  Follows from the price and the down payment. Type in it directly and it
+                  becomes the input instead, which is what you want if you are refinancing
+                  and know your payoff balance rather than a purchase price.
+                </p>
+                <p class="field__pinned" id="loan-pinned-note" hidden>
+                  <span>Loan amount set directly. The home price now follows from it.</span>
+                  <button class="field__unpin" type="button" id="unpin-loan">Use home price instead</button>
+                </p>
+                <p class="field__error" id="loan-amount-error" hidden></p>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset calc__section">
+              <legend class="fieldset__legend">Rate and term</legend>
+
+              <div class="field">
+                <label class="field__label" for="interest-rate">Interest rate (% a year)</label>
+                <div class="field__control field__control--pct">
+                  <input class="field__input" id="interest-rate" name="interest-rate" type="text"
+                         inputmode="decimal" autocomplete="off" value="6"
+                         aria-describedby="interest-rate-hint interest-rate-error interest-rate-warn">
+                  <span class="field__adorn field__adorn--end" aria-hidden="true">%</span>
+                </div>
+                <p class="field__hint" id="interest-rate-hint">
+                  The annual nominal rate your lender quotes, not the APR. It is divided by
+                  twelve to get the monthly rate used above. 6% is an illustrative default,
+                  not a rate quote. Curiosity Mapped does not track or offer mortgage rates.
+                </p>
+                <p class="field__warn" id="interest-rate-warn" hidden></p>
+                <p class="field__error" id="interest-rate-error" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="term">Loan term (years)</label>
+                <div class="field__control">
+                  <select class="field__input" id="term" name="term">
+                    <option value="10">10 years</option>
+                    <option value="15">15 years</option>
+                    <option value="20">20 years</option>
+                    <option value="25">25 years</option>
+                    <option value="30" selected>30 years</option>
+                    <option value="40">40 years</option>
+                    <option value="other">Other&hellip;</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field" id="term-other-field" hidden>
+                <label class="field__label" for="term-other">Term in years</label>
+                <div class="field__control">
+                  <input class="field__input" id="term-other" name="term-other" type="text"
+                         inputmode="numeric" autocomplete="off" value="30"
+                         aria-describedby="term-other-error term-other-warn">
+                </div>
+                <p class="field__warn" id="term-other-warn" hidden></p>
+                <p class="field__error" id="term-other-error" hidden></p>
+              </div>
+            </fieldset>
+
+            <p class="calc__privacy">
+              The numbers you enter stay in this browser. Nothing you type here is sent
+              anywhere, and nothing is saved between visits. The page itself uses Google
+              Analytics, as described in the <a href="/privacy.html">privacy policy</a>.
+            </p>
+          </form>
+        </div>
+
+        <div class="calc__results">
+          <div class="result" id="result-panel">
+            <span class="result__label">Monthly principal &amp; interest</span>
+            <!--
+              aria-live is switched off deliberately. <output> is a live region by
+              default in several screen readers, and this page already has exactly one
+              -- #calc-status, below -- because two of them on one page talk over each
+              other and neither gets heard.
+            -->
+            <output class="result__amount" id="result-pi" for="loan-amount interest-rate term" aria-live="off">$1,918.56</output>
+            <p class="result__stale-note" id="result-stale-note" hidden></p>
+
+            <div class="result__grid">
+              <div class="result__tile">
+                <span class="result__tile-label">Total interest</span>
+                <span class="result__tile-value" id="result-total-interest">$370,683.35</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Total of all payments</span>
+                <span class="result__tile-value" id="result-total-paid">$690,683.35</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Payments</span>
+                <span class="result__tile-value" id="result-payments">360</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Final payment</span>
+                <span class="result__tile-value" id="result-final">$1,920.31</span>
+              </div>
+            </div>
+
+            <div class="result__housing" id="result-housing" hidden>
+              <span class="result__label">Estimated monthly housing payment</span>
+              <span class="result__housing-amount" id="result-housing-amount"></span>
+              <p class="result__housing-note" id="result-housing-note"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!--
+        The one live region on the page. Visually hidden, because the figures are
+        already on screen for anyone who can see them; written on a 500ms trailing
+        debounce, because a region that fires on every keystroke is unusable.
+      -->
+      <div class="status" id="calc-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </section>
+
+    <!-- ============================ 3. explanation ============================ -->
+
+    <section aria-labelledby="your-result">
+      <h2 id="your-result">What your numbers mean</h2>
+
+      <div class="explain" id="explain">
+        <p>You entered a $320,000 loan at 6% for 30 years. That is a $400,000 home with $80,000 down, which finances 80% of the price.</p>
+        <p>Dividing the annual rate by twelve gives a monthly periodic rate of 0.500%, and 30 years of monthly payments gives 360 payments. Putting those two numbers into the fixed-rate formula gives $1,918.56 a month for principal and interest.</p>
+        <p>In the first month, interest is 0.500% of the $320,000 balance, which is $1,600.00. The rest of the payment, $318.56, reduces what you owe. Most of that first payment is interest, which is normal and is simply a consequence of the balance being at its largest. By the last payment the split has reversed: $9.55 of interest against $1,910.76 of principal.</p>
+        <p>Over 360 payments you would pay $690,683.35 in total, of which $370,683.35 is interest, about 116% of the amount you borrowed. A shorter term would raise the monthly payment and lower that total.</p>
+        <p hidden></p>
+      </div>
+    </section>
+
+    <!-- ============================ 4. real costs ============================ -->
+
+    <section aria-labelledby="additional-costs">
+      <h2 id="additional-costs">Real-world costs: taxes, insurance, and dues</h2>
+
+      <p>
+        None of what follows enters the mortgage formula. Property tax, homeowners
+        insurance, mortgage insurance, and association dues are all costs of owning the
+        home; none of them accrues interest on the loan and none of them reduces the
+        balance. Your lender will usually collect the first two into an
+        <strong>escrow account</strong> and pay them on your behalf, which is why the
+        amount debited from your account each month is larger than the payment the
+        formula produced.
+      </p>
+
+      <p>
+        Enter the figures you have actually been quoted. This calculator will not
+        estimate any of them, because none of them can be estimated honestly from what
+        it knows about you.
+      </p>
+
+      <details class="disclosure">
+        <summary class="disclosure__summary">Add taxes, insurance, and other costs</summary>
+        <div class="disclosure__body">
+          <form id="costs-form" novalidate>
+            <fieldset class="fieldset">
+              <legend class="visually-hidden">Additional monthly housing costs</legend>
+
+              <div class="field">
+                <label class="field__label" for="tax">Property tax ($)</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="tax" name="tax" type="text"
+                         inputmode="decimal" autocomplete="off" aria-describedby="tax-hint">
+                </div>
+                <fieldset class="fieldset">
+                  <legend class="visually-hidden">Property tax period</legend>
+                  <div class="units">
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="tax-unit" id="tax-unit-year" value="year" checked>
+                      <label class="units__label" for="tax-unit-year">A year</label>
+                    </span>
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="tax-unit" id="tax-unit-month" value="month">
+                      <label class="units__label" for="tax-unit-month">A month</label>
+                    </span>
+                  </div>
+                </fieldset>
+                <p class="field__hint" id="tax-hint">
+                  Rates vary enormously between jurisdictions, so there is no sensible
+                  default. Use your assessor&rsquo;s figure or the listing&rsquo;s.
+                </p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="insurance">Homeowners insurance ($)</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="insurance" name="insurance" type="text"
+                         inputmode="decimal" autocomplete="off">
+                </div>
+                <fieldset class="fieldset">
+                  <legend class="visually-hidden">Insurance period</legend>
+                  <div class="units">
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="insurance-unit" id="insurance-unit-year" value="year" checked>
+                      <label class="units__label" for="insurance-unit-year">A year</label>
+                    </span>
+                    <span class="units__option">
+                      <input class="units__input" type="radio" name="insurance-unit" id="insurance-unit-month" value="month">
+                      <label class="units__label" for="insurance-unit-month">A month</label>
+                    </span>
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="pmi">Mortgage insurance ($ a month)</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="pmi" name="pmi" type="text"
+                         inputmode="decimal" autocomplete="off" aria-describedby="pmi-hint">
+                </div>
+                <p class="field__hint" id="pmi-hint">
+                  Often quoted as 0.5% to 1.5% of the loan a year, but the rate depends on
+                  your credit, your loan-to-value, and the insurer&rsquo;s own rate card. Use
+                  the figure your lender quoted rather than a rule of thumb.
+                </p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="hoa">Association dues ($ a month)</label>
+                <div class="field__control field__control--money">
+                  <span class="field__adorn" aria-hidden="true">$</span>
+                  <input class="field__input" id="hoa" name="hoa" type="text"
+                         inputmode="decimal" autocomplete="off">
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </details>
+
+      <p class="note">
+        Anything you enter above appears as a separate <em>estimated monthly housing
+        payment</em> beside the results, never merged into the principal-and-interest
+        figure. The two are different quantities and the page will not blur them.
+      </p>
+    </section>
+
+    <!-- ============================ 5. amortization ============================ -->
+
+    <section aria-labelledby="amortization">
+      <h2 id="amortization">How the balance is paid down</h2>
+
+      <p>
+        The payment never changes, but what it does changes every month. Early on, most
+        of it is interest on a large balance. Late on, the balance is small, the interest
+        it accrues is small, and almost the whole payment goes to principal. The table
+        below is the year-by-year summary of that shift; the full month-by-month
+        schedule is behind it.
+      </p>
+
+      <div class="amort amort__wrap">
+        <table class="table">
+          <caption id="amort-yearly-caption">Interest, principal, and the remaining balance at the end of each year. The final payment is $1,920.31 rather than $1,918.56, because each month&rsquo;s interest is rounded to the cent and the difference lands on the last row.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Interest paid</th>
+              <th scope="col">Principal paid</th>
+              <th scope="col">Balance at year end</th>
+            </tr>
+          </thead>
+          <tbody id="amort-yearly-body">
+            <tr><th scope="row">1</th><td>$19,093</td><td>$3,930</td><td>$316,070</td></tr>
+            <tr><th scope="row">2</th><td>$18,851</td><td>$4,172</td><td>$311,898</td></tr>
+            <tr><th scope="row">3</th><td>$18,593</td><td>$4,429</td><td>$307,469</td></tr>
+            <tr><th scope="row">4</th><td>$18,320</td><td>$4,702</td><td>$302,767</td></tr>
+            <tr><th scope="row">5</th><td>$18,030</td><td>$4,993</td><td>$297,774</td></tr>
+            <tr><th scope="row">6</th><td>$17,722</td><td>$5,300</td><td>$292,474</td></tr>
+            <tr><th scope="row">7</th><td>$17,395</td><td>$5,627</td><td>$286,846</td></tr>
+            <tr><th scope="row">8</th><td>$17,048</td><td>$5,974</td><td>$280,872</td></tr>
+            <tr><th scope="row">9</th><td>$16,680</td><td>$6,343</td><td>$274,529</td></tr>
+            <tr><th scope="row">10</th><td>$16,289</td><td>$6,734</td><td>$267,795</td></tr>
+            <tr><th scope="row">11</th><td>$15,873</td><td>$7,150</td><td>$260,645</td></tr>
+            <tr><th scope="row">12</th><td>$15,432</td><td>$7,590</td><td>$253,055</td></tr>
+            <tr><th scope="row">13</th><td>$14,964</td><td>$8,059</td><td>$244,996</td></tr>
+            <tr><th scope="row">14</th><td>$14,467</td><td>$8,556</td><td>$236,440</td></tr>
+            <tr><th scope="row">15</th><td>$13,939</td><td>$9,083</td><td>$227,357</td></tr>
+            <tr><th scope="row">16</th><td>$13,379</td><td>$9,644</td><td>$217,713</td></tr>
+            <tr><th scope="row">17</th><td>$12,784</td><td>$10,238</td><td>$207,475</td></tr>
+            <tr><th scope="row">18</th><td>$12,153</td><td>$10,870</td><td>$196,605</td></tr>
+            <tr><th scope="row">19</th><td>$11,482</td><td>$11,540</td><td>$185,064</td></tr>
+            <tr><th scope="row">20</th><td>$10,771</td><td>$12,252</td><td>$172,812</td></tr>
+            <tr><th scope="row">21</th><td>$10,015</td><td>$13,008</td><td>$159,804</td></tr>
+            <tr><th scope="row">22</th><td>$9,213</td><td>$13,810</td><td>$145,994</td></tr>
+            <tr><th scope="row">23</th><td>$8,361</td><td>$14,662</td><td>$131,332</td></tr>
+            <tr><th scope="row">24</th><td>$7,457</td><td>$15,566</td><td>$115,766</td></tr>
+            <tr><th scope="row">25</th><td>$6,496</td><td>$16,526</td><td>$99,240</td></tr>
+            <tr><th scope="row">26</th><td>$5,477</td><td>$17,546</td><td>$81,694</td></tr>
+            <tr><th scope="row">27</th><td>$4,395</td><td>$18,628</td><td>$63,066</td></tr>
+            <tr><th scope="row">28</th><td>$3,246</td><td>$19,777</td><td>$43,290</td></tr>
+            <tr><th scope="row">29</th><td>$2,026</td><td>$20,997</td><td>$22,293</td></tr>
+            <tr><th scope="row">30</th><td>$731</td><td>$22,293</td><td>$0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="disclosure" id="amort-monthly">
+        <summary class="disclosure__summary">Show every payment, month by month</summary>
+        <div class="disclosure__body">
+          <div class="table-scroll amort amort--monthly" tabindex="0" role="region"
+               aria-label="Monthly amortization schedule, scrollable">
+            <table class="table">
+              <caption id="amort-monthly-caption">Every payment, in order. Open this section with JavaScript enabled to build the schedule.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Payment</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Interest</th>
+                  <th scope="col">Principal</th>
+                  <th scope="col">Remaining balance</th>
+                </tr>
+              </thead>
+              <tbody id="amort-monthly-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="charts">
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-balance-caption">What you still owe</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-balance-caption" aria-describedby="chart-balance-desc"
+                 focusable="false">
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__area" id="chart-balance-area" d="M0.00,0.00L21.33,2.95L42.67,6.08L64.00,9.40L85.33,12.93L106.67,16.67L128.00,20.64L149.33,24.87L170.67,29.35L192.00,34.10L213.33,39.15L234.67,44.52L256.00,50.21L277.33,56.25L298.67,62.67L320.00,69.48L341.33,76.72L362.67,84.39L384.00,92.55L405.33,101.20L426.67,110.39L448.00,120.15L469.33,130.50L490.67,141.50L512.00,153.18L533.33,165.57L554.67,178.73L576.00,192.70L597.33,207.53L618.67,223.28L640.00,240.00L640.00,240.00L0.00,240.00Z"></path>
+              <path class="chart__line" id="chart-balance-line" d="M0.00,0.00L21.33,2.95L42.67,6.08L64.00,9.40L85.33,12.93L106.67,16.67L128.00,20.64L149.33,24.87L170.67,29.35L192.00,34.10L213.33,39.15L234.67,44.52L256.00,50.21L277.33,56.25L298.67,62.67L320.00,69.48L341.33,76.72L362.67,84.39L384.00,92.55L405.33,101.20L426.67,110.39L448.00,120.15L469.33,130.50L490.67,141.50L512.00,153.18L533.33,165.57L554.67,178.73L576.00,192.70L597.33,207.53L618.67,223.28L640.00,240.00"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-balance-ymax">$320,000</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-balance-xmax">Year 30</span></p>
+          <p class="visually-hidden" id="chart-balance-desc">Remaining balance at the end of year 5, $297,774, year 10, $267,795, year 15, $227,357, year 20, $172,812, year 25, $99,240, and year 30, $0. The curve is convex: the balance falls slowly at first and quickly at the end. The same figures appear in the schedule below.</p>
+        </figure>
+
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-comp-caption">Where each year&rsquo;s payments go</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-comp-caption" aria-describedby="chart-comp-desc"
+                 focusable="false">
+              <defs>
+                <!--
+                  The interest band is hatched as well as tinted. Two areas told apart
+                  by hue alone would be unreadable to a colour-blind reader and would
+                  disappear entirely in forced-colors mode.
+                -->
+                <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <line class="chart__hatch" x1="0" y1="0" x2="0" y2="6"></line>
+                </pattern>
+              </defs>
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__band--interest" id="chart-comp-interest" d="M0.00,40.98L22.07,43.51L44.14,46.19L66.21,49.04L88.28,52.06L110.34,55.27L132.41,58.68L154.48,62.29L176.55,66.14L198.62,70.21L220.69,74.54L242.76,79.14L264.83,84.02L286.90,89.20L308.97,94.70L331.03,100.54L353.10,106.74L375.17,113.32L397.24,120.31L419.31,127.73L441.38,135.61L463.45,143.97L485.52,152.85L507.59,162.28L529.66,172.28L551.72,182.91L573.79,194.19L595.86,206.16L617.93,218.88L640.00,232.38L640.00,240.00L617.93,240.00L595.86,240.00L573.79,240.00L551.72,240.00L529.66,240.00L507.59,240.00L485.52,240.00L463.45,240.00L441.38,240.00L419.31,240.00L397.24,240.00L375.17,240.00L353.10,240.00L331.03,240.00L308.97,240.00L286.90,240.00L264.83,240.00L242.76,240.00L220.69,240.00L198.62,240.00L176.55,240.00L154.48,240.00L132.41,240.00L110.34,240.00L88.28,240.00L66.21,240.00L44.14,240.00L22.07,240.00L0.00,240.00Z"></path>
+              <path id="chart-comp-interest-hatch" fill="url(#hatch)" d="M0.00,40.98L22.07,43.51L44.14,46.19L66.21,49.04L88.28,52.06L110.34,55.27L132.41,58.68L154.48,62.29L176.55,66.14L198.62,70.21L220.69,74.54L242.76,79.14L264.83,84.02L286.90,89.20L308.97,94.70L331.03,100.54L353.10,106.74L375.17,113.32L397.24,120.31L419.31,127.73L441.38,135.61L463.45,143.97L485.52,152.85L507.59,162.28L529.66,172.28L551.72,182.91L573.79,194.19L595.86,206.16L617.93,218.88L640.00,232.38L640.00,240.00L617.93,240.00L595.86,240.00L573.79,240.00L551.72,240.00L529.66,240.00L507.59,240.00L485.52,240.00L463.45,240.00L441.38,240.00L419.31,240.00L397.24,240.00L375.17,240.00L353.10,240.00L331.03,240.00L308.97,240.00L286.90,240.00L264.83,240.00L242.76,240.00L220.69,240.00L198.62,240.00L176.55,240.00L154.48,240.00L132.41,240.00L110.34,240.00L88.28,240.00L66.21,240.00L44.14,240.00L22.07,240.00L0.00,240.00Z"></path>
+              <path class="chart__band--principal" id="chart-comp-principal" d="M0.00,0.02L22.07,0.02L44.14,0.02L66.21,0.02L88.28,0.02L110.34,0.02L132.41,0.02L154.48,0.02L176.55,0.02L198.62,0.02L220.69,0.02L242.76,0.02L264.83,0.02L286.90,0.02L308.97,0.02L331.03,0.02L353.10,0.02L375.17,0.02L397.24,0.02L419.31,0.02L441.38,0.02L463.45,0.02L485.52,0.02L507.59,0.02L529.66,0.02L551.72,0.02L573.79,0.02L595.86,0.02L617.93,0.02L640.00,0.00L640.00,232.38L617.93,218.88L595.86,206.16L573.79,194.19L551.72,182.91L529.66,172.28L507.59,162.28L485.52,152.85L463.45,143.97L441.38,135.61L419.31,127.73L397.24,120.31L375.17,113.32L353.10,106.74L331.03,100.54L308.97,94.70L286.90,89.20L264.83,84.02L242.76,79.14L220.69,74.54L198.62,70.21L176.55,66.14L154.48,62.29L132.41,58.68L110.34,55.27L88.28,52.06L66.21,49.04L44.14,46.19L22.07,43.51L0.00,40.98Z"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-comp-ymax">$23,024 a year</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-comp-xmax">Year 30</span></p>
+          <p class="chart__legend">
+            <span class="chart__key"><span class="chart__swatch chart__swatch--interest" aria-hidden="true"></span> Interest (hatched, below)</span>
+            <span class="chart__key"><span class="chart__swatch chart__swatch--principal" aria-hidden="true"></span> Principal (solid, above)</span>
+          </p>
+          <p class="visually-hidden" id="chart-comp-desc">In year 1, $19,093 of the year&rsquo;s payments is interest and $3,930 is principal. In year 30, $731 is interest and $22,293 is principal. The total stays the same; only the split moves.</p>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================ 6. understanding ============================ -->
+
+    <section aria-labelledby="understanding">
+      <h2 id="understanding">Understanding your mortgage payment</h2>
+
+      <h3 id="periodic-rate">The periodic rate is a convention, not a derivation</h3>
+
+      <p>
+        A 6% mortgage does not charge 6% on the balance once a year. It charges
+        6% &divide; 12 = 0.5% on the outstanding balance every month. Those are not the
+        same thing: 0.5% compounded twelve times is 6.168%, so the effective annual rate
+        on a 6% mortgage is slightly above 6%. Going the other way, the monthly rate that
+        genuinely compounds to 6% a year is 0.4868%, not 0.5%.
+      </p>
+
+      <p>
+        United States fixed-rate mortgages use the simple division. It is a convention
+        the industry settled on, and it is the one this calculator follows. But it is
+        worth knowing that it is a convention, because it is the reason a mortgage&rsquo;s
+        effective rate is always a little higher than its quoted rate.
+      </p>
+
+      <h3 id="front-loading">Why the early payments are mostly interest</h3>
+
+      <p>
+        Interest accrues on the balance outstanding, and the balance is largest on day
+        one. The payment is fixed, so whatever the interest does not consume is what
+        reduces the principal. On the default scenario above, the first payment is
+        $1,600.00 of interest and $318.56 of principal. Because that $318.56 makes the
+        balance a little smaller, the next month&rsquo;s interest is a little smaller,
+        which leaves a little more for principal. The effect compounds in your favour,
+        slowly at first and then very quickly.
+      </p>
+
+      <p>
+        This is also why the balance curve above bends rather than falling in a straight
+        line. The closed form for the balance after <em>k</em> payments is
+        <em>B<sub>k</sub></em> = <em>P</em>(1+<em>i</em>)<sup><em>k</em></sup> &minus;
+        <em>M</em>[((1+<em>i</em>)<sup><em>k</em></sup> &minus; 1) / <em>i</em>], and the
+        exponential terms in it are exactly where the curvature comes from.
+      </p>
+
+      <h3 id="what-changes-what">What each input actually does</h3>
+
+      <ul>
+        <li><strong>Principal.</strong> The payment is directly proportional to it. Double the loan and you double the payment, exactly.</li>
+        <li><strong>Rate.</strong> Non-linear, and steeper than most people expect. The rate affects both the numerator and the denominator of the formula, which is why a single percentage point is worth so much over thirty years.</li>
+        <li><strong>Term.</strong> Lowers the payment and raises the total. Extending a loan spreads the same principal over more payments, but it also leaves a larger balance outstanding for longer, so more interest accrues.</li>
+      </ul>
+    </section>
+
+    <!-- ============================ 7. misconceptions ============================ -->
+
+    <section aria-labelledby="misconceptions">
+      <h2 id="misconceptions">Common misconceptions</h2>
+
+      <h3 id="misconception-apr">&ldquo;The APR and the interest rate are the same thing&rdquo;</h3>
+      <p>
+        They are different measures and they answer different questions. The interest
+        rate is what the balance accrues; the APR folds certain fees and prepaid charges
+        into a single annual figure under a regulator-defined method, so that two offers
+        with different fee structures can be compared. Where fees exist the APR is
+        generally the higher of the two. Enter the note rate here; entering an APR would
+        overstate your payment.
+      </p>
+
+      <h3 id="misconception-annual">&ldquo;A 6% mortgage means I pay 6% of the loan every year&rdquo;</h3>
+      <p>
+        Interest is charged monthly on a balance that falls every month, so the amount
+        you actually pay in interest falls every year. In the default scenario the first
+        year&rsquo;s interest is about $19,093 on a $320,000 loan, and the last
+        year&rsquo;s is about $731.
+      </p>
+
+      <h3 id="misconception-longer">&ldquo;A longer mortgage is cheaper, because the payment is lower&rdquo;</h3>
+      <p>
+        The monthly payment is lower and the total cost is higher. Change the term above
+        from 30 years to 15 and watch both numbers move at once: the payment goes up by
+        roughly 40%, and the total interest falls by more than half. Which of those
+        matters more is a question about your budget, not about the arithmetic. But they
+        are not the same question, and one of them is often not asked.
+      </p>
+
+      <h3 id="misconception-pmi">&ldquo;PMI is just extra interest&rdquo;</h3>
+      <p>
+        It is an insurance premium, and the policy it buys protects the lender against
+        your default, not you. It does not accrue on the balance, it does not appear
+        anywhere in the amortization formula, and it does not reduce what you owe by a
+        cent. For many conventional loans it can be cancelled once enough equity has
+        built up; the statutory automatic termination point is a loan-to-value of 78%,
+        subject to conditions, and it does not apply to FHA mortgage insurance premiums.
+      </p>
+
+      <h3 id="misconception-total">&ldquo;This is what I will actually pay my lender&rdquo;</h3>
+      <p>
+        The headline figure on this page is principal and interest, which is what the
+        formula produces and nothing more. Most lenders also collect property tax and
+        homeowners insurance into escrow, so the amount that leaves your account is
+        larger. That is what the additional-costs section above is for, and it is why its
+        total is labelled &ldquo;estimated monthly housing payment&rdquo; rather than
+        &ldquo;monthly payment&rdquo;.
+      </p>
+
+      <h3 id="misconception-linear">&ldquo;The balance drops by the same amount every month&rdquo;</h3>
+      <p>
+        It drops by more every month. The schedule and the first chart above show it
+        directly: the principal portion of the payment grows month over month for the
+        entire life of the loan, because the interest portion it is competing with keeps
+        shrinking.
+      </p>
+    </section>
+
+    <!-- ============================ 8. limitations ============================ -->
+
+    <section aria-labelledby="limitations">
+      <h2 id="limitations">What this calculator does not include</h2>
+
+      <p>
+        Being explicit about this is more useful than quietly modelling a guess. None of
+        the following is accounted for:
+      </p>
+
+      <ul>
+        <li><strong>Closing costs and cash to close.</strong> Origination fees, title, appraisal, recording, and prepaid items are all paid at closing and none of them changes the payment.</li>
+        <li><strong>Discount points.</strong> Points buy a lower rate, so they do change the payment, but only indirectly, by changing the rate you would enter here, and at a cost paid up front.</li>
+        <li><strong>Prepaid per-diem interest.</strong> A real closing produces a stub period of interest between the funding date and the start of the first full period. This calculator assumes the first payment falls exactly one month after origination.</li>
+        <li><strong>Day-count conventions.</strong> 30/360 and actual/365 give slightly different interest figures. Which one applies is a matter of your loan documents.</li>
+        <li><strong>Adjustable rates.</strong> An ARM&rsquo;s payment is recalculated whenever its rate resets. The formula here describes a single fixed rate for the whole term.</li>
+        <li><strong>Extra payments and recasts.</strong> Prepaying principal changes the schedule rather than adding to it, which is exactly why it deserves proper treatment rather than a bolted-on field.</li>
+        <li><strong>Escrow analysis.</strong> Tax and insurance change over time and your escrow payment is periodically re-evaluated. The figures here are held constant.</li>
+        <li><strong>Balloon structures, interest-only periods, and negative amortization.</strong> None of these is a level-payment fully amortizing loan.</li>
+        <li><strong>Eligibility of any kind.</strong> This page computes arithmetic. It has no view on what you can borrow.</li>
+      </ul>
+    </section>
+
+    <!-- ============================ 9. FAQ ============================ -->
+
+    <section aria-labelledby="faq">
+      <h2 id="faq">Frequently asked questions</h2>
+
+      <h3 id="faq-how">How is a monthly mortgage payment calculated?</h3>
+      <p>
+        The annual interest rate is divided by twelve to get a monthly periodic rate, and
+        the term in years is multiplied by twelve to get the number of payments. Those
+        two numbers and the loan amount go into the level-payment formula at the top of
+        this page, which returns the one figure that stays the same every month for a
+        fixed-rate loan.
+      </p>
+
+      <h3 id="faq-apr">Is the interest rate the same thing as the APR?</h3>
+      <p>
+        No. The interest rate, sometimes called the note rate, is what the balance
+        actually accrues, and it is what this calculator asks for. The APR is a broader
+        cost measure that folds certain fees and prepaid charges into a single annual
+        figure under a regulator-defined method. Where fees exist, the APR is generally
+        higher than the note rate.
+      </p>
+
+      <h3 id="faq-front-loaded">Why is my first mortgage payment almost all interest?</h3>
+      <p>
+        Interest is charged on the balance outstanding, and the balance is at its largest
+        on the first day. The payment is a fixed amount, so whatever the interest does
+        not consume goes to principal. As the balance falls, the interest portion falls
+        with it and the principal portion grows to fill the gap.
+      </p>
+
+      <h3 id="faq-longer">Does a longer mortgage term cost more?</h3>
+      <p>
+        At the same interest rate, yes. A longer term lowers the monthly payment because
+        the principal is spread over more payments, but it leaves a larger balance
+        outstanding for longer, so more total interest accrues. In practice longer-term
+        loans are also often priced at higher rates, which widens the gap further.
+      </p>
+
+      <h3 id="faq-escrow">Are property taxes and insurance included in the monthly payment?</h3>
+      <p>
+        Not in the figure the mortgage formula produces. That figure is principal and
+        interest only. Most lenders collect property tax and homeowners insurance
+        alongside it into an escrow account, so the amount actually debited each month is
+        larger. This calculator keeps the two figures visibly separate and never merges
+        them into a single number.
+      </p>
+
+      <h3 id="faq-pmi">How much is PMI, and why does this calculator not work it out?</h3>
+      <p>
+        There is no universal formula for private mortgage insurance. The premium depends
+        on the loan-to-value band, the credit score, the coverage percentage, the loan
+        purpose, the occupancy, the debt-to-income ratio, and the individual
+        insurer&rsquo;s rate card. A calculator that produced a confident PMI figure from
+        the loan-to-value alone would be manufacturing precision it does not have, so
+        this one asks for the figure your lender quoted instead.
+      </p>
+
+      <h3 id="faq-biweekly">Do biweekly payments really save money?</h3>
+      <p>
+        They save money, but not for the reason usually given. Twenty-six half-payments a
+        year is thirteen monthly payments rather than twelve, so a biweekly schedule
+        quietly makes one extra payment a year. The saving comes from prepaying
+        principal, not from any change in how interest is calculated. Sending
+        one-twelfth extra each month achieves almost exactly the same thing.
+      </p>
+
+      <h3 id="faq-final-payment">Why is the last payment on the schedule a different amount?</h3>
+      <p>
+        Each month&rsquo;s interest is rounded to the cent before it is subtracted from
+        the payment, so the principal reduction is a fraction of a cent away from what the
+        unrounded formula assumed. Over hundreds of payments that difference accumulates,
+        and it has to land somewhere. It lands on the final payment, which is why this
+        schedule shows that payment at its true amount rather than repeating the level
+        figure and claiming the balance reached zero.
+      </p>
+
+      <h3 id="faq-privacy">Is anything I type here sent anywhere?</h3>
+      <p>
+        No. The calculation runs entirely in your browser, there is no server request
+        behind it, and nothing is saved between visits. The page itself uses Google
+        Analytics, which collects information about the visit in the way described in the
+        <a href="/privacy.html">privacy policy</a>, but no figure you enter into the
+        calculator is ever included in that.
+      </p>
+    </section>
+
+    <!-- ============================ 10. assumptions ============================ -->
+
+    <section aria-labelledby="assumptions">
+      <h2 id="assumptions">Assumptions</h2>
+
+      <ul>
+        <li>A fixed rate for the whole term, compounded monthly.</li>
+        <li>The periodic rate is the annual nominal rate divided by twelve, which is the United States convention for fixed-rate mortgages.</li>
+        <li>The number of payments is the term in years multiplied by twelve.</li>
+        <li>The first payment falls exactly one period after origination, with no stub period of prepaid interest.</li>
+        <li>Every payment is made in full and on time; nothing is prepaid.</li>
+        <li>The payment is rounded once, to the cent, and that rounded figure is what the schedule uses. Each month&rsquo;s interest is rounded to the cent before it is subtracted, so every row adds up exactly and the final payment absorbs the accumulated difference.</li>
+        <li>Money is carried internally as whole cents, so the schedule sums to the loan amount exactly rather than approximately.</li>
+        <li>All figures are in United States dollars.</li>
+      </ul>
+
+      <p class="note">
+        This page is an explanation of arithmetic, not financial advice, a rate quote, or
+        an offer of credit. Curiosity Mapped does not track, publish, or offer mortgage
+        rates. Use the figures your lender gives you.
+      </p>
+    </section>
+
+    <!-- ============================ 11. related ============================ -->
+
+    <section aria-labelledby="related">
+      <h2 id="related">Related calculators</h2>
+
+      <ul class="cards">
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Loan Calculator</span>
+          <span class="card__text">The same amortization engine without the housing-specific parts, for car loans, personal loans, and anything else with a level payment.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Amortization Schedule</span>
+          <span class="card__text">The schedule on its own, for a loan already in progress, starting from a payoff balance and a payment rather than from a purchase.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Compound Interest</span>
+          <span class="card__text">The other direction of the same arithmetic: what a balance grows to rather than what it takes to retire one.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Refinance Break-Even</span>
+          <span class="card__text">How many months of a lower payment it takes to recover what the refinance cost to close.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+      </ul>
+
+      <p class="visually-hidden">
+        These calculators are not yet published and are shown as plain text rather than
+        as links, because there is nowhere for a link to go.
+      </p>
+
+      <p>
+        Every tool on this site is listed at <a href="/tools/">Tools</a>.
+      </p>
+    </section>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
+    <nav class="footer__legal" aria-label="Footer">
+      <p class="visually-hidden">Only the Privacy page is published so far; the others are coming soon.</p>
+      <span>About</span>
+      <span>Contact</span>
+      <a href="/privacy.html">Privacy</a>
+      <span>Accessibility</span>
+    </nav>
+    <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # curiosity-mapped-website
 
-The Curiosity Mapped placeholder site — a single static page, hand-written, with no
-build step, no dependencies, and no framework. What is in `docs/` is what is served.
+The Curiosity Mapped site — hand-written static pages with no build step, no
+dependencies, and no framework. What is in `docs/` is what is served.
 
 Live at **https://curiositymapped.com/**
 
@@ -13,14 +13,19 @@ so `docs/` is the served root: a file at `docs/privacy.html` is served at
 furniture that never reaches the web.
 
 ```
-docs/index.html          the page
+docs/index.html          the home page
 docs/privacy.html        privacy policy; the template for any indexable page
 docs/404.html            not-found page (GitHub Pages serves it for any missing path)
+docs/tools/index.html    the Tools hub, served at /tools/
+docs/tools/mortgage-calculator.html
+                         the first published tool
 docs/css/tokens.css      colour / type / space tokens, and the light + dark + high-contrast ramps
 docs/css/base.css        element defaults
 docs/css/components.css  the blocks on the page
+docs/css/calculator.css  page-scoped; loaded ONLY by the calculator
 docs/css/utilities.css   last layer, so it wins
-docs/js/main.js          theme toggle and footer year; the page works without it
+docs/js/main.js          theme toggle and footer year; every page works without it
+docs/js/mortgage.js      the calculator's arithmetic and behaviour; loaded only by that page
 docs/assets/             og image and raster icons
 docs/favicon.ico         the bare /favicon.ico browsers ask for unprompted
 docs/site.webmanifest    name, colours, and the 192/512 icons
@@ -28,15 +33,20 @@ docs/robots.txt          and docs/sitemap.xml
 docs/CNAME               custom domain, read by GitHub Pages
 docs/.nojekyll           serve files as-is instead of running them through Jekyll
 
+tests/mortgage.test.mjs  the calculator's unit tests; repository furniture, never served
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 README.md                this file
 ```
 
+`docs/tools/` is the first subdirectory in the published tree. Every path in the site
+is root-absolute, so its depth changes nothing.
+
 `CNAME` and `.nojekyll` are read from the publishing source, not the repository root,
 which is why they sit inside `docs/` rather than beside this file.
 
-Cascade layer order is declared in `index.html`, not in the stylesheets, so it does
-not depend on which sheet loads first.
+Cascade layer order is declared in each page's head, not in the stylesheets, so it
+does not depend on which sheet loads first. `calculator.css` declares into the same
+`components` layer as `components.css`, which is why it can be linked in any position.
 
 ## Running it locally
 
@@ -51,10 +61,26 @@ Serve `docs/`, not the repository root — pointing a server at the root gets yo
 directory listing, and every root-absolute path in the pages resolves one level too
 high.
 
-All three pages use root-absolute asset paths (`/css/...`), so all three need a server
+Every page uses root-absolute asset paths (`/css/...`), so every page needs a server
 and none of them render over `file://`. `404.html` is the reason the convention exists:
 Pages serves that one file for a missing path at any depth, and a relative path would
 resolve against the missing directory and 404 in turn.
+
+## Tests
+
+The mortgage calculator's arithmetic has unit tests. There is nothing to install: they
+run on Node's own test runner against the file the browser loads, not against a copy of
+it.
+
+```sh
+node --test "tests/**/*.test.mjs"
+```
+
+`docs/js/mortgage.js` ends with a `typeof module` guard whose only purpose is to make
+its pure functions reachable from Node. In a browser that block is skipped and the file
+stays a plain `<script defer>`. Run the tests before changing anything in the top half
+of that file — the property-style suite asserts that the schedule sums to the loan
+amount exactly, in integer cents, across a matrix of rates, terms, and principals.
 
 ## Deploying
 
@@ -103,13 +129,21 @@ A few things hold absolute URLs and need updating together, since nothing genera
 them:
 
 - `docs/index.html` — `link[rel=canonical]`, `og:url`, `og:image`, and the `@id`/`url`
-  fields in the JSON-LD block.
+  fields in the JSON-LD block. It defines the `#website` and `#org` nodes that every
+  other page's JSON-LD references by `@id`; reference them, never redefine them.
 - `docs/privacy.html` — its own `canonical` and `og:url`. Copy its head as the starting
-  point for a new indexable page; `404.html` is the `noindex` variant, and only
-  `index.html` carries the JSON-LD graph.
-- `docs/index.html` and `docs/privacy.html` share the `.footer__legal` nav. Publishing one of
-  its remaining spans means turning it into an `<a>` in both files and rewording the
-  visually-hidden line above them, which explains why the rest are inert.
+  point for a new indexable page; `404.html` is the `noindex` variant.
+- `docs/tools/index.html` and `docs/tools/mortgage-calculator.html` — their own
+  `canonical`, `og:url`, and the absolute URLs throughout their JSON-LD graphs,
+  including every `BreadcrumbList` item.
+- Every page with the primary nav shares it: `index.html`, `tools/index.html`, and the
+  calculator. Publishing one of its remaining spans means turning it into an
+  `<a class="nav__item nav__item--link">` in all three and rewording the
+  visually-hidden line above them, which explains why the rest are inert. The same
+  applies to the `.footer__legal` nav, which every page carries.
+- The Tools hub lists planned calculators as inert `.card__soon` tiles. Publishing one
+  means turning its `<li class="card">` into `<li><a class="card card--link">` and
+  rewording the visually-hidden line below the list.
 - `docs/sitemap.xml` — add each new page, and bump `lastmod`.
 - `docs/robots.txt` — only the `Sitemap:` line is absolute.
 - The Google Analytics tag is per-file, since nothing templates the head. Run
