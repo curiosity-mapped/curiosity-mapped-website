@@ -19,10 +19,10 @@
      can never depend on the order rules happen to appear in. -->
 <style>@layer tokens, base, components, utilities;</style>
 
-<title>Curiosity Mapped</title>
-<meta name="description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
+<title>Tools | Curiosity Mapped</title>
+<meta name="description" content="Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.">
 
-<link rel="canonical" href="https://curiositymapped.com/">
+<link rel="canonical" href="https://curiositymapped.com/tools/">
 
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
@@ -30,9 +30,9 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Curiosity Mapped">
-<meta property="og:title" content="Curiosity Mapped">
-<meta property="og:description" content="Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser. Launching soon.">
-<meta property="og:url" content="https://curiositymapped.com/">
+<meta property="og:title" content="Tools | Curiosity Mapped">
+<meta property="og:description" content="Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.">
+<meta property="og:url" content="https://curiositymapped.com/tools/">
 <meta property="og:locale" content="en_US">
 <!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
 <meta property="og:image" content="https://curiositymapped.com/assets/og.png">
@@ -40,24 +40,17 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Curiosity Mapped: follow the curiosity, map what you find, see where it leads.">
-<!-- Safe now that a 1200x630 image exists; a large-image card without one renders broken. -->
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
-
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
-<!-- iOS ignores rel=icon entirely and masks this into its own squircle. -->
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 
 <script>
-  /* Runs before first paint, so the stored choice never flashes the wrong theme.
-     localStorage *throws* in a private window or with site data blocked (it does
-     not return null), and an uncaught throw here would leave the page unstyled.
-     Placed above the stylesheet links: a parser-blocking script that follows a
-     <link rel="stylesheet"> waits on that sheet to load before it runs. */
+  /* Same pre-paint theme boot as the home page; see index.html for why it is inline. */
   try {
     var t = localStorage.getItem('cm-theme');
     if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
@@ -65,14 +58,11 @@
   document.documentElement.classList.add('js');
 </script>
 
-<!-- Listed in layer order for readability only. The @layer statement above already
-     fixes the cascade, so these four sheets may land in any order. -->
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/components.css">
 <link rel="stylesheet" href="/css/utilities.css">
 
-<!-- Behaviour only; the pre-paint theme boot above must stay inline. -->
 <script src="/js/main.js" defer></script>
 
 <script type="application/ld+json">
@@ -80,21 +70,23 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "WebSite",
-      "@id": "https://curiositymapped.com/#website",
-      "url": "https://curiositymapped.com/",
-      "name": "Curiosity Mapped",
-      "description": "Curiosity Mapped explores science, technology, and complex systems: tools, writing, and reference, all running in your browser.",
+      "@type": "CollectionPage",
+      "@id": "https://curiositymapped.com/tools/#page",
+      "url": "https://curiositymapped.com/tools/",
+      "name": "Tools",
+      "description": "Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.",
+      "isPartOf": { "@id": "https://curiositymapped.com/#website" },
       "publisher": { "@id": "https://curiositymapped.com/#org" },
+      "breadcrumb": { "@id": "https://curiositymapped.com/tools/#breadcrumb" },
       "inLanguage": "en"
     },
     {
-      "@type": "Organization",
-      "@id": "https://curiositymapped.com/#org",
-      "name": "Curiosity Mapped",
-      "url": "https://curiositymapped.com/",
-      "slogan": "Mapping knowledge. Empowering curiosity. Inspiring discovery.",
-      "logo": "https://curiositymapped.com/assets/icon-512.png"
+      "@type": "BreadcrumbList",
+      "@id": "https://curiositymapped.com/tools/#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://curiositymapped.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Tools" }
+      ]
     }
   ]
 }
@@ -105,16 +97,16 @@
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="header">
-  <span class="wordmark">
+  <a class="wordmark" href="/">
     <span class="wordmark__line">Curiosity</span>
     <span class="wordmark__line wordmark__line--wide">Mapped</span>
-  </span>
+  </a>
 
   <nav class="nav" aria-label="Primary">
     <p class="visually-hidden">Only Tools is published so far; the other sections are coming soon.</p>
     <ul class="nav__list">
       <li><span class="nav__item">Journal</span></li>
-      <li><a class="nav__item nav__item--link" href="/tools/">Tools</a></li>
+      <li><a class="nav__item nav__item--link" href="/tools/" aria-current="page">Tools</a></li>
       <li><span class="nav__item">Reference</span></li>
       <li><span class="nav__item">About</span></li>
     </ul>
@@ -131,50 +123,76 @@
 </header>
 
 <main id="main" tabindex="-1">
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__sweep" aria-hidden="true"></div>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb__list">
+      <li class="breadcrumb__item"><a href="/">Home</a></li>
+      <li class="breadcrumb__item"><span aria-current="page">Tools</span></li>
+    </ol>
+  </nav>
 
-    <p class="hero__kicker rise" style="--i:0">Survey in progress</p>
+  <article class="prose" aria-labelledby="tools-title">
+    <h1 class="prose__title rise" id="tools-title" style="--i:0">Tools</h1>
 
-    <h1 class="hero__title rise" id="hero-title" style="--i:1">Curiosity Mapped</h1>
-
-    <p class="motto rise" style="--i:2">
-      Follow the curiosity.<br>
-      Map what you find.<br>
-      See where it leads.
+    <p class="prose__lede rise" style="--i:1">
+      Calculators and converters that run entirely in your browser. There is no
+      server to send anything to.
     </p>
 
-    <p class="hero__note rise" style="--i:3">
-      The map is still being drawn. Tools has its first square on it, a
-      <a href="/tools/mortgage-calculator.html">mortgage calculator</a> that shows its
-      working. Journal and Reference are still blank, which is the interesting part.
+    <p>
+      Every tool here is built the same way. It shows the arithmetic it used rather
+      than only the answer, it says plainly what it does not account for, and it
+      never invents a number it cannot actually derive from what you typed. Where a
+      figure depends on something the page cannot know, such as your lender&rsquo;s
+      rate card or your county&rsquo;s assessor, the tool asks for it instead of
+      guessing on your behalf.
     </p>
-  </section>
 
-  <section class="ahead" aria-labelledby="ahead-title">
-    <div class="ahead__inner">
-      <h2 class="ahead__title" id="ahead-title">What&rsquo;s ahead</h2>
-      <ul class="cards">
-        <li class="card card--journal rise" style="--i:4">
-          <span class="card__label">Journal</span>
-          <p class="card__text">Writing on science, technology, and complex systems, published when finished rather than on a cadence.</p>
-          <span class="card__soon">Coming soon</span>
-        </li>
-        <li class="rise" style="--i:5">
-          <a class="card card--tools card--link" href="/tools/">
-            <span class="card__label">Tools</span>
-            <span class="card__text">Calculators and converters that run entirely in your browser. There is no server to send anything to.</span>
-            <span class="card__go">Open Tools &rarr;</span>
-          </a>
-        </li>
-        <li class="card card--reference rise" style="--i:6">
-          <span class="card__label">Reference</span>
-          <p class="card__text">Knowledge that sticks, organised so it can be found again: straight answers on pages that load instantly.</p>
-          <span class="card__soon">Coming soon</span>
-        </li>
-      </ul>
-    </div>
-  </section>
+    <h2 id="published">Published</h2>
+
+    <ul class="cards">
+      <li>
+        <a class="card card--tools card--link" href="/tools/mortgage-calculator.html">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Mortgage Calculator</span>
+          <span class="card__text">The monthly payment, the formula that produced it, and the full amortization schedule. Taxes, insurance, mortgage insurance, and association dues are kept visibly separate from principal and interest.</span>
+          <span class="card__go">Open the calculator &rarr;</span>
+        </a>
+      </li>
+    </ul>
+
+    <h2 id="planned">Planned</h2>
+
+    <p>
+      These are the next squares on this part of the map. They are listed because
+      the mortgage calculator already borders on them, not as a roadmap with dates.
+    </p>
+
+    <ul class="cards">
+      <li class="card card--tools">
+        <span class="card__label">Calculator</span>
+        <span class="card__title">Loan Calculator</span>
+        <span class="card__text">The same amortization engine without the housing-specific parts, for car loans, personal loans, and anything else with a level payment.</span>
+        <span class="card__soon">Coming soon</span>
+      </li>
+      <li class="card card--tools">
+        <span class="card__label">Calculator</span>
+        <span class="card__title">Compound Interest</span>
+        <span class="card__text">The other direction of the same arithmetic: what a balance grows to rather than what it takes to retire one.</span>
+        <span class="card__soon">Coming soon</span>
+      </li>
+      <li class="card card--tools">
+        <span class="card__label">Calculator</span>
+        <span class="card__title">Refinance Break-Even</span>
+        <span class="card__text">How many months of a lower payment it takes to recover what the refinance cost to close.</span>
+        <span class="card__soon">Coming soon</span>
+      </li>
+    </ul>
+
+    <p class="visually-hidden">
+      The planned tools above are not yet published and are shown as plain text
+      rather than as links, because there is nowhere for a link to go.
+    </p>
+  </article>
 </main>
 
 <footer class="footer">

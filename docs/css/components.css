@@ -1,4 +1,14 @@
 @layer components {
+  /*
+   * `hidden` is toggled as a property all over the calculator, and the UA rule
+   * behind it is a bare `[hidden] { display: none }` -- which any component rule
+   * that sets `display: flex` silently beats on specificity. That failure is
+   * invisible in review and loud on the page: a hidden error message renders as a
+   * stray "!" glyph. Stated once, with the weight to hold, rather than as an
+   * `[hidden]` variant bolted onto every component that might one day be flex.
+   */
+  [hidden] { display: none !important; }
+
   .skip-link {
     position: absolute;
     inset-inline-start: var(--s-4);
@@ -71,6 +81,21 @@
     cursor: default;
     letter-spacing: 0.01em;
   }
+  /*
+   * The modifier a span becomes when its destination finally exists. Undecorated
+   * for the same reason as .footer__legal: a row of four items where one is
+   * underlined reads as a mistake rather than as a distinction, and the colour
+   * shift plus the global focus ring already carry the affordance.
+   */
+  .nav__item--link {
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .nav__item--link:hover { color: var(--accent); }
+  /* Present for orientation on its own section, but it should not invite a click. */
+  .nav__item--link[aria-current='page'] { color: var(--text-dim); }
 
   /* ---------- hero ---------- */
 
@@ -159,6 +184,19 @@
     max-width: var(--measure);
     color: var(--text-dim);
   }
+  /*
+   * The hero note is outside every prose scope, so its one running link has to
+   * state its own treatment. Underlined, unlike the nav and footer links: this
+   * one sits inside a sentence, where colour alone would not mark it as a link.
+   */
+  .hero__note a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-thickness: from-font;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .hero__note a:hover { color: var(--text); text-decoration-thickness: 2px; }
 
   /* ---------- what's ahead ---------- */
 
@@ -207,7 +245,52 @@
   .card--tools { --tint: var(--tools); }
   .card--reference { --tint: var(--reference); }
 
-  .card__text { color: var(--text-dim); font-size: var(--t--1); }
+  /*
+   * A <span> in a link card and a <p> on the home page, so the display value is
+   * stated rather than inherited from the element.
+   */
+  .card__text { display: block; color: var(--text-dim); font-size: var(--t--1); }
+
+  /* The card's own heading. Not an h3: the cards are a list of destinations, and
+     inserting a heading level per tile would fragment the page outline. */
+  .card__title {
+    display: block;
+    margin-block-end: var(--s-2);
+    font-family: var(--font-display);
+    font-size: var(--t-1);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+    letter-spacing: var(--track-tight);
+    color: var(--text);
+  }
+
+  /*
+   * A card that is itself the link. The whole tile is the target rather than a
+   * "read more" inside it, so there is one focus stop per card and a 44px-plus
+   * hit area on touch without a single extra element.
+   */
+  .card--link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+  .card--link:hover { border-color: var(--edge); transform: translate3d(0, -2px, 0); }
+  .card--link:hover .card__go { color: var(--accent); }
+  /* Cheaper than animating a shadow, and it is the only motion on the tile. */
+  @media (prefers-reduced-motion: reduce) {
+    .card--link:hover { transform: none; }
+  }
+
+  /* The affordance the pill badge carries on an unpublished card. */
+  .card__go {
+    display: inline-block;
+    margin-block-start: var(--s-4);
+    font-size: var(--t--1);
+    font-weight: 600;
+    color: var(--text);
+    transition: color var(--dur-fast) var(--ease);
+  }
 
   .card__soon {
     display: inline-block;
@@ -381,6 +464,391 @@
     font-size: var(--t--1);
   }
 
+  /* ---------- long-form prose (tool and article pages) ---------- */
+
+  /*
+   * .legal above re-establishes everything base.css zeroes, but it does it for a
+   * document that is nothing BUT running text. A tool page interleaves prose with
+   * forms, tables, and figures, so the same defaults are restated here with
+   * `:not([class])` guards: an element carrying a class is a component and styles
+   * itself. Written as a separate scope rather than as an alias of .legal exactly
+   * because of that difference -- privacy.html has no classed paragraphs in its
+   * flow and must keep the margins it has today, so it must not inherit a guard.
+   */
+  .prose {
+    width: 100%;
+    max-width: var(--width-page);
+    margin-inline: auto;
+    padding: var(--s-7) var(--gutter) var(--s-8);
+  }
+
+  /*
+   * The column is as wide as the page; running text is not. Each text block is
+   * held to the reading measure and aligned to the start of that wider column,
+   * which leaves tables, the calculator, and the charts free to use the full
+   * width without negative margins or a vw unit that would count the scrollbar
+   * and reintroduce horizontal scroll at 320px.
+   *
+   * Start-aligned rather than centred, and that is not a style preference: --measure
+   * is 60ch, and `ch` is font-relative, so the same declaration yields a
+   * noticeably wider box on a heading set at --t-3 than on body text. Centring
+   * boxes of different widths puts their left edges in different places and the
+   * column visibly wanders down the page. One shared start edge cannot.
+   */
+  .prose :is(h1, h2, h3, h4, hr),
+  .prose p:not([class]),
+  .prose ul:not([class]),
+  .prose ol:not([class]) {
+    max-width: var(--measure);
+  }
+
+  .prose__title { font-size: var(--t-3); }
+
+  /* Set like .hero__kicker, minus the accent and its glow: a stamp, not a signal. */
+  .prose__meta {
+    max-width: var(--measure);
+    margin-block-start: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t--1);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* The opening paragraphs, set a step larger so the article has a lede. */
+  .prose__lede {
+    max-width: var(--measure);
+    margin-block: var(--s-5) var(--s-4);
+    font-size: var(--t-1);
+    line-height: var(--leading-snug);
+    color: var(--text-dim);
+  }
+
+  .prose h2 { font-size: var(--t-1); margin-block: var(--s-7) var(--s-3); }
+
+  /* base.css styles h1 and h2 only, so h3 and h4 state family and weight here. */
+  .prose h3 {
+    margin-block: var(--s-5) var(--s-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--t-0);
+    line-height: var(--leading-snug);
+    color: var(--text);
+  }
+  /*
+   * h4 is the first fourth-level heading on the site. It is deliberately NOT
+   * larger than body text -- at this depth the job is to label a block, and size
+   * is already spent on h2 and h3. Weight and tracking do the work instead.
+   */
+  .prose h4 {
+    margin-block: var(--s-4) var(--s-2);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: var(--t--1);
+    letter-spacing: var(--track-wide);
+    text-transform: uppercase;
+    line-height: var(--leading-snug);
+    color: var(--text-dim);
+  }
+
+  /* .header is sticky, so an anchor jump would park the heading behind it. */
+  .prose :is(h1, h2, h3, h4) { scroll-margin-block-start: calc(var(--header-h) + var(--s-4)); }
+
+  .prose p:not([class]) { margin-block-end: var(--s-4); }
+
+  .prose ul:not([class]) { list-style: disc; padding-inline-start: var(--s-5); margin-block-end: var(--s-4); }
+  .prose ol:not([class]) { list-style: decimal; padding-inline-start: var(--s-5); margin-block-end: var(--s-4); }
+  .prose :is(ul, ol):not([class]) > li { margin-block-end: var(--s-2); }
+  .prose li::marker { color: var(--text-dim); }
+
+  .prose a:not([class]) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-thickness: from-font;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .prose a:not([class]):hover { color: var(--text); text-decoration-thickness: 2px; }
+
+  .prose strong { font-weight: 600; }
+
+  .prose hr { border: 0; border-block-start: 1px solid var(--rule); margin-block: var(--s-6); }
+
+  /* An aside for a caveat that would break the argument if it were a paragraph. */
+  .note {
+    max-width: var(--measure);
+    margin-block: var(--s-4);
+    padding: var(--s-3) var(--s-4);
+    border-inline-start: 3px solid var(--rule);
+    background: var(--surface-sunk);
+    border-start-end-radius: var(--radius-sm);
+    border-end-end-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-size: var(--t--1);
+  }
+
+  /* ---------- breadcrumb ---------- */
+
+  /*
+   * Ordered, because the order is the meaning. The separator is a ::after on the
+   * item rather than a character in the markup, so a screen reader reads
+   * "Home, Tools, Mortgage Calculator" without three stray slashes.
+   */
+  .breadcrumb {
+    width: 100%;
+    max-width: var(--width-page);
+    margin-inline: auto;
+    padding: var(--s-5) var(--gutter) 0;
+    font-size: var(--t--1);
+    color: var(--text-dim);
+  }
+  .breadcrumb__list { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .breadcrumb__item { display: flex; gap: var(--s-2); align-items: baseline; }
+  .breadcrumb__item + .breadcrumb__item::before { content: '/'; color: var(--edge); }
+  .breadcrumb a {
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  /* The current page is the last crumb: present for orientation, not a target. */
+  .breadcrumb [aria-current='page'] { color: var(--text); }
+
+  /* ---------- form fields ---------- */
+
+  /*
+   * The first form controls on the site. Geometry is borrowed wholesale from
+   * .toggle and .backlink -- 44px minimum target, 1px border, `font: inherit` --
+   * so a text input and a pill button read as the same family of object.
+   */
+  .fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0; /* fieldset defaults to min-content, which breaks grid children. */
+  }
+  .fieldset__legend {
+    padding: 0;
+    margin-block-end: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t--1);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .field { margin-block-end: var(--s-4); }
+  .field__label { display: block; margin-block-end: var(--s-1); font-size: var(--t--1); font-weight: 600; }
+
+  /*
+   * The currency/percent mark is decoration: the unit is already in the label
+   * text, because a screen reader skips an adornment sitting outside the field.
+   */
+  .field__control { position: relative; display: flex; align-items: center; }
+  .field__adorn {
+    position: absolute;
+    inset-inline-start: var(--s-3);
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  .field__adorn--end { inset-inline-start: auto; inset-inline-end: var(--s-3); }
+
+  .field__input {
+    inline-size: 100%;
+    min-height: 44px;
+    padding: var(--s-2) var(--s-3);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    /*
+     * 16px floor, not a token: below 16px iOS Safari zooms the viewport when the
+     * field takes focus, and --t-0 clamps down to exactly 1rem so this only ever
+     * pins the bottom of the range.
+     */
+    font-size: max(1rem, var(--t-0));
+    font-variant-numeric: tabular-nums;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .field__input:hover { border-color: var(--text-dim); }
+  /*
+   * A derived field the reader is not currently driving. Sunk rather than
+   * disabled: read-only keeps it focusable and readable by a screen reader,
+   * where `disabled` would remove it from the tab order and hide the value that
+   * is the whole point of showing it.
+   */
+  .field__input:read-only { background: var(--surface-sunk); color: var(--text-dim); }
+  .field__control--money .field__input { padding-inline-start: var(--s-6); }
+  .field__control--pct .field__input { padding-inline-end: var(--s-6); }
+
+  select.field__input { padding-inline-end: var(--s-6); cursor: pointer; }
+
+  .field__hint { margin-block-start: var(--s-1); font-size: var(--t--1); color: var(--text-dim); }
+
+  /*
+   * Never colour alone: the message carries a "!" glyph and a solid inline rule,
+   * both of which survive forced-colors mode and colour-blind readers.
+   */
+  .field__error {
+    display: flex;
+    gap: var(--s-2);
+    margin-block-start: var(--s-2);
+    padding-inline-start: var(--s-3);
+    border-inline-start: 3px solid var(--danger);
+    font-size: var(--t--1);
+    color: var(--text);
+  }
+  .field__error::before { content: '!'; font-weight: 700; color: var(--danger); }
+  .field__input[aria-invalid='true'] { border-color: var(--danger); border-inline-start-width: 3px; }
+
+  /* A warning is not an error: the input is usable, the number is just unusual. */
+  .field__warn {
+    display: flex;
+    gap: var(--s-2);
+    margin-block-start: var(--s-2);
+    font-size: var(--t--1);
+    color: var(--text-dim);
+  }
+  .field__warn::before { content: '\2020'; color: var(--text-dim); }
+
+  /*
+   * Unit choice is two radios, not a select: two options and one tap, and a
+   * radio group announces "1 of 2" where a collapsed select announces nothing
+   * until it is opened.
+   */
+  .units { display: flex; gap: var(--s-1); margin-block-start: var(--s-2); }
+  .units__option { position: relative; display: flex; }
+  .units__input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .units__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 44px, matching .toggle and .backlink. A smaller pill looks tidier and is
+       the wrong call: this is a control people tap, and it sits next to a text
+       field they are already aiming at. */
+    min-height: 44px;
+    min-width: 44px;
+    padding: var(--s-1) var(--s-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: var(--t--1);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .units__input:checked + .units__label { border-color: var(--accent); color: var(--text); font-weight: 600; }
+  /* The input is transparent, so the ring has to be drawn on its visible label. */
+  .units__input:focus-visible + .units__label { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- tables ---------- */
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--t--1);
+    font-variant-numeric: tabular-nums;
+  }
+  .table caption {
+    caption-side: bottom;
+    margin-block-start: var(--s-3);
+    text-align: start;
+    color: var(--text-dim);
+    font-size: var(--t--1);
+  }
+  /* Padding tightens toward the narrow end so that four money columns still fit
+     inside a 320px viewport without a scrollbar. */
+  .table th, .table td {
+    padding: var(--s-2) clamp(var(--s-1), 1.5vw, var(--s-3));
+    border-block-end: 1px solid var(--rule);
+    text-align: start;
+  }
+  /*
+   * Header cells wrap. Holding them on one line is what pushes a four-column
+   * currency table past a 320px viewport -- the numbers fit, "Balance at year
+   * end" does not -- and a header that wraps costs nothing.
+   */
+  .table thead th {
+    border-block-end: 1px solid var(--edge);
+    font-weight: 600;
+  }
+  .table tbody th { font-weight: 400; color: var(--text-dim); white-space: nowrap; }
+  /* Numeric columns are end-aligned, so their headers have to be too -- a header
+     sitting over the far side of its own column reads as belonging to the one
+     next to it. The first column is the row header and stays at the start. */
+  .table thead th:not(:first-child) { text-align: end; }
+  /* Sticky only where there is a scrollport for it to stick to, and painted with
+     that scrollport's own background rather than the page's. */
+  .table-scroll .table thead th {
+    position: sticky;
+    inset-block-start: 0;
+    background: var(--surface);
+  }
+  .table td { text-align: end; }
+  .table tbody tr:last-child :is(th, td) { border-block-end: 0; }
+
+  /*
+   * tabindex="0" is not optional: a region that scrolls but cannot take focus
+   * cannot be scrolled from the keyboard at all, which is a WCAG 2.1.1 failure
+   * and the single most commonly missed thing about wide tables.
+   */
+  .table-scroll {
+    max-block-size: 28rem;
+    overflow: auto;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+  .table-scroll .table { font-size: var(--t--1); }
+  .table-scroll .table :is(th, td):first-child { padding-inline-start: var(--s-4); }
+  .table-scroll .table :is(th, td):last-child { padding-inline-end: var(--s-4); }
+
+  /* ---------- disclosure ---------- */
+
+  /*
+   * Native <details>. Not reimplemented with aria-expanded buttons, which would
+   * cost the keyboard behaviour, the AT semantics, and browser find-in-page
+   * expanding a closed section to reveal a match.
+   */
+  .disclosure {
+    margin-block: var(--s-5);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+  .disclosure__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 44px;
+    padding: var(--s-3) var(--s-4);
+    color: var(--text);
+    font-size: var(--t--1);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none; /* Firefox marker */
+  }
+  .disclosure__summary::-webkit-details-marker { display: none; }
+  /* Drawn rather than typed, so it rotates and never falls back to a tofu box. */
+  .disclosure__summary::before {
+    content: '';
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    border-inline-end: 2px solid var(--text-dim);
+    border-block-end: 2px solid var(--text-dim);
+    transform: rotate(-45deg);
+    transition: transform var(--dur-fast) var(--ease);
+  }
+  .disclosure[open] > .disclosure__summary::before { transform: rotate(45deg); }
+  .disclosure__body { padding: 0 var(--s-4) var(--s-4); }
+
   /* ---------- one-shot entrance ---------- */
 
   .rise {
@@ -429,5 +897,19 @@
     .card { border-color: #ccc; box-shadow: none; }
     /* Reading measure is a screen concern; on paper the margins already set it. */
     .legal { max-width: none; }
+    .prose { max-width: none; }
+    /*
+     * A closed <details> prints as its summary alone, and a printed page that
+     * silently omits the schedule is worse than a long one. Two mechanisms hide
+     * that content depending on the engine -- display:none on the children in
+     * older ones, content-visibility on ::details-content in current Chromium --
+     * so both are unwound. An unsupported pseudo-element rule is simply ignored.
+     */
+    .disclosure > *:not(.disclosure__summary) { display: block !important; }
+    .disclosure::details-content { content-visibility: visible !important; }
+    /* A scrollport has no meaning on paper; the rows have to be allowed to flow. */
+    .table-scroll { max-block-size: none; overflow: visible; border: 0; }
+    .table thead th { position: static; }
+    .breadcrumb, .field__hint { display: none !important; }
   }
 }

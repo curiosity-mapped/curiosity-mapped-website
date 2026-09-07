@@ -70,6 +70,16 @@
     --reference: var(--orange-700);
 
     /*
+     * The palette had no error role, because nothing on the site could fail until
+     * a form existed. Pointed at the existing orange ramp rather than at a new
+     * red: red would be a fifth hue on a four-hue site, and the orange already
+     * holds the measured 4.5:1 floor. Nothing signals error by this colour alone
+     * -- see .field__error, which also carries a rule and a glyph.
+     */
+    --danger: var(--orange-700);
+    --on-danger: var(--paper-050);
+
+    /*
      * `transparent` in daylight, and that is the whole trick: emissive rules
      * carry `drop-shadow(0 0 6px var(--glow))` unconditionally, so it becomes a
      * no-op here. No rule anywhere below branches on theme.
@@ -104,6 +114,9 @@
       --tools: var(--blue-300);
       --reference: var(--orange-400);
 
+      --danger: var(--orange-300);
+      --on-danger: var(--ink-950);
+
       --glow: color-mix(in srgb, var(--green-300) 35%, transparent);
 
       --grid-line: var(--ink-100);
@@ -135,6 +148,9 @@
     --tools: var(--blue-300);
     --reference: var(--orange-400);
 
+    --danger: var(--orange-300);
+    --on-danger: var(--ink-950);
+
     --glow: color-mix(in srgb, var(--green-300) 35%, transparent);
 
     --grid-line: var(--ink-100);
@@ -157,6 +173,8 @@
       --journal: var(--green-900);
       --tools: #123a63;
       --reference: #7a3a06;
+      --danger: #7a3a06;
+      --on-danger: var(--paper-050);
       --glow: transparent;
       --grid-opacity: 0;
     }
@@ -171,6 +189,8 @@
       --journal: var(--green-200);
       --tools: #a8ccf4;
       --reference: var(--orange-300);
+      --danger: var(--orange-300);
+      --on-danger: var(--ink-950);
       --glow: transparent;
       --grid-opacity: 0;
     }
