@@ -25,6 +25,7 @@ docs/css/components.css  the blocks on the page
 docs/css/calculator.css  page-scoped; loaded ONLY by the calculator
 docs/css/utilities.css   last layer, so it wins
 docs/js/main.js          theme toggle and footer year; every page works without it
+docs/js/consent.js       the analytics consent panel and the footer control; every page
 docs/js/mortgage.js      the calculator's arithmetic and behaviour; loaded only by that page
 docs/assets/             og image and raster icons
 docs/favicon.ico         the bare /favicon.ico browsers ask for unprompted
@@ -34,6 +35,7 @@ docs/CNAME               custom domain, read by GitHub Pages
 docs/.nojekyll           serve files as-is instead of running them through Jekyll
 
 tests/mortgage.test.mjs  the calculator's unit tests; repository furniture, never served
+tests/consent.test.mjs   the stored-choice logic, plus assertions over the built pages
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 README.md                this file
 TOOL-TIERS.md            the content standard every tool page is written against
@@ -80,9 +82,9 @@ resolve against the missing directory and 404 in turn.
 
 ## Tests
 
-The mortgage calculator's arithmetic has unit tests. There is nothing to install: they
-run on Node's own test runner against the file the browser loads, not against a copy of
-it.
+The mortgage calculator's arithmetic and the analytics consent logic have tests. There
+is nothing to install: they run on Node's own test runner against the files the browser
+loads, not against copies of them.
 
 ```sh
 node --test "tests/**/*.test.mjs"
@@ -93,6 +95,14 @@ its pure functions reachable from Node. In a browser that block is skipped and t
 stays a plain `<script defer>`. Run the tests before changing anything in the top half
 of that file — the property-style suite asserts that the schedule sums to the loan
 amount exactly, in integer cents, across a matrix of rates, terms, and principals.
+
+`tests/consent.test.mjs` does the same for `docs/js/consent.js`, and then reads the
+published HTML, because with no build step the generated pages *are* the artefact. It
+asserts that the consent defaults are queued before `gtag.js` is fetched, that the block
+appears exactly once per page, that both default calls carry all four Consent Mode
+signals with the regional one first, and that the calculator has not grown a route to
+the network. Run it after `./scripts/apply-gtag.sh`, since half of what it checks is
+that script's output.
 
 ## Deploying
 
@@ -134,6 +144,90 @@ dig +short curiositymapped.com
 curl -sI https://curiositymapped.com/ | head -1
 curl -sI https://curiositymapped.com/nope | head -1   # expect 404
 ```
+
+## Analytics consent
+
+Analytics is consented, not assumed. Three pieces, and the split between them is the
+point:
+
+- **The inline block at the top of every `<head>`**, written by `scripts/apply-gtag.sh`.
+  It is the only code on the site that speaks to Google. It declares the Consent Mode
+  defaults, reads the stored choice, applies it, and only then lets `gtag.js` load.
+- **`docs/js/consent.js`**, deferred. The panel and the footer control. It asks the
+  question and records the answer through `window.cmConsent`; it never calls `gtag`.
+- **`.consent*` in `docs/css/components.css`.** Presentation only.
+
+Because the interface layer never touches Google, it can be replaced -- by a certified
+consent platform, which Google requires for serving ads in the EEA, the UK, and
+Switzerland -- without any of the Google-facing code moving.
+
+### Why the block lives in the shell script
+
+Consent Mode defaults have to be queued *before* `gtag.js` loads, or they do not apply
+to the first hit. `apply-gtag.sh` re-inserts its block as the first element of `<head>`
+on every run, so a default hand-placed above the tag would be pushed below it on the
+next run -- silently, and in the wrong order. Keeping the whole thing in `GTAG_SNIPPET`
+is what makes the ordering hold across five hand-written heads. `tests/consent.test.mjs`
+asserts the byte offsets, so a regression fails the suite rather than the site.
+
+### The default is regional; the panel is not
+
+`analytics_storage` defaults to `denied` in the EEA, the UK, and Switzerland, and to
+`granted` everywhere else. The region list is an array in `GTAG_SNIPPET`; Google
+resolves the visitor's region from the request IP, which is the only geography a static
+site can consult without adding a third-party lookup to every page load. Revisit the
+list if a country joins or leaves the EEA.
+
+The panel itself is shown to everyone, because the page cannot know where the reader is.
+The three advertising signals are declared and denied in every region: the panel asks
+about analytics only, and granting what was never asked for would misreport it.
+
+**The tradeoff this carries.** Before a choice is made, a reader in a denied region
+still causes one cookieless request to Google -- timestamp, user agent, referrer, page
+address, consent status. No cookie, no identifier. That is inherent to loading the tag
+at all, and it is what buys jurisdiction-appropriate defaults with no geography lookup.
+An *explicit* decline goes further and sets `window['ga-disable-<ID>']`, so nothing is
+sent at all; that is the difference between "not answered yet" and "answered no".
+
+### The stored choice
+
+`localStorage`, under `cm-consent` -- the same `cm-` convention as `cm-theme`, and for
+the same reason wrapped in `try`/`catch` everywhere, since it *throws* in a private
+window rather than returning null.
+
+```json
+{ "v": 1, "analytics": "granted", "ts": 1757337600000 }
+```
+
+Three fields, no identifier, nothing that distinguishes one reader from another, and it
+never leaves the browser. Reading fails closed: an unparseable value, an unknown
+version, an unrecognised choice, a missing or stale timestamp, or a thrown exception all
+read as *no choice*, which shows the panel and leaves the regional default in force.
+
+`VERSION` is stored so the format can change. **Bump it** when a consent category is
+added or removed (advertising would make it `2`), when Google changes what the signals
+mean, or when the policy changes the basis of the choice. **Do not bump it** for copy or
+styling: re-prompting without cause teaches people to dismiss the panel. A choice also
+lapses after twelve months (`MAX_AGE`).
+
+`VERSION`, `KEY`, and `MAX_AGE` appear in both the inline block and `consent.js`. They
+are held together by a test, not by shared code, because the inline copy has to run
+before anything can be fetched and so cannot be a module.
+
+### One thing the calculator must never do
+
+> Analytics consent governs whether the visit is measured. It does not govern what a
+> tool does with what you type, because nothing typed into a tool is supposed to leave
+> the browser -- in any consent state.
+
+Nothing on the site writes to the URL, and `page_location` is sanitised to origin and
+path plus an allowlist of campaign parameters, so a value that reached a URL still could
+not reach analytics. `#calc-form` and `#costs-form` also block submission outright:
+neither can submit today -- no action, no submit button -- but adding one button would
+turn Enter into a GET of the same page with the loan amount in the query string.
+
+`tests/consent.test.mjs` fails if `mortgage.js` grows a reference to `gtag`, `fetch`,
+`document.cookie`, `location`, or the History API. That is the invariant, enforced.
 
 ## When the site grows
 
