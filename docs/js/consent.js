@@ -94,11 +94,14 @@
     panel.tabIndex = -1;
 
     var body = el('div', 'consent__body');
+    /* Three short sentences, because the panel covers the foot of a small
+       screen for as long as it is up. What it must not do is overclaim:
+       declining stops the cookies and the requests, and it is the tool
+       guarantee -- not the analytics choice -- that keeps what you type local. */
     var text = el('p', 'consent__text',
       'Curiosity Mapped uses Google Analytics to see which pages and tools ' +
-      'people use. Decline and no analytics cookies are used and nothing ' +
-      'further is sent from this page. Anything you type into a tool stays ' +
-      'in your browser either way. ');
+      'get used. Decline and nothing is sent from this page. Either way, what ' +
+      'you type into a tool stays in your browser. ');
     var more = el('a', null, 'How this works');
     more.href = '/privacy.html#choices-consent';
     text.appendChild(more);
