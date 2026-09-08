@@ -889,9 +889,106 @@
    * leave the backwards-filled state (opacity 0) on the page. This is the only
    * path by which content could ever print blank.
    */
+  /*
+   * The consent panel and its footer control. The first fixed element on the
+   * site, so it is also the first thing to need a z-index between the sticky
+   * header (50) and the skip link (100), which has to stay reachable above it.
+   *
+   * The panel itself is built by js/consent.js and appended to the body; only
+   * the control and the live region are in the markup. Nothing here branches on
+   * theme -- the role tokens already carry both.
+   */
+  .consent {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 60;
+    padding: var(--s-4) var(--gutter);
+    border-block-start: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: var(--t--1);
+    box-shadow: var(--shadow-sm);
+    animation: rise var(--dur) var(--ease) both;
+  }
+  .consent__body {
+    max-width: var(--width-page);
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-3) var(--s-5);
+  }
+  .consent__text {
+    flex: 1 1 28rem;
+    max-width: var(--measure);
+    margin: 0;
+    line-height: var(--leading-body);
+  }
+  .consent__text a { color: var(--text); }
+  .consent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+  /*
+   * Accept and decline are one shape, one weight, one colour. Making the
+   * agreeable answer the prettier button is the oldest trick in this genre, and
+   * the choice is not worth having if the interface leans on it. Geometry is
+   * the toggle's, including the 44px target.
+   */
+  .consent__button,
+  .js .consent-manage {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: var(--s-2) var(--s-5);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--t--1);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .consent__button:hover,
+  .js .consent-manage:hover { color: var(--accent); border-color: var(--accent); }
+
+  /*
+   * Hidden without scripting rather than present and dead, the same way the
+   * theme toggle is: neither control can do anything if consent.js never ran.
+   */
+  .consent-manage { display: none; }
+  .js .consent-manage { color: var(--text-dim); }
+
+  /*
+   * While the panel is up it covers the bottom of the page, which is where the
+   * footer keeps the link to the policy the panel is talking about. The height
+   * is measured and set by consent.js, since the text wraps differently at every
+   * width; the fallback is only for the frame before it does.
+   */
+  .consent-open body { padding-block-end: var(--consent-h, 9rem); }
+
+  .consent-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   @media print {
     .rise { opacity: 1 !important; transform: none !important; animation: none !important; }
-    .hero::before, .hero__sweep, .toggle, .skip-link { display: none !important; }
+    .hero::before, .hero__sweep, .toggle, .skip-link,
+    .consent, .consent-manage { display: none !important; }
     .header, .ahead, .footer { border-color: #ccc; background: #fff; }
     body { background: #fff; color: #000; }
     .card { border-color: #ccc; box-shadow: none; }

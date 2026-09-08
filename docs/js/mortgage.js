@@ -1315,6 +1315,18 @@
     costsForm.addEventListener('change', onInput);
   }
 
+  /*
+   * Neither form can submit today: both lack an action and a submit button, and
+   * the spec suppresses implicit submission for a form with several text fields
+   * and no submit button. That is a guarantee resting on an absence. Adding one
+   * button would turn Enter into a GET of this same page with every field in the
+   * query string -- home price, loan amount, rate -- and page_location is the one
+   * thing analytics records verbatim. Two lines, and the numbers stay in the tab.
+   */
+  function blockSubmit(event) { event.preventDefault(); }
+  form.addEventListener('submit', blockSubmit);
+  if (costsForm) costsForm.addEventListener('submit', blockSubmit);
+
   function onInput(event) {
     var target = event.target;
 
