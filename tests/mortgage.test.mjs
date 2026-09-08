@@ -231,6 +231,134 @@ test('balanceAfter: the closed form tracks the schedule it explains', () => {
   assert.equal(M.balanceAfter(100000, 0, 120, 833.33, 60), 100000 - 833.33 * 60);
 });
 
+/* ------------------------------------------------------------ sensitivity */
+
+/* The default scenario, built the way the page builds it. */
+const model = (over = {}) =>
+  M.buildModel({
+    homePrice: 400000,
+    downPayment: 80000,
+    downIsPercent: false,
+    loanAmount: 320000,
+    ratePct: 6,
+    years: 30,
+    pinned: false,
+    costs: {},
+    ...over
+  });
+
+test('sensitivity: every alternative agrees with the engine that priced it', () => {
+  const m = model();
+  const s = M.sensitivity(m);
+
+  /* A row is not allowed to be a different loan from the one the schedule
+     builder would produce for the same three inputs. */
+  for (const row of [...s.rates, ...s.terms]) {
+    const direct = M.scenario(m.principal, row.ratePct, row.years);
+    assert.equal(row.paymentCents, direct.paymentCents);
+    assert.equal(row.totalInterestCents, direct.totalInterestCents);
+    assert.equal(row.totalPaidCents, direct.totalPaidCents);
+    /* Totals come from a real schedule, so they close on the loan amount. */
+    assert.equal(row.totalPaidCents - row.totalInterestCents, M.toCents(m.principal));
+  }
+});
+
+test('sensitivity: exactly one row is the reader’s own, and its deltas are zero', () => {
+  const m = model();
+  const s = M.sensitivity(m);
+
+  for (const rows of [s.rates, s.terms]) {
+    const current = rows.filter((r) => r.current);
+    assert.equal(current.length, 1);
+    assert.equal(current[0].paymentDeltaCents, 0);
+    assert.equal(current[0].interestDeltaCents, 0);
+    assert.equal(current[0].paymentCents, m.paymentCents);
+    assert.equal(current[0].totalInterestCents, m.schedule.totalInterestCents);
+  }
+  assert.equal(s.rates.find((r) => r.current).ratePct, 6);
+  assert.equal(s.terms.find((r) => r.current).years, 30);
+});
+
+test('sensitivity: the rate rows are the reader’s rate plus or minus a point', () => {
+  const s = M.sensitivity(model());
+  assert.deepEqual(s.rates.map((r) => r.ratePct), [5, 5.5, 6, 6.5, 7]);
+  /* Ascending rate, ascending payment, ascending interest. */
+  for (let k = 1; k < s.rates.length; k++) {
+    assert.ok(s.rates[k].paymentCents > s.rates[k - 1].paymentCents);
+    assert.ok(s.rates[k].totalInterestCents > s.rates[k - 1].totalInterestCents);
+  }
+});
+
+test('sensitivity: a rate the form would reject is left out rather than clamped', () => {
+  /* 0.5% has no row a point below it, and 24.8% has none a point above. Both
+     tables must simply be shorter, never silently pinned to the boundary. */
+  const low = M.sensitivity(model({ ratePct: 0.5 }));
+  assert.deepEqual(low.rates.map((r) => r.ratePct), [0, 0.5, 1, 1.5]);
+
+  const high = M.sensitivity(model({ ratePct: 24.8 }));
+  assert.deepEqual(high.rates.map((r) => r.ratePct), [23.8, 24.3, 24.8]);
+  assert.ok(high.rates.every((r) => r.ratePct <= M.HARD_MAX_RATE));
+});
+
+test('sensitivity: binary arithmetic does not lose the reader’s own row', () => {
+  /* 6.1 - 0.5 is 5.6000000000000005 unrounded, and the row would not be found. */
+  const s = M.sensitivity(model({ ratePct: 6.1 }));
+  assert.deepEqual(s.rates.map((r) => r.ratePct), [5.1, 5.6, 6.1, 6.6, 7.1]);
+  assert.equal(s.rates.filter((r) => r.current).length, 1);
+});
+
+test('sensitivity: the term list always contains the term that was entered', () => {
+  assert.deepEqual(M.sensitivity(model()).terms.map((r) => r.years), [15, 20, 30]);
+  assert.deepEqual(M.sensitivity(model({ years: 40 })).terms.map((r) => r.years), [15, 20, 30, 40]);
+  assert.deepEqual(M.sensitivity(model({ years: 15 })).terms.map((r) => r.years), [15, 20, 30]);
+  assert.deepEqual(M.sensitivity(model({ years: 7 })).terms.map((r) => r.years), [7, 15, 20, 30]);
+});
+
+test('sensitivity: a longer term is a smaller payment and more interest', () => {
+  const terms = M.sensitivity(model()).terms;
+  for (let k = 1; k < terms.length; k++) {
+    assert.ok(terms[k].paymentCents < terms[k - 1].paymentCents);
+    assert.ok(terms[k].totalInterestCents > terms[k - 1].totalInterestCents);
+  }
+});
+
+test('sensitivity: a zero-rate loan has no interest at any term', () => {
+  const m = model({ ratePct: 0 });
+  const s = M.sensitivity(m);
+  assert.deepEqual(s.rates.map((r) => r.ratePct), [0, 0.5, 1]);
+  assert.ok(s.terms.every((r) => r.totalInterestCents === 0));
+  /* And the caption must not offer to save interest that does not exist. */
+  assert.match(M.termCaptionText(m, s.terms), /no interest for a shorter term to save/);
+});
+
+test('sensitivity captions: quote a row of the table, in the right direction', () => {
+  const m = model();
+  const s = M.sensitivity(m);
+  const up = s.rates.find((r) => r.ratePct === 7);
+  const rate = M.rateCaptionText(m, s.rates);
+  assert.match(rate, /One percentage point more would add/);
+  assert.ok(rate.includes(M.money(up.paymentDeltaCents / 100)));
+  assert.ok(rate.includes(M.money(up.interestDeltaCents / 100)));
+
+  /* At the top of the accepted range there is no row a point up, so the
+     sentence has to turn around rather than disappear. */
+  const top = model({ ratePct: 24.8 });
+  assert.match(M.rateCaptionText(top, M.sensitivity(top).rates), /One percentage point less would save/);
+
+  /* 15 years is the shortest listed term, so its sentence looks upward. */
+  const short = model({ years: 15 });
+  assert.match(M.termCaptionText(short, M.sensitivity(short).terms), /Spreading it over 20 years/);
+  assert.match(M.termCaptionText(m, s.terms), /Retiring it in 20 years/);
+});
+
+test('moneySigned: the sign is the content of the column', () => {
+  assert.equal(M.moneySigned(10406), '+$104.06');
+  assert.equal(M.moneySigned(-10164), '−$101.64');
+  assert.equal(M.moneySigned(0), '$0.00');
+  /* A true minus sign, not a hyphen: the column is read, not parsed. */
+  assert.ok(!M.moneySigned(-1).includes('-'));
+});
+
 /* ------------------------------------------------------------ parseNumber */
 
 test('parseNumber: accepts what people actually paste', () => {
