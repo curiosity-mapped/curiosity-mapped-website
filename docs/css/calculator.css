@@ -30,16 +30,43 @@
    * The table that turns the equation from decoration into something the reader
    * can check: symbol, meaning, and the value currently in the calculator.
    */
-  .params { max-width: 52rem; margin-block: var(--s-5); }
+  .params {
+    max-width: 52rem;
+    margin-block: var(--s-5);
+    /* Four columns now, and they fit at 320px: the prose column wraps and
+       hyphenates rather than widening. The guard is here anyway, so that a
+       longer value can never take the page with it -- the same reason .formula
+       carries one. */
+    overflow-x: auto;
+  }
   .params .table th:first-child {
     font-family: var(--font-mono);
     font-weight: 600;
     color: var(--text);
     inline-size: 4rem;
   }
-  .params .table td:nth-child(2) { text-align: start; color: var(--text-dim); }
-  /* No nowrap: "$1,918.56 a month" held on one line is enough to push the table
-     past a narrow viewport, and the value reads perfectly well over two lines. */
+  /* A prose column reads from its start edge, and so must the heading above it.
+     The .table default ends every cell but the first, which is right for money
+     and wrong for sentences. */
+  .params .table :is(th, td):nth-child(2),
+  .params .table :is(th, td):nth-child(4) { text-align: start; }
+  .params .table td:nth-child(2),
+  .params .table td:nth-child(4) {
+    color: var(--text-dim);
+    /*
+     * A prose column beside two numeric ones. On a phone the table's minimum
+     * width is set by its longest single word, and letting that word break is
+     * what keeps four columns on the screen without turning the table into one
+     * more thing to scroll. The document is lang="en", so the break lands where
+     * English hyphenates. Switched off again above 48rem, where there is room
+     * and a hyphen would be noise -- see the breakpoint at the foot of the sheet.
+     */
+    hyphens: auto;
+  }
+  /* Still no nowrap, and no width below 48rem: "$1,918.56 a month" held on one
+     line is exactly what pushes a four-column table past a narrow viewport, and
+     the value reads perfectly well over two lines. Where there is room, the
+     width comes back -- see the breakpoint at the foot of this sheet. */
   .params__value { font-weight: 600; }
 
   /* ---------- the calculator ---------- */
@@ -226,6 +253,97 @@
      wider than the viewport, and it scrolls inside its own focusable region. */
   .amort--monthly .table { min-inline-size: 34rem; }
 
+  /* ---------- sensitivity ---------- */
+
+  /*
+   * Same frame as the amortization table, because it is the same kind of object:
+   * rows of figures produced by the same engine. Sharing .amort__wrap outright
+   * was the alternative, and it would have made one of the two names a lie.
+   */
+  .sens { margin-block: var(--s-5); }
+  .sens .table { inline-size: 100%; }
+  .sens__wrap {
+    max-width: 52rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: var(--s-2) var(--s-4);
+    /*
+     * Four columns, three of them currency, and two of the four carry cents.
+     * Below about 26rem they stop fitting, and the table scrolls inside this box
+     * rather than taking the page with it. The markup carries the tabindex that
+     * makes the box reachable from a keyboard -- see the note on .table-scroll,
+     * which solves the same problem for the monthly schedule.
+     */
+    overflow-x: auto;
+  }
+
+  /*
+   * The reader's own row, which every other row's delta is measured against.
+   * Marked three ways -- a word in the cell, a rule down the edge, and weight --
+   * because a tint alone would not survive forced-colors, a monochrome print, or
+   * a reader who cannot see it.
+   */
+  .sens__row--current :is(th, td) {
+    font-weight: 600;
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+  .sens__row--current th:first-child { box-shadow: inset 3px 0 0 0 var(--accent); }
+  .sens__tag {
+    display: inline-block;
+    margin-inline-start: var(--s-2);
+    /* The tracking below adds a space after the last letter that the pill would
+       otherwise carry as an off-centre gap. Trimmed from the end padding. */
+    padding-inline: var(--s-2) calc(var(--s-2) - 0.08em);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--t--1);
+    font-weight: 400;
+    letter-spacing: var(--track-wide);
+    color: var(--accent);
+  }
+
+  /* ---------- factors ---------- */
+
+  /*
+   * Three prose columns, so this one overrides the .table default of ending
+   * every cell: figures align on the right, sentences do not.
+   *
+   * Same scrollport as the sensitivity tables and no height cap: fourteen rows
+   * of prose is a table to be read down, not a box to be scrolled inside. The
+   * markup carries the tabindex that makes it reachable from a keyboard.
+   */
+  .factors { margin-block: var(--s-5); overflow-x: auto; }
+  .factors .table { inline-size: 100%; }
+  .factors .table :is(th, td) { text-align: start; }
+  .factors .table td:nth-child(2) { color: var(--text-dim); }
+  .factors .table th[scope='row'] { white-space: normal; color: var(--text); font-weight: 600; }
+  .factors__wrap { max-width: 52rem; }
+
+  /*
+   * Where a factor stands relative to the model. The word is the content and the
+   * colour is decoration -- read the tag with every colour stripped out and it
+   * still says which of the four buckets the row is in.
+   */
+  .tag {
+    display: inline-block;
+    /* Same trailing-space trim as .sens__tag, for the same tracking. */
+    padding-inline: var(--s-2) calc(var(--s-2) - 0.08em);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--t--1);
+    letter-spacing: var(--track-wide);
+    white-space: nowrap;
+    color: var(--text-dim);
+  }
+  .tag--in { border-color: var(--accent); color: var(--accent); }
+  .tag--side { border-color: var(--edge); color: var(--text); }
+  .tag--out,
+  .tag--never { border-style: dashed; }
+
   /* ---------- charts ---------- */
 
   .charts { display: grid; gap: var(--s-6); margin-block: var(--s-6); }
@@ -325,6 +443,13 @@
    * payment stays on screen while the inputs that produce it are being changed.
    */
   @media (min-width: 48rem) {
+    /* The value column is what a reader checks against the calculator, so where
+       there is room it gets a stable share rather than whatever the prose column
+       leaves it. Narrower than this it would force the table to scroll. */
+    .params .table :is(th, td):nth-child(3) { inline-size: 10.5rem; }
+    /* And with room, no hyphens: the break above is for phones only. */
+    .params .table td:nth-child(2) { hyphens: manual; }
+
     .calc__layout { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s-6); }
     .calc__results { position: sticky; inset-block-start: calc(var(--header-h) + var(--s-4)); }
     .charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -334,6 +459,6 @@
   @media print {
     /* Sticky positioning has no meaning on paper and can strand the panel. */
     .calc__results { position: static; }
-    .result, .chart__frame, .amort__wrap { box-shadow: none; }
+    .result, .chart__frame, .amort__wrap, .sens__wrap { box-shadow: none; }
   }
 }

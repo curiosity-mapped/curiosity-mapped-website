@@ -227,6 +227,16 @@
   function pctRatio(n) { return FMT_PCT_TRIM2.format(n); }
 
   /*
+   * "+$118.61", "−$118.61", "$0.00". Used only in the sensitivity columns,
+   * where the sign is the entire content of the cell. A true minus sign rather
+   * than a hyphen, because that column is read rather than parsed.
+   */
+  function moneySigned(cents) {
+    if (cents === 0) return money(0);
+    return (cents > 0 ? '+' : '−') + moneyCents(Math.abs(cents));
+  }
+
+  /*
    * "taxes", "taxes and insurance", "taxes, insurance, and dues". One helper,
    * and it is the difference between a paragraph and a run of fragments.
    */
@@ -487,6 +497,145 @@
     return line;
   }
 
+  /* ================================================================
+   * Sensitivity. The same arithmetic run again against inputs the reader did
+   * not enter, so that "what if the rate were a point higher" is answered by a
+   * schedule rather than by a rule of thumb. A point of rate is worth different
+   * money at every principal and every term, which is exactly why the answer
+   * cannot be written into the prose once and left there.
+   * ================================================================ */
+
+  /* Percentage points, added to the rate the reader entered. */
+  var RATE_STEPS = [-1, -0.5, 0, 0.5, 1];
+
+  /* Years. The reader's own term joins this list wherever it sorts, so the
+     table always contains the row its deltas are measured against. */
+  var TERM_STEPS = [15, 20, 30];
+
+  /*
+   * One alternative loan, priced from scratch. The payment is rounded to the
+   * cent exactly as the headline figure is, and the totals come from a real
+   * schedule rather than from payment × n -- so a row in the sensitivity table
+   * and the result panel can never disagree about the same loan.
+   */
+  function scenario(principal, ratePct, years) {
+    var i = ratePct / 100 / 12;
+    var n = Math.round(years * 12);
+    var payment = Math.round(monthlyPayment(principal, i, n) * 100) / 100;
+    var s = buildSchedule(principal, i, n, payment);
+    return {
+      ratePct: ratePct,
+      years: years,
+      n: n,
+      paymentCents: toCents(payment),
+      totalInterestCents: s.totalInterestCents,
+      totalPaidCents: s.totalPaidCents,
+      count: s.count
+    };
+  }
+
+  function withDeltas(s, m, isCurrent) {
+    s.current = !!isCurrent;
+    s.paymentDeltaCents = s.paymentCents - m.paymentCents;
+    s.interestDeltaCents = s.totalInterestCents - m.schedule.totalInterestCents;
+    return s;
+  }
+
+  /* Rates carry three decimals at most, and 6.1 - 0.5 is 5.6000000000000005
+     in binary. Rounding here is what lets the current row be found by equality
+     rather than by tolerance. */
+  function stepRate(ratePct, step) {
+    return Math.round((ratePct + step) * 1000) / 1000;
+  }
+
+  function sensitivity(m) {
+    var rates = [];
+    var terms = [];
+    var seen = {};
+    var years = TERM_STEPS.slice();
+    var k, r, y;
+
+    for (k = 0; k < RATE_STEPS.length; k++) {
+      r = stepRate(m.ratePct, RATE_STEPS[k]);
+      /*
+       * Anything the form itself would reject is left out of the table. A
+       * scenario the calculator refuses to compute is not a scenario worth
+       * offering, and a clamped row would be a different loan wearing the
+       * label of the one asked for.
+       */
+      if (r < 0 || r > HARD_MAX_RATE || seen[r]) continue;
+      seen[r] = true;
+      rates.push(withDeltas(scenario(m.principal, r, m.years), m, RATE_STEPS[k] === 0));
+    }
+
+    if (years.indexOf(m.years) === -1) years.push(m.years);
+    years.sort(function (a, b) { return a - b; });
+    for (k = 0; k < years.length; k++) {
+      y = years[k];
+      if (y < 1 || y > HARD_MAX_YEARS) continue;
+      terms.push(withDeltas(scenario(m.principal, m.ratePct, y), m, y === m.years));
+    }
+
+    return { rates: rates, terms: terms };
+  }
+
+  function findRate(rows, ratePct) {
+    for (var k = 0; k < rows.length; k++) if (rows[k].ratePct === ratePct) return rows[k];
+    return null;
+  }
+
+  /*
+   * The caption is the whole point of the rate table: the table shows five
+   * loans, and this says what the distance between two of them costs. Taken
+   * from a row rather than from a remembered figure, and phrased downward when
+   * a rate a point higher would be outside what the form accepts.
+   */
+  function rateCaptionText(m, rows) {
+    var lead = 'The same ' + moneyNatural(m.principal) + ' over ' + m.years + ' ' +
+      plural(m.years, 'year') + ', priced at other rates. Your own row is marked.';
+    var up = findRate(rows, stepRate(m.ratePct, 1));
+    var down = findRate(rows, stepRate(m.ratePct, -1));
+    if (up) {
+      return lead + ' One percentage point more would add ' + moneyCents(up.paymentDeltaCents) +
+        ' a month, and ' + moneyCents(up.interestDeltaCents) + ' in interest over the whole term.';
+    }
+    if (down) {
+      return lead + ' One percentage point less would save ' + moneyCents(-down.paymentDeltaCents) +
+        ' a month, and ' + moneyCents(-down.interestDeltaCents) + ' in interest over the whole term.';
+    }
+    return lead;
+  }
+
+  /*
+   * The term table's trade is the one people most often take only half of: the
+   * payment and the total move in opposite directions, and both numbers belong
+   * in the same sentence.
+   */
+  function termCaptionText(m, rows) {
+    var lead = 'The same ' + moneyNatural(m.principal) + ' at ' + pctTrim(m.ratePct / 100) +
+      ', over other terms. Your own row is marked.';
+    if (m.periodicRate === 0) {
+      return lead + ' At a zero rate the term changes the payment and nothing else: there is no interest for a shorter term to save.';
+    }
+    var shorter = null;
+    var longer = null;
+    for (var k = 0; k < rows.length; k++) {
+      if (rows[k].years < m.years) shorter = rows[k];
+      else if (rows[k].years > m.years && !longer) longer = rows[k];
+    }
+    if (shorter) {
+      return lead + ' Retiring it in ' + shorter.years + ' years rather than ' + m.years +
+        ' would raise the payment by ' + moneyCents(shorter.paymentDeltaCents) +
+        ' a month and cut the interest by ' + moneyCents(-shorter.interestDeltaCents) + '.';
+    }
+    if (longer) {
+      return lead + ' Spreading it over ' + longer.years + ' years rather than ' + m.years +
+        ' would lower the payment by ' + moneyCents(-longer.paymentDeltaCents) +
+        ' a month and add ' + moneyCents(longer.interestDeltaCents) + ' in interest.';
+    }
+    return lead;
+  }
+
   /*
    * Node's test runner loads this file to exercise the functions above. In a
    * browser `module` is undefined, the block is skipped, and the file stays a
@@ -508,6 +657,7 @@
       money: money,
       moneyWhole: moneyWhole,
       moneyNatural: moneyNatural,
+      moneySigned: moneySigned,
       pctTrim: pctTrim,
       pctRatio: pctRatio,
       pct: pct,
@@ -521,7 +671,15 @@
       COST_FIELDS: COST_FIELDS,
       buildModel: buildModel,
       explainParagraphs: explainParagraphs,
-      summarySentence: summarySentence
+      summarySentence: summarySentence,
+      RATE_STEPS: RATE_STEPS,
+      TERM_STEPS: TERM_STEPS,
+      HARD_MAX_RATE: HARD_MAX_RATE,
+      HARD_MAX_YEARS: HARD_MAX_YEARS,
+      scenario: scenario,
+      sensitivity: sensitivity,
+      rateCaptionText: rateCaptionText,
+      termCaptionText: termCaptionText
     };
   }
 
@@ -588,6 +746,11 @@
     pPayment: $('p-payment'),
 
     explain: $('explain'),
+
+    sensRateBody: $('sens-rate-body'),
+    sensRateCaption: $('sens-rate-caption'),
+    sensTermBody: $('sens-term-body'),
+    sensTermCaption: $('sens-term-caption'),
 
     yearlyBody: $('amort-yearly-body'),
     yearlyCaption: $('amort-yearly-caption'),
@@ -876,6 +1039,57 @@
     return td;
   }
 
+  /*
+   * Nine more schedules on every keystroke, which sounds worse than it is: the
+   * monthly table is 1,800 elements and these two are 36 between them, so the
+   * cost is the arithmetic, and the arithmetic is a few thousand integer
+   * additions. Cheaper than the render it sits next to, and it buys the one
+   * question the calculator otherwise makes the reader answer by retyping.
+   */
+  function renderSensitivity(m) {
+    if (!ui.sensRateBody && !ui.sensTermBody) return;
+    var s = sensitivity(m);
+    if (ui.sensRateBody) {
+      replace(ui.sensRateBody, sensRows(s.rates, 'rate'));
+      text(ui.sensRateCaption, rateCaptionText(m, s.rates));
+    }
+    if (ui.sensTermBody) {
+      replace(ui.sensTermBody, sensRows(s.terms, 'term'));
+      text(ui.sensTermCaption, termCaptionText(m, s.terms));
+    }
+  }
+
+  function sensRows(rows, kind) {
+    var frag = document.createDocumentFragment();
+    for (var k = 0; k < rows.length; k++) {
+      var r = rows[k];
+      var tr = document.createElement('tr');
+      var th = cell('th', kind === 'rate'
+        ? pctTrim(r.ratePct / 100)
+        : r.years + ' ' + plural(r.years, 'year'), 'row');
+      if (r.current) {
+        /*
+         * The marker is a word, not a tint. Colour alone would not survive
+         * forced-colors mode, a monochrome print, or a reader who cannot see
+         * it, and this row is the one every other row is measured against.
+         */
+        tr.setAttribute('aria-current', 'true');
+        tr.className = 'sens__row--current';
+        var tag = document.createElement('span');
+        tag.className = 'sens__tag';
+        tag.appendChild(document.createTextNode('yours'));
+        th.appendChild(document.createTextNode(' '));
+        th.appendChild(tag);
+      }
+      tr.appendChild(th);
+      tr.appendChild(cell('td', moneyCents(r.paymentCents)));
+      tr.appendChild(cell('td', r.current ? '—' : moneySigned(r.paymentDeltaCents)));
+      tr.appendChild(cell('td', moneyCents(r.totalInterestCents)));
+      frag.appendChild(tr);
+    }
+    return frag;
+  }
+
   function renderYearly(m) {
     if (!ui.yearlyBody) return;
     var frag = document.createDocumentFragment();
@@ -1076,6 +1290,7 @@
     renderExplanation(m);
     renderYearly(m);
     renderCharts(m);
+    renderSensitivity(m);
 
     /* 1,800 elements. Built when the disclosure is open, deferred when it is not. */
     if (ui.monthlyDetails && ui.monthlyDetails.open) renderMonthly(m);

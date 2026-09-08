@@ -47,6 +47,12 @@ What goes *on* a tool page is governed by `TOOL-TIERS.md`. Every tool is classif
 sections the page must carry. The mortgage calculator is the canonical `DEEP` page;
 read the standard before adding a tool, not after.
 
+Each tool page records its own tier. The classification and a map from every required
+area of that tier to the section that satisfies it sit in an HTML comment at the top of
+the page's `<article>` — there is no build step to hold that metadata anywhere else, and
+a tier recorded only in a commit message is a tier nobody will find. Add the same block
+to a new tool page, and keep it accurate when sections move.
+
 `CNAME` and `.nojekyll` are read from the publishing source, not the repository root,
 which is why they sit inside `docs/` rather than beside this file.
 
