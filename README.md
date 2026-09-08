@@ -36,10 +36,16 @@ docs/.nojekyll           serve files as-is instead of running them through Jekyl
 tests/mortgage.test.mjs  the calculator's unit tests; repository furniture, never served
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 README.md                this file
+TOOL-TIERS.md            the content standard every tool page is written against
 ```
 
 `docs/tools/` is the first subdirectory in the published tree. Every path in the site
 is root-absolute, so its depth changes nothing.
+
+What goes *on* a tool page is governed by `TOOL-TIERS.md`. Every tool is classified
+`SIMPLE`, `MODERATE`, or `DEEP` before it is built, and the tier fixes the minimum
+sections the page must carry. The mortgage calculator is the canonical `DEEP` page;
+read the standard before adding a tool, not after.
 
 `CNAME` and `.nojekyll` are read from the publishing source, not the repository root,
 which is why they sit inside `docs/` rather than beside this file.
