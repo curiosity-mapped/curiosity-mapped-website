@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script>
+  /* Consent Mode defaults, declared before the tag loads. The order is
+     load-bearing: gtag.js drains whatever is already queued in dataLayer, so a
+     default that arrived after the loader would not apply to the first hit. */
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  /* Denied by default in the EEA, the UK, and Switzerland. Google resolves the
+     region from the request IP, which is the only geography a static site can
+     consult without adding a third-party lookup to every page load. */
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    region: ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB',
+             'GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO',
+             'PL','PT','RO','SE','SI','SK']
+  });
+
+  /* Everywhere else analytics is on until the visitor says otherwise. The three
+     advertising signals stay denied in every region: the banner asks about
+     analytics only, and granting what was never asked for would misreport it. */
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'granted'
+  });
+
+  gtag('set', 'ads_data_redaction', true);
+
+  /* The only code on the site that speaks to Google. The banner in consent.js
+     calls set() and never touches gtag itself, so the consent interface can be
+     replaced -- by a certified CMP, if advertising is ever added -- without any
+     of this moving. */
+  window.cmConsent = (function () {
+    var ID = 'G-6ZT7DLXEBG';
+    var KEY = 'cm-consent';
+    var VERSION = 1;
+    var MAX_AGE = 31536000000; /* 12 months, in milliseconds */
+    var KEEP = /^(utm_source|utm_medium|utm_campaign|utm_term|utm_content|gclid|gbraid|wbraid)$/;
+
+    /* Fails closed. Anything this cannot positively recognise as a current,
+       unexpired choice reads as no choice at all, which leaves the regional
+       default in force and shows the banner. localStorage throws rather than
+       returning null in a private window, hence the catch. */
+    function read() {
+      try {
+        var c = JSON.parse(localStorage.getItem(KEY));
+        if (!c || c.v !== VERSION) return null;
+        if (c.analytics !== 'granted' && c.analytics !== 'denied') return null;
+        if (typeof c.ts !== 'number' || Date.now() - c.ts > MAX_AGE) return null;
+        return c.analytics;
+      } catch (e) { return null; }
+    }
+
+    function write(state) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(
+          { v: VERSION, analytics: state, ts: Date.now() }
+        ));
+      } catch (e) {}
+    }
+
+    /* Strips every query parameter the site does not put there itself, so that
+       no future URL can carry a browser-tool input into page_location. Nothing
+       on the site writes to the URL today; this is what keeps that true if one
+       day something does. The allowlist is what leaves campaign attribution
+       working, should it ever be used. */
+    function url(href) {
+      if (!href) return href;
+      var a = document.createElement('a');
+      a.href = href;
+      var kept = [];
+      var parts = a.search.replace(/^\?/, '').split('&');
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i] && KEEP.test(parts[i].split('=')[0])) kept.push(parts[i]);
+      }
+      return a.protocol + '//' + a.host + a.pathname +
+             (kept.length ? '?' + kept.join('&') : '');
+    }
+
+    /* Withdrawal has to remove what is already there: a consent update stops GA
+       writing cookies, it does not clear the ones written before it. */
+    function purge() {
+      var all = document.cookie.split(';');
+      for (var i = 0; i < all.length; i++) {
+        var name = all[i].split('=')[0].replace(/^\s+|\s+$/g, '');
+        if (name.indexOf('_ga') !== 0) continue;
+        document.cookie = name + '=; Max-Age=0; path=/';
+        var domain = location.hostname;
+        while (domain.indexOf('.') > -1) {
+          document.cookie = name + '=; Max-Age=0; path=/; domain=' + domain;
+          document.cookie = name + '=; Max-Age=0; path=/; domain=.' + domain;
+          domain = domain.slice(domain.indexOf('.') + 1);
+        }
+      }
+    }
+
+    function apply(state) {
+      gtag('consent', 'update', { analytics_storage: state });
+      /* Advanced consent mode keeps sending cookieless pings while storage is
+         denied. That is the right behaviour for someone who has not answered
+         yet, and it is not what Reject means, so an explicit denial also trips
+         Google's own per-measurement-ID kill switch. Assigned rather than set,
+         because the flag is read at hit time: leaving it true would silently
+         make a later change of mind do nothing. */
+      window['ga-disable-' + ID] = state === 'denied';
+    }
+
+    var api = {
+      ID: ID,
+      KEY: KEY,
+      VERSION: VERSION,
+      MAX_AGE: MAX_AGE,
+      read: read,
+      url: url,
+      state: read(),
+
+      set: function (state) {
+        write(state);
+        apply(state);
+        /* No page view is replayed here. Where the default was already
+           granted -- everywhere outside the denied regions -- this document was
+           counted on load, and sending another would count it twice. Where the
+           default was denied, accepting costs the entry page view and every
+           page after it is measured normally. An overcount corrupts the numbers
+           for most visitors; an undercount of one view understates them for
+           some. gtag does not replay it either, which was measured rather than
+           assumed. */
+        if (state === 'denied') purge();
+        api.state = state;
+      },
+
+      /* For another tab reacting to a storage event: the choice is already
+         written, only this document's Google state needs to catch up. */
+      sync: function (state) {
+        if (state) apply(state);
+        if (state === 'denied') purge();
+        api.state = state;
+      }
+    };
+
+    if (api.state) apply(api.state);
+    return api;
+  })();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZT7DLXEBG"></script>
+<script>
+  gtag('js', new Date());
+  (function () {
+    var cfg = { page_location: cmConsent.url(location.href) };
+    /* An external referrer is Google's to interpret and cannot carry anything
+       typed into this site. A same-origin one goes through the same sanitiser,
+       so a value that reached one page's URL could not follow the reader to the
+       next one either. */
+    if (document.referrer && document.referrer.indexOf(location.origin) === 0) {
+      cfg.page_referrer = cmConsent.url(document.referrer);
+    }
+    gtag('config', 'G-6ZT7DLXEBG', cfg);
+  })();
+</script>
+<!-- End Google tag -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Cascade layer order is declared in the document, not in the stylesheet, so it
+     can never depend on the order rules happen to appear in. -->
+<style>@layer tokens, base, components, utilities;</style>
+
+<title>Compound Interest Calculator | Curiosity Mapped</title>
+<meta name="description" content="Work out what a balance grows to under compound interest, and see exactly which arithmetic produced it: the formula, the periodic rate, the effective annual rate, and what the result does not include. Runs entirely in your browser.">
+
+<link rel="canonical" href="https://curiositymapped.com/tools/compound-interest-calculator.html">
+
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#02090e" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Curiosity Mapped">
+<meta property="og:title" content="Compound Interest Calculator | Curiosity Mapped">
+<meta property="og:description" content="Work out what a balance grows to under compound interest, and see exactly which arithmetic produced it: the formula, the periodic rate, the effective annual rate, and what the result does not include. Runs entirely in your browser.">
+<meta property="og:url" content="https://curiositymapped.com/tools/compound-interest-calculator.html">
+<meta property="og:locale" content="en_US">
+<!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
+<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Curiosity Mapped: follow the curiosity, map what you find, see where it leads.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<script>
+  /* Same pre-paint theme boot as the home page; see index.html for why it is inline. */
+  try {
+    var t = localStorage.getItem('cm-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<!-- Loaded only by the calculator pages, so the rest of the site pays nothing for it. -->
+<link rel="stylesheet" href="/css/calculator.css">
+<link rel="stylesheet" href="/css/utilities.css">
+
+<script src="/js/main.js" defer></script>
+<script src="/js/consent.js" defer></script>
+<!-- Kept separate from main.js, which is on every page and must not grow. -->
+<script src="/js/compound.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://curiositymapped.com/tools/compound-interest-calculator.html#app",
+      "url": "https://curiositymapped.com/tools/compound-interest-calculator.html",
+      "name": "Compound Interest Calculator",
+      "description": "Work out what a balance grows to under compound interest, and see exactly which arithmetic produced it: the formula, the periodic rate, the effective annual rate, and what the result does not include.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript for live results; the formula, the worked example, and the growth tables are readable without it.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "isPartOf": {
+        "@id": "https://curiositymapped.com/#website"
+      },
+      "publisher": {
+        "@id": "https://curiositymapped.com/#org"
+      },
+      "breadcrumb": {
+        "@id": "https://curiositymapped.com/tools/compound-interest-calculator.html#breadcrumb"
+      },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://curiositymapped.com/tools/compound-interest-calculator.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://curiositymapped.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tools",
+          "item": "https://curiositymapped.com/tools/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Compound Interest Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://curiositymapped.com/tools/compound-interest-calculator.html#faq",
+      "isPartOf": {
+        "@id": "https://curiositymapped.com/tools/compound-interest-calculator.html#app"
+      },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is compound interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Compound interest is interest calculated on a balance that already includes the interest added before it. Simple interest is always worked out on the amount you started with; compound interest is worked out on the balance as it stands, so each round of interest becomes part of the amount the next round is calculated on. That is the whole of it, and it is why the growth curves rather than running straight."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the compound interest formula?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A = P(1 + r/n)^(nt), where P is the amount you start with, r is the annual rate written as a decimal, n is the number of times a year interest is added, and t is the number of years. Under continuous compounding it becomes A = Pe^(rt), which is a different equation rather than a very large value of n. Both are set out symbol by symbol at the top of this page."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does compounding frequency mean, and is monthly better than annual?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12 — and everything beyond monthly, up to and including continuous compounding, is worth another $1.71."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between APR and APY?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "APY, the annual percentage yield, is the effective annual rate: what a year of the account’s compounding actually comes to. APR is the nominal rate, before compounding is accounted for. A 5% nominal rate compounded monthly has an APY of 5.116%. On a loan, APR usually means something broader again, because United States lenders must fold certain fees into it, so an APR on a mortgage quote and an APY on a savings account are not two names for one idea."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is continuous compounding?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny — six cents on $1,000 at 5% over ten years."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this calculator include monthly contributions?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, deliberately. This page works out what a single amount grows to on its own. Money paid in later is an annuity riding on top of compound interest, it has a formula of its own, and folding it in here would mean the equation printed above the calculator was no longer the equation that produced the answer. The section on adding money every month sets out the mathematics and the timing distinction between an ordinary annuity and an annuity due."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does compound interest account for inflation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today’s money, which is a separate calculation applied afterwards rather than part of the formula — and it is kept visibly separate in the result panel for that reason."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does my bank or investment account show a different number?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Several ordinary reasons, and usually more than one at once. Real accounts round every interest credit to the cent and this page does not. Banks differ on day-count conventions. Rates change, and this page assumes one constant rate. Fees and tax are taken out along the way. And an investment account does not earn a fixed rate at all: its returns vary, and a variable series does not compound at its own average."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does compound interest apply to loans and credit cards?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, in the same way and against you. Credit card interest is typically compounded daily on the balance carried, which is why an unpaid balance grows faster than the quoted annual rate suggests. Mortgages work differently again, because the balance falls as you pay it down, so the arithmetic there is amortization rather than growth."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="header">
+  <a class="wordmark" href="/">
+    <span class="wordmark__line">Curiosity</span>
+    <span class="wordmark__line wordmark__line--wide">Mapped</span>
+  </a>
+
+  <nav class="nav" aria-label="Primary">
+    <p class="visually-hidden">Some of the map is still blank. Tools is the first area to take shape; Journal and Reference will follow.</p>
+    <ul class="nav__list">
+      <li><span class="nav__item">Journal</span></li>
+      <li><a class="nav__item nav__item--link" href="/tools/">Tools</a></li>
+      <li><span class="nav__item">Reference</span></li>
+      <li><span class="nav__item">About</span></li>
+    </ul>
+  </nav>
+
+  <button class="toggle" type="button" id="theme-toggle" aria-label="Switch theme">
+    <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <span id="theme-label">Dark</span>
+  </button>
+</header>
+
+<main id="main" tabindex="-1">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb__list">
+      <li class="breadcrumb__item"><a href="/">Home</a></li>
+      <li class="breadcrumb__item"><a href="/tools/">Tools</a></li>
+      <li class="breadcrumb__item"><span aria-current="page">Compound Interest Calculator</span></li>
+    </ol>
+  </nav>
+
+  <!--
+    CONTENT COMPLEXITY TIER: DEEP  (see /TOOL-TIERS.md)
+
+    Classified DEEP rather than MODERATE. The arithmetic is one line, but the
+    number it returns is routinely mistaken for something it is not: a forecast of
+    what an investment will be worth, a figure that already allows for inflation,
+    or a balance that includes money the reader means to pay in later. The gap
+    between the model and what people believe the model covers is where every
+    misconception on this page lives, and that gap is the DEEP trigger. Every
+    required area of the tier maps to a section below.
+
+      1  Title and introduction ......... #page-title and the lede
+      2  Interactive calculator ......... #calculator
+      3  Formula ........................ #how-compound-interest-works
+      4  Parameters / variables ......... the table under #how-compound-interest-works
+      5  Calculation method ............. #your-result, including the worked substitution
+      6  Result interpretation .......... #understanding
+      7  Real-world context ............. #purchasing-power and #contributions
+      8  Factors ........................ #factors
+      9  Assumptions .................... #assumptions
+     10  Visualization .................. the charts under #growth
+     11  Detailed breakdown ............. the tables under #growth
+     12  Scenarios / sensitivity ........ #sensitivity, and the table under #frequency
+     13  Common misconceptions .......... #misconceptions
+     14  Limitations .................... #limitations
+     15  Edge cases ..................... #edge-cases
+     16  FAQ ............................ #faq
+     17  Methodology .................... #methodology
+     18  Related tools and concepts ..... #related
+
+    Nothing here is present to satisfy the template. A section that could not
+    answer a question a reader actually has was not written.
+  -->
+
+  <!--
+    The stagger stops after the title and the lede, for the same reason it does on
+    the mortgage calculator: .rise fills backwards, so carrying it down a document
+    this long would hold the tail invisible for seconds on first paint.
+  -->
+  <article class="prose" aria-labelledby="page-title">
+    <h1 class="prose__title rise" id="page-title" style="--i:0">Compound Interest Calculator</h1>
+
+    <p class="prose__lede rise" style="--i:1">
+      Work out what an amount grows to when the interest it earns starts earning
+      interest of its own, and see exactly which arithmetic produced the figure. The
+      formula is above the calculator rather than hidden behind it, and every number
+      the page reports comes from the equation it shows you.
+    </p>
+
+    <p>
+      This calculator answers one question precisely: if you put an amount somewhere
+      that pays a fixed rate, and leave it alone, what is it worth after a given
+      length of time? That is <strong>compound interest on a single sum</strong>, and
+      it is the only thing the formula below produces. Money paid in later, tax on the
+      interest, account fees, and inflation are all real, and none of them is in the
+      equation. What each of them would do is set out further down, and one of
+      them&nbsp;&mdash; inflation &mdash; can be applied to the answer afterwards, clearly
+      labelled as a separate step.
+    </p>
+
+    <p>
+      It runs entirely in your browser. There is no server behind it and nothing you
+      type is transmitted anywhere.
+    </p>
+
+    <!-- ============================ 1. the maths ============================ -->
+
+    <section aria-labelledby="how-compound-interest-works">
+      <h2 id="how-compound-interest-works">How compound interest is calculated</h2>
+
+      <p>
+        Compound interest is <em>interest on interest</em>. Simple interest is worked
+        out on the amount you started with, every time; compound interest is worked out
+        on the balance as it currently stands. Because each round of interest joins the
+        balance, it becomes part of the amount the next round is calculated on. That
+        one difference is the whole idea, and it is why the growth curves rather than
+        running straight.
+      </p>
+
+      <figure class="formula" id="formula-discrete">
+        <math display="block">
+          <semantics>
+            <mrow>
+              <mi>A</mi>
+              <mo>=</mo>
+              <mi>P</mi>
+              <msup>
+                <mrow>
+                  <mo>(</mo><mn>1</mn><mo>+</mo>
+                  <mfrac><mi>r</mi><mi>n</mi></mfrac>
+                  <mo>)</mo>
+                </mrow>
+                <mrow><mi>n</mi><mo>&#x2062;</mo><mi>t</mi></mrow>
+              </msup>
+            </mrow>
+            <annotation encoding="application/x-tex">A = P\left(1 + \frac{r}{n}\right)^{nt}</annotation>
+          </semantics>
+        </math>
+        <figcaption class="visually-hidden">
+          The balance equals the starting amount multiplied by the quantity one plus the
+          annual rate divided by the number of compounding periods a year, all raised to
+          the power of the number of periods a year multiplied by the number of years.
+        </figcaption>
+      </figure>
+
+      <!--
+        The continuous form is a different equation, not a large value of n, so it is
+        a second figure that replaces the first rather than a value swapped inside it.
+        Hidden until the frequency select asks for it.
+      -->
+      <figure class="formula" id="formula-continuous" hidden>
+        <math display="block">
+          <semantics>
+            <mrow>
+              <mi>A</mi>
+              <mo>=</mo>
+              <mi>P</mi>
+              <msup>
+                <mi>e</mi>
+                <mrow><mi>r</mi><mo>&#x2062;</mo><mi>t</mi></mrow>
+              </msup>
+            </mrow>
+            <annotation encoding="application/x-tex">A = P e^{rt}</annotation>
+          </semantics>
+        </math>
+        <figcaption class="visually-hidden">
+          Under continuous compounding, the balance equals the starting amount
+          multiplied by e raised to the power of the annual rate multiplied by the
+          number of years.
+        </figcaption>
+      </figure>
+
+      <div class="params">
+        <table class="table">
+          <caption>Every symbol in the formula: what it means, the unit it is carried in, the value it currently holds in the calculator below, and the direction it moves <em>A</em> in. The last three rows are not inputs &mdash; they are figures the first four produce.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Symbol</th>
+              <th scope="col">What it is</th>
+              <th scope="col">Your value</th>
+              <th scope="col">Moves <em>A</em></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">P</th>
+              <td>The principal: the amount you start with. Dollars.</td>
+              <td><span class="params__value" id="p-principal">$1,000</span></td>
+              <td>Proportional</td>
+            </tr>
+            <tr>
+              <th scope="row">r</th>
+              <td>The nominal annual rate, as a decimal rather than a percentage. 5% a year is 0.05.</td>
+              <td><span class="params__value" id="p-rate">0.05 (5%)</span></td>
+              <td>Up, steeply</td>
+            </tr>
+            <tr>
+              <th scope="row">n</th>
+              <td>How many times a year interest is added to the balance. A count. Not defined under continuous compounding, which uses the other formula.</td>
+              <td><span class="params__value" id="p-freq">12 (monthly)</span></td>
+              <td>Up, but barely</td>
+            </tr>
+            <tr>
+              <th scope="row">t</th>
+              <td>How long the amount is left alone. Years, and it does not have to be a whole number.</td>
+              <td><span class="params__value" id="p-time">10 years</span></td>
+              <td>Up, and accelerating</td>
+            </tr>
+            <tr>
+              <th scope="row">r/n</th>
+              <td>The periodic rate: the share of the annual rate applied each period. Derived, not entered.</td>
+              <td><span class="params__value" id="p-periodic">0.4167% a month</span></td>
+              <td>Derived</td>
+            </tr>
+            <tr>
+              <th scope="row">nt</th>
+              <td>The total number of compounding periods, and the exponent the whole formula turns on. Derived, not entered.</td>
+              <td><span class="params__value" id="p-periods">120 periods</span></td>
+              <td>Derived</td>
+            </tr>
+            <tr>
+              <th scope="row">A</th>
+              <td>The balance at the end: everything you started with, plus all the interest. Dollars.</td>
+              <td><span class="params__value" id="p-amount">$1,647.01</span></td>
+              <td>The output</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The rate the formula wants is the <strong>nominal annual rate</strong>, the one
+        quoted on the account. It is not the APY, and dividing it by <em>n</em> to get
+        the periodic rate is a convention rather than a derivation: 0.4167% a month
+        applied twelve times does not come to 5% a year, it comes to 5.116%. That
+        difference is not a rounding error. It is the entire subject of
+        <a href="#frequency">why compounding frequency matters</a>, and it is why a
+        savings account advertises an APY rather than the rate the formula uses.
+      </p>
+
+      <p>
+        Percentages go in as percentages and are converted once, at the edge of the
+        calculation: what you type as <em>5</em> becomes <em>0.05</em> before anything
+        else happens, and nothing downstream divides by a hundred again. The parameter
+        table above prints both forms for that reason.
+      </p>
+    </section>
+
+    <!-- ============================ 2. the calculator ============================ -->
+
+    <section class="calc" aria-labelledby="calculator">
+      <h2 id="calculator">Calculate compound interest</h2>
+
+      <div class="calc__layout">
+        <!--
+          One form, and it has no action, no method, and no submit button. That is
+          not an oversight: a submit button would turn Enter into a GET of this same
+          page with the amount in the query string, and page_location is the one
+          thing analytics records verbatim. compound.js blocks submission outright as
+          well, so the guarantee does not rest on an absence.
+        -->
+        <form class="calc__form" id="calc-form" novalidate>
+          <fieldset class="fieldset">
+            <legend class="fieldset__legend">The amount and the rate</legend>
+
+            <div class="field">
+              <label class="field__label" for="principal">Starting amount ($): the <em>P</em> in the formula</label>
+              <div class="field__control field__control--money">
+                <span class="field__adorn" aria-hidden="true">$</span>
+                <input class="field__input" id="principal" name="principal" type="text"
+                       inputmode="decimal" autocomplete="off" value="1000"
+                       aria-describedby="principal-hint principal-error">
+              </div>
+              <p class="field__hint" id="principal-hint">
+                A single amount, put in once and left alone. Money you plan to add later
+                is not part of this calculation &mdash; see
+                <a href="#contributions">what if you add money every month</a>.
+              </p>
+              <p class="field__error" id="principal-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="rate">Annual interest rate (%): the <em>r</em> in the formula</label>
+              <div class="field__control field__control--pct">
+                <input class="field__input" id="rate" name="rate" type="text"
+                       inputmode="decimal" autocomplete="off" value="5"
+                       aria-describedby="rate-hint rate-warn rate-error">
+                <span class="field__adorn field__adorn--end" aria-hidden="true">%</span>
+              </div>
+              <p class="field__hint" id="rate-hint">
+                The nominal annual rate, not the APY. 5% is an illustrative default and
+                not a rate quote; Curiosity Mapped does not track or offer savings rates.
+                Negative rates are accepted, because they have existed.
+              </p>
+              <p class="field__warn" id="rate-warn" hidden></p>
+              <p class="field__error" id="rate-error" hidden></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="fieldset calc__section">
+            <legend class="fieldset__legend">Frequency and time</legend>
+
+            <div class="field">
+              <label class="field__label" for="compounding">Compounding frequency: the <em>n</em> in the formula</label>
+              <select class="field__input" id="compounding" name="compounding"
+                      aria-describedby="compounding-hint">
+                <option value="1">Annually</option>
+                <option value="2">Semiannually</option>
+                <option value="4">Quarterly</option>
+                <option value="12" selected>Monthly</option>
+                <option value="365">Daily</option>
+                <option value="continuous">Continuously</option>
+              </select>
+              <p class="field__hint" id="compounding-hint">
+                How often interest is added to the balance. Daily is taken as 365
+                periods a year. Continuously is a different equation rather than a very
+                large number of periods, and choosing it changes the formula shown above.
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="time">Time: the <em>t</em> in the formula</label>
+              <input class="field__input" id="time" name="time" type="text"
+                     inputmode="decimal" autocomplete="off" value="10"
+                     aria-describedby="time-hint time-warn time-error">
+              <fieldset class="fieldset">
+                <legend class="visually-hidden">Time unit</legend>
+                <div class="units">
+                  <span class="units__option">
+                    <input class="units__input" type="radio" name="time-unit" id="time-unit-years" value="years" checked>
+                    <label class="units__label" for="time-unit-years">Years</label>
+                  </span>
+                  <span class="units__option">
+                    <input class="units__input" type="radio" name="time-unit" id="time-unit-months" value="months">
+                    <label class="units__label" for="time-unit-months">Months</label>
+                  </span>
+                </div>
+              </fieldset>
+              <p class="field__hint" id="time-hint">
+                Switching the unit converts the figure rather than reinterpreting it, so
+                10 years becomes 120 months. Fractions are allowed.
+              </p>
+              <p class="field__readout" id="time-readout" hidden></p>
+              <p class="field__warn" id="time-warn" hidden></p>
+              <p class="field__error" id="time-error" hidden></p>
+            </div>
+          </fieldset>
+
+          <!--
+            Inflation is offered where recurring contributions are not, and the reason
+            is structural rather than editorial. Dividing the answer by (1+i)^t leaves
+            the equation above the calculator true; adding contributions would not.
+          -->
+          <details class="disclosure calc__section">
+            <summary class="disclosure__summary">Show what the balance would be worth in today&rsquo;s money</summary>
+            <div class="disclosure__body">
+              <div class="field">
+                <label class="field__label" for="inflation">Assumed annual inflation (%)</label>
+                <div class="field__control field__control--pct">
+                  <input class="field__input" id="inflation" name="inflation" type="text"
+                         inputmode="decimal" autocomplete="off"
+                         aria-describedby="inflation-hint inflation-error">
+                  <span class="field__adorn field__adorn--end" aria-hidden="true">%</span>
+                </div>
+                <p class="field__hint" id="inflation-hint">
+                  Leave this blank and nothing is assumed. Enter a rate and the result
+                  panel gains a second figure, kept separate from the balance, showing
+                  what that balance would buy in today&rsquo;s money. It is a division
+                  applied to the answer, not part of the formula.
+                </p>
+                <p class="field__error" id="inflation-error" hidden></p>
+              </div>
+            </div>
+          </details>
+
+          <p class="calc__privacy">
+            The numbers you enter stay in this browser. Nothing you type here is sent
+            anywhere, nothing is written to the address bar, and nothing is saved
+            between visits. The page itself uses Google Analytics, as described in the
+            <a href="/privacy.html">privacy policy</a>.
+          </p>
+        </form>
+
+        <div class="calc__results">
+          <div class="result" id="result-panel">
+            <span class="result__label" id="result-label">Balance after 10 years</span>
+            <!--
+              aria-live is switched off deliberately. <output> is a live region by
+              default in several screen readers, and this page already has exactly
+              one -- #calc-status, below -- because two of them on one page talk over
+              each other and neither gets heard.
+            -->
+            <output class="result__amount" id="result-amount" for="principal rate compounding time" aria-live="off">$1,647.01</output>
+            <p class="result__stale-note" id="result-stale-note" hidden></p>
+
+            <div class="result__grid">
+              <div class="result__tile">
+                <span class="result__tile-label" id="result-interest-label">Interest earned</span>
+                <span class="result__tile-value" id="result-interest">$647.01</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Starting amount</span>
+                <span class="result__tile-value" id="result-principal">$1,000.00</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Effective annual rate</span>
+                <span class="result__tile-value" id="result-ear">5.116%</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Growth multiple</span>
+                <span class="result__tile-value" id="result-multiple">1.65×</span>
+              </div>
+            </div>
+
+            <div class="result__real" id="result-real" hidden>
+              <span class="result__label">In today&rsquo;s money</span>
+              <span class="result__real-amount" id="result-real-amount"></span>
+              <p class="result__real-note" id="result-real-note"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!--
+        The one live region on the page. Visually hidden, because the figures are
+        already on screen for anyone who can see them; written on a 500ms trailing
+        debounce, because a region that fires on every keystroke is unusable.
+      -->
+      <div class="status" id="calc-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </section>
+
+    <!-- ============================ 3. your result ============================ -->
+
+    <section aria-labelledby="your-result">
+      <h2 id="your-result">What your numbers mean</h2>
+
+      <div class="explain" id="explain">
+        <p>You entered $1,000 at 5% a year, compounded monthly, left for 10 years.</p>
+        <p>Dividing the annual rate by 12 gives a periodic rate of 0.4167% a month, and 10 years of monthly compounding gives 120 periods.</p>
+        <p>A 5% annual rate does not mean 5% is added once a year here. Under monthly compounding, 0.4167% of the current balance is applied 12 times, and because each application becomes part of the balance the next one is calculated on, a year of it comes to 5.116% rather than 5%. That is what the formula does. Whether a particular account behaves this way is a question about its terms, not about the arithmetic.</p>
+        <p>After 10 years the balance is $1,647.01, of which $647.01 is interest. That is 1.65 times what you started with. Simple interest on the same amount at the same rate would have reached $1,500; the difference, $147.01, is the interest that earned interest of its own.</p>
+        <p hidden></p>
+      </div>
+
+      <!--
+        The substitution, rebuilt on every keystroke. This is the part a generic
+        calculator leaves out: not the formula, and not the answer, but the one
+        standing between them with the reader's own figures in it.
+      -->
+      <figure class="formula formula--worked" id="substitution" aria-labelledby="substitution-caption">
+        <div id="substitution-math" tabindex="0" role="region"
+             aria-label="The formula with your figures in it, scrollable">
+          <math display="block">
+            <semantics>
+              <mrow>
+                <mi>A</mi><mo>=</mo>
+                <mn>$1,000</mn>
+                <msup>
+                  <mrow>
+                    <mo>(</mo><mn>1</mn><mo>+</mo>
+                    <mfrac><mn>0.05</mn><mn>12</mn></mfrac>
+                    <mo>)</mo>
+                  </mrow>
+                  <mrow><mn>12</mn><mo>&#xD7;</mo><mn>10</mn></mrow>
+                </msup>
+                <mo>&#x2248;</mo>
+                <mn>$1,647.01</mn>
+              </mrow>
+            </semantics>
+          </math>
+        </div>
+        <figcaption class="chart__caption" id="substitution-caption">The formula with your figures in it.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================ 4. frequency ============================ -->
+
+    <section aria-labelledby="frequency">
+      <h2 id="frequency">Why compounding frequency matters</h2>
+
+      <p>
+        Adding interest more often is worth more, because each addition starts earning
+        sooner. That much is intuitive. What is not intuitive is how little it is
+        worth, and how quickly the gains run out.
+      </p>
+
+      <div class="sens">
+        <div class="sens__wrap" tabindex="0" role="region" aria-label="Compounding frequency compared, scrollable">
+          <table class="table">
+            <caption id="freq-caption">The same $1,000 at 5% over 10 years, compounded at every frequency this page offers. Your own row is marked. The whole range, from annually to continuously, is worth $19.83 here, and $18.12 of that is spent getting from annually to monthly. The difference is too small to see on a chart at this scale, which is the finding rather than a limitation of the picture.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Compounded</th>
+                <th scope="col"><em>n</em></th>
+                <th scope="col">Periodic rate</th>
+                <th scope="col">Balance</th>
+                <th scope="col">Effective annual rate</th>
+                <th scope="col">Against annual</th>
+              </tr>
+            </thead>
+            <tbody id="freq-body">
+            <tr>
+              <th scope="row">Annually</th>
+              <td>1</td>
+              <td>5%</td>
+              <td>$1,628.89</td>
+              <td>5%</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <th scope="row">Semiannually</th>
+              <td>2</td>
+              <td>2.5%</td>
+              <td>$1,638.62</td>
+              <td>5.062%</td>
+              <td>+$9.73</td>
+            </tr>
+            <tr>
+              <th scope="row">Quarterly</th>
+              <td>4</td>
+              <td>1.25%</td>
+              <td>$1,643.62</td>
+              <td>5.095%</td>
+              <td>+$14.73</td>
+            </tr>
+            <tr aria-current="true" class="sens__row--current">
+              <th scope="row">Monthly <span class="sens__tag">yours</span></th>
+              <td>12</td>
+              <td>0.4167%</td>
+              <td>$1,647.01</td>
+              <td>5.116%</td>
+              <td>+$18.12</td>
+            </tr>
+            <tr>
+              <th scope="row">Daily</th>
+              <td>365</td>
+              <td>0.0137%</td>
+              <td>$1,648.66</td>
+              <td>5.127%</td>
+              <td>+$19.77</td>
+            </tr>
+            <tr>
+              <th scope="row">Continuously</th>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td>$1,648.72</td>
+              <td>5.127%</td>
+              <td>+$19.83</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p>
+        Going from annual to monthly compounding is worth $18.12 on these
+        figures. Going from monthly all the way to continuous &mdash; past daily, past
+        hourly, past every subdivision there is &mdash; is worth another
+        $1.71. Continuous compounding beats daily by
+        $0.06.
+      </p>
+
+      <p class="note">
+        There is no chart of this above, and the absence is deliberate. Six curves
+        spanning about one per cent would render as a single line at any size this page
+        could draw them, and a picture that cannot show its own data is worse than the
+        numbers it was drawn from. That the difference is too small to see <em>is</em>
+        the finding.
+      </p>
+
+      <h3 id="nominal-periodic-effective">Nominal, periodic, and effective are three different numbers</h3>
+
+      <p>
+        All three describe the same account. The <strong>nominal annual rate</strong> is
+        what is quoted, and it is what goes into the formula as <em>r</em>. The
+        <strong>periodic rate</strong> is <em>r</em>&nbsp;/&nbsp;<em>n</em>, the share
+        applied each time interest is added. The <strong>effective annual rate</strong>
+        is what a year of that process actually comes to, once each period&rsquo;s
+        interest has joined the balance:
+        (1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>n</em></sup>&nbsp;&minus;&nbsp;1,
+        or <em>e</em><sup><em>r</em></sup>&nbsp;&minus;&nbsp;1 under continuous
+        compounding.
+      </p>
+
+      <p>
+        On the default figures those three are 5%, 0.4167% a month, and 5.116%. The
+        first is what the account advertises as a rate, the second is what it does
+        twelve times, and the third is what you actually get. The
+        <a href="/tools/mortgage-calculator.html#periodic-rate">mortgage calculator
+        makes the same distinction from the borrowing side</a>, where the convention
+        runs the other way and costs you rather than pays you.
+      </p>
+
+      <h3 id="apr-apy">APR and APY are not the same thing</h3>
+
+      <p>
+        <strong>APY</strong>, annual percentage yield, is the effective annual rate
+        under another name. It is the figure a savings account is required to advertise,
+        precisely because it makes accounts with different compounding frequencies
+        comparable. <strong>APR</strong>, annual percentage rate, is the nominal rate
+        &mdash; and on a loan it usually means something broader still, because United
+        States lenders must fold certain fees into it. So an APR on a mortgage quote
+        and an APY on a savings account are not two words for one idea, and neither is
+        the number this formula takes.
+      </p>
+
+      <p>
+        If you have an APY and want to know what to type here, the relationship runs
+        backwards as well: the nominal rate that produces a given effective rate is
+        <em>n</em>[(1&nbsp;+&nbsp;EAR)<sup>1/<em>n</em></sup>&nbsp;&minus;&nbsp;1]. For a
+        5% APY compounded monthly that is 4.889%, not 5%.
+      </p>
+    </section>
+
+    <!-- ============================ 5. growth ============================ -->
+
+    <section aria-labelledby="growth">
+      <h2 id="growth">How the balance grows</h2>
+
+      <p>
+        Two pictures, both drawn from the same figures the tables below them carry. The
+        first separates what you put in from what the interest added; the second sets
+        compound interest against simple interest on identical terms.
+      </p>
+
+      <div class="charts">
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-balance-caption">What you put in, and what the interest added</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-balance-caption" aria-describedby="chart-balance-desc"
+                 focusable="false">
+              <defs>
+                <!--
+                  The interest band is hatched as well as tinted. Two areas told apart
+                  by hue alone would be unreadable to a colour-blind reader and would
+                  disappear entirely in forced-colors mode.
+                -->
+                <pattern id="hatch-balance" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <line class="chart__hatch" x1="0" y1="0" x2="0" y2="6"></line>
+                </pattern>
+              </defs>
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__band--principal" id="chart-balance-principal" d="M0.00,94.28L64.00,94.28L128.00,94.28L192.00,94.28L256.00,94.28L320.00,94.28L384.00,94.28L448.00,94.28L512.00,94.28L576.00,94.28L640.00,94.28L640.00,240.00L576.00,240.00L512.00,240.00L448.00,240.00L384.00,240.00L320.00,240.00L256.00,240.00L192.00,240.00L128.00,240.00L64.00,240.00L0.00,240.00Z"></path>
+              <path class="chart__band--interest" id="chart-balance-interest" d="M0.00,94.28L64.00,86.83L128.00,78.99L192.00,70.75L256.00,62.09L320.00,52.99L384.00,43.42L448.00,33.37L512.00,22.79L576.00,11.68L640.00,0.00L640.00,94.28L576.00,94.28L512.00,94.28L448.00,94.28L384.00,94.28L320.00,94.28L256.00,94.28L192.00,94.28L128.00,94.28L64.00,94.28L0.00,94.28Z"></path>
+              <path id="chart-balance-interest-hatch" fill="url(#hatch-balance)" d="M0.00,94.28L64.00,86.83L128.00,78.99L192.00,70.75L256.00,62.09L320.00,52.99L384.00,43.42L448.00,33.37L512.00,22.79L576.00,11.68L640.00,0.00L640.00,94.28L576.00,94.28L512.00,94.28L448.00,94.28L384.00,94.28L320.00,94.28L256.00,94.28L192.00,94.28L128.00,94.28L64.00,94.28L0.00,94.28Z"></path>
+              <path class="chart__line" id="chart-balance-line" d="M0.00,94.28L64.00,86.83L128.00,78.99L192.00,70.75L256.00,62.09L320.00,52.99L384.00,43.42L448.00,33.37L512.00,22.79L576.00,11.68L640.00,0.00"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-balance-ymax">$1,647</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-balance-xmax">Year 10</span></p>
+          <!--
+            The band's position carries the meaning as well as its fill: above the
+            principal line is interest, below it is a decline. The label says which,
+            because at a negative rate "Interest" would be the wrong word.
+          -->
+          <p class="chart__legend">
+            <span class="chart__key"><span class="chart__swatch chart__swatch--principal" aria-hidden="true"></span> Starting amount (solid, below)</span>
+            <span class="chart__key"><span class="chart__swatch chart__swatch--interest" aria-hidden="true"></span> <span id="chart-balance-legend">Interest (hatched, above)</span></span>
+          </p>
+          <p class="visually-hidden" id="chart-balance-desc">Balance at the end of year 2, $1,105, year 4, $1,221, year 6, $1,349, year 8, $1,491, and year 10, $1,647. The lower band is the $1,000 you started with and never changes; everything above it is interest, and that band widens as the interest earns interest of its own.</p>
+        </figure>
+
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-compare-caption">Compound interest against simple interest</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-compare-caption" aria-describedby="chart-compare-desc"
+                 focusable="false">
+              <defs>
+                <pattern id="hatch-compare" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <line class="chart__hatch" x1="0" y1="0" x2="0" y2="6"></line>
+                </pattern>
+              </defs>
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__band--gap" id="chart-compare-gap" fill="url(#hatch-compare)" d="M0.00,94.28L64.00,86.83L128.00,78.99L192.00,70.75L256.00,62.09L320.00,52.99L384.00,43.42L448.00,33.37L512.00,22.79L576.00,11.68L640.00,0.00L640.00,21.42L576.00,28.71L512.00,35.99L448.00,43.28L384.00,50.57L320.00,57.85L256.00,65.14L192.00,72.42L128.00,79.71L64.00,87.00L0.00,94.28Z"></path>
+              <path class="chart__line chart__line--muted" id="chart-compare-simple" d="M0.00,94.28L64.00,87.00L128.00,79.71L192.00,72.42L256.00,65.14L320.00,57.85L384.00,50.57L448.00,43.28L512.00,35.99L576.00,28.71L640.00,21.42"></path>
+              <path class="chart__line" id="chart-compare-compound" d="M0.00,94.28L64.00,86.83L128.00,78.99L192.00,70.75L256.00,62.09L320.00,52.99L384.00,43.42L448.00,33.37L512.00,22.79L576.00,11.68L640.00,0.00"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-compare-ymax">$1,647</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-compare-xmax">Year 10</span></p>
+          <p class="chart__legend">
+            <span class="chart__key"><span class="chart__swatch chart__swatch--compound" aria-hidden="true"></span> Compound (curved)</span>
+            <span class="chart__key"><span class="chart__swatch chart__swatch--simple" aria-hidden="true"></span> Simple (straight)</span>
+          </p>
+          <p class="visually-hidden" id="chart-compare-desc">Simple interest reaches $1,500 after 10 years and compound interest reaches $1,647. Simple interest is a straight line because it is always calculated on the $1,000 you started with; the compound line curves away from it, and the gap between them, $147, is the interest that earned interest.</p>
+        </figure>
+      </div>
+
+      <div class="amort">
+        <div class="amort__wrap table-scroll" tabindex="0" role="region" aria-label="Year by year growth, scrollable">
+          <table class="table">
+            <caption id="yearly-caption">Interest earned each year, the interest earned so far, and the balance at the end of each year, for $1,000 at 5% compounded monthly. Every row is the formula evaluated at that year, not a running total, so the last row is the balance above rather than a number that resembles it.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Year</th>
+                <th scope="col">Interest that year</th>
+                <th scope="col">Interest so far</th>
+                <th scope="col">Balance</th>
+              </tr>
+            </thead>
+            <tbody id="yearly-body">
+            <tr><th scope="row">1</th><td>$51.16</td><td>$51.16</td><td>$1,051.16</td></tr>
+            <tr><th scope="row">2</th><td>$53.78</td><td>$104.94</td><td>$1,104.94</td></tr>
+            <tr><th scope="row">3</th><td>$56.53</td><td>$161.47</td><td>$1,161.47</td></tr>
+            <tr><th scope="row">4</th><td>$59.42</td><td>$220.90</td><td>$1,220.90</td></tr>
+            <tr><th scope="row">5</th><td>$62.46</td><td>$283.36</td><td>$1,283.36</td></tr>
+            <tr><th scope="row">6</th><td>$65.66</td><td>$349.02</td><td>$1,349.02</td></tr>
+            <tr><th scope="row">7</th><td>$69.02</td><td>$418.04</td><td>$1,418.04</td></tr>
+            <tr><th scope="row">8</th><td>$72.55</td><td>$490.59</td><td>$1,490.59</td></tr>
+            <tr><th scope="row">9</th><td>$76.26</td><td>$566.85</td><td>$1,566.85</td></tr>
+            <tr><th scope="row">10</th><td>$80.16</td><td>$647.01</td><td>$1,647.01</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <details class="disclosure" id="periods-details">
+        <summary class="disclosure__summary">Show the first compounding periods, one at a time</summary>
+        <div class="disclosure__body">
+          <p>
+            The table above is the formula evaluated at each year. This one is the
+            recurrence underneath it: a balance, the interest applied to that balance,
+            and the balance that results. It is the only place on the page where the
+            two rows either side of a compounding event are both visible, which is
+            where &ldquo;interest on interest&rdquo; actually happens.
+          </p>
+          <p class="field__hint" id="periods-note" hidden></p>
+          <div class="amort amort--periods">
+            <div class="amort__wrap table-scroll" tabindex="0" role="region" aria-label="The first compounding periods, scrollable">
+              <table class="table">
+                <caption id="periods-caption">The first 10 of 120 compounding periods. Each period applies 0.4167% to the balance as it stands, which is why the interest column rises while the rate does not.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Period</th>
+                    <th scope="col">Opening balance</th>
+                    <th scope="col">Interest</th>
+                    <th scope="col">Closing balance</th>
+                  </tr>
+                </thead>
+                <tbody id="periods-body">
+              <tr><th scope="row">1</th><td>$1,000.00</td><td>$4.17</td><td>$1,004.17</td></tr>
+              <tr><th scope="row">2</th><td>$1,004.17</td><td>$4.18</td><td>$1,008.35</td></tr>
+              <tr><th scope="row">3</th><td>$1,008.35</td><td>$4.20</td><td>$1,012.55</td></tr>
+              <tr><th scope="row">4</th><td>$1,012.55</td><td>$4.22</td><td>$1,016.77</td></tr>
+              <tr><th scope="row">5</th><td>$1,016.77</td><td>$4.24</td><td>$1,021.01</td></tr>
+              <tr><th scope="row">6</th><td>$1,021.01</td><td>$4.25</td><td>$1,025.26</td></tr>
+              <tr><th scope="row">7</th><td>$1,025.26</td><td>$4.27</td><td>$1,029.53</td></tr>
+              <tr><th scope="row">8</th><td>$1,029.53</td><td>$4.29</td><td>$1,033.82</td></tr>
+              <tr><th scope="row">9</th><td>$1,033.82</td><td>$4.31</td><td>$1,038.13</td></tr>
+              <tr><th scope="row">10</th><td>$1,038.13</td><td>$4.33</td><td>$1,042.46</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================ 6. understanding ============================ -->
+
+    <section aria-labelledby="understanding">
+      <h2 id="understanding">Understanding the result</h2>
+
+      <h3 id="interest-on-interest">Where &ldquo;interest on interest&rdquo; actually shows up</h3>
+
+      <p>
+        On the default figures the first month earns $4.17 and the second
+        earns $4.18. A single cent, on the same rate and the same deposit,
+        and it is the entire mechanism: the second month is calculated on a balance
+        that includes the first month&rsquo;s interest. Nothing else changed.
+      </p>
+
+      <p>
+        A cent a month sounds like nothing, and over one month it is. Run it for ten
+        years and the same effect is the difference between the first year, which earns
+        $51.16, and the tenth, which earns $80.16 &mdash; on an
+        unchanged rate and without another dollar going in. That is what the widening
+        band in the first chart above is showing.
+      </p>
+
+      <h3 id="compound-vs-simple">Compound interest against simple interest</h3>
+
+      <p>
+        Simple interest is always worked out on the amount you started with. At 5% on
+        $1,000 that is a flat $50 a year, forever, and after ten years the
+        balance is $1,500 &mdash; the straight line in the second chart. Compound
+        interest reaches $1,647.01 over the same ten years at the same rate. The gap,
+        $147.01, is precisely the interest that earned interest of its own.
+      </p>
+
+      <p>
+        The two are not always in that order. Over a period <em>shorter</em> than one
+        compounding period, compound interest is worth slightly <em>less</em> than
+        simple interest &mdash; see <a href="#edge-partial">a partial compounding
+        period</a>. It is a genuine reversal rather than a rounding artefact, and it
+        catches people out.
+      </p>
+
+      <h3 id="doubling">How long it takes to double</h3>
+
+      <p>
+        The exact answer is
+        ln&nbsp;2&nbsp;/&nbsp;[<em>n</em>&nbsp;ln(1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)],
+        which on your figures is <span class="params__value" id="doubling-exact">13.89 years</span>.
+      </p>
+
+      <p class="note" id="doubling-note">
+        <strong>The Rule of 72.</strong> Divide 72 by the rate as a percentage and you
+        get an approximate doubling time: here
+        72&nbsp;&divide;&nbsp;5&nbsp;=&nbsp;<span id="doubling-rule">14.4 years</span>,
+        against the exact 13.89 years. It is a mental shortcut, it is accurate enough
+        for rates in the low single and double digits, and it is <em>not</em> used
+        anywhere in this calculator &mdash; every figure on this page comes from the
+        formula, not from the rule.
+      </p>
+    </section>
+
+    <!-- ============================ 7. sensitivity ============================ -->
+
+    <section aria-labelledby="sensitivity">
+      <h2 id="sensitivity">What happens when you change one input</h2>
+
+      <p>
+        Both tables below are the same calculation run again against figures you did not
+        enter, so that &ldquo;what if the rate were a point higher&rdquo; is answered by
+        the formula rather than by a rule of thumb. Your own row is marked in each.
+      </p>
+
+      <h3 id="sensitivity-rate">Changing the rate</h3>
+
+      <div class="sens">
+        <div class="sens__wrap" tabindex="0" role="region" aria-label="Other rates, scrollable">
+          <table class="table">
+            <caption id="sens-rate-caption">The same $1,000 over 10 years, compounded monthly, at other rates. Your own row is marked. One percentage point more would add $172.39 to the balance.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Rate</th>
+                <th scope="col">Balance</th>
+                <th scope="col">Against yours</th>
+                <th scope="col">Interest</th>
+              </tr>
+            </thead>
+            <tbody id="sens-rate-body">
+            <tr>
+              <th scope="row">4%</th>
+              <td>$1,490.83</td>
+              <td>−$156.18</td>
+              <td>$490.83</td>
+            </tr>
+            <tr>
+              <th scope="row">4.5%</th>
+              <td>$1,566.99</td>
+              <td>−$80.02</td>
+              <td>$566.99</td>
+            </tr>
+            <tr aria-current="true" class="sens__row--current">
+              <th scope="row">5% <span class="sens__tag">yours</span></th>
+              <td>$1,647.01</td>
+              <td>&mdash;</td>
+              <td>$647.01</td>
+            </tr>
+            <tr>
+              <th scope="row">5.5%</th>
+              <td>$1,731.08</td>
+              <td>+$84.07</td>
+              <td>$731.08</td>
+            </tr>
+            <tr>
+              <th scope="row">6%</th>
+              <td>$1,819.40</td>
+              <td>+$172.39</td>
+              <td>$819.40</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 id="sensitivity-time">Changing the length of time</h3>
+
+      <div class="sens">
+        <div class="sens__wrap" tabindex="0" role="region" aria-label="Other lengths of time, scrollable">
+          <table class="table">
+            <caption id="sens-time-caption">The same $1,000 at 5%, compounded monthly, over other lengths of time. Your own row is marked. Leaving it for 20 years rather than 10 would add a further $1,065.63 to the balance.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Balance</th>
+                <th scope="col">Against yours</th>
+                <th scope="col">Interest</th>
+              </tr>
+            </thead>
+            <tbody id="sens-time-body">
+            <tr>
+              <th scope="row">5 years</th>
+              <td>$1,283.36</td>
+              <td>−$363.65</td>
+              <td>$283.36</td>
+            </tr>
+            <tr aria-current="true" class="sens__row--current">
+              <th scope="row">10 years <span class="sens__tag">yours</span></th>
+              <td>$1,647.01</td>
+              <td>&mdash;</td>
+              <td>$647.01</td>
+            </tr>
+            <tr>
+              <th scope="row">20 years</th>
+              <td>$2,712.64</td>
+              <td>+$1,065.63</td>
+              <td>$1,712.64</td>
+            </tr>
+            <tr>
+              <th scope="row">30 years</th>
+              <td>$4,467.74</td>
+              <td>+$2,820.73</td>
+              <td>$3,467.74</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p>
+        Rate and time do not act alike. The rate sits inside the base of an exponent and
+        time sits in the exponent itself, which is why doubling the years does far more
+        than doubling the rate. It is also why the two tables above are worth reading
+        together: the same balance can be reached by a higher rate you may not be able
+        to find, or by a longer wait you can simply decide to take.
+      </p>
+    </section>
+
+    <!-- ============================ 8. purchasing power ============================ -->
+
+    <section aria-labelledby="purchasing-power">
+      <h2 id="purchasing-power">What the balance will be worth</h2>
+
+      <p>
+        The formula returns a number of <em>future dollars</em>. It says nothing at all
+        about what those dollars will buy, and the difference is not small. Growing
+        $1,000 to $1,647.01 over ten years is a 5% nominal return; if prices
+        rise 3% a year over the same decade, the amount that actually matters &mdash;
+        what the balance buys &mdash; has grown by about 1.94% a year, not 5%.
+      </p>
+
+      <p>
+        The relationship is exact rather than a subtraction:
+        real&nbsp;=&nbsp;(1&nbsp;+&nbsp;nominal)&nbsp;/&nbsp;(1&nbsp;+&nbsp;inflation)&nbsp;&minus;&nbsp;1.
+        Subtracting inflation from the nominal rate gets 2.00% where the true figure is
+        1.94%, which is close enough for conversation and not close enough for a page
+        that is in the middle of explaining compounding.
+      </p>
+
+      <p>
+        The optional adjustment in the calculator applies
+        <em>A</em>&nbsp;/&nbsp;(1&nbsp;+&nbsp;<em>i</em>)<sup><em>t</em></sup> to the
+        answer and shows the result under a separate heading, in lighter type, below a
+        dashed rule. That presentation is deliberate: it is not a peer of the balance,
+        because the formula did not produce it.
+      </p>
+
+      <p class="note">
+        What the adjustment does not do: forecast inflation, or know anything about what
+        you personally buy. It applies one constant rate that you supplied. Published
+        inflation measures track a basket of goods that is nobody&rsquo;s actual basket,
+        and future inflation is not a quantity any calculator can know.
+      </p>
+    </section>
+
+    <!-- ============================ 9. contributions ============================ -->
+
+    <section aria-labelledby="contributions">
+      <h2 id="contributions">What if you add money every month?</h2>
+
+      <p>
+        Then this is not the calculation you want, and the difference is worth being
+        precise about. Compound interest describes what happens to an amount that is
+        already there. A stream of equal payments made at regular intervals is an
+        <em>annuity</em>, it has a formula of its own, and the two are added together
+        rather than being one idea.
+      </p>
+
+      <p>
+        For a payment <em>PMT</em> made at the end of every period, the payments alone
+        grow to
+        <em>PMT</em>&nbsp;&times;&nbsp;[((1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>&nbsp;&minus;&nbsp;1)&nbsp;/&nbsp;(<em>r</em>/<em>n</em>)]
+        &mdash; an <strong>ordinary annuity</strong>. Paid at the <em>start</em> of each
+        period instead, every payment compounds one period longer, so the whole thing is
+        multiplied by (1&nbsp;+&nbsp;<em>r</em>/<em>n</em>); that is an
+        <strong>annuity due</strong>. The timing is not a detail: $100 a year for five
+        years at 6% comes to $563.71 paid at year end and $597.53 paid at year start, on
+        identical money.
+      </p>
+
+      <p>
+        This page does not model any of that, on purpose. The formula printed above the
+        calculator is the formula that produced the answer, and that is the promise the
+        whole page rests on. Folding contributions in would break it: the number on
+        screen would no longer be
+        <em>A</em>&nbsp;=&nbsp;<em>P</em>(1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>,
+        and the reader would have no way of telling which part of the total came from
+        growth and which from their own deposits. A savings growth calculator that owns
+        the annuity formula outright is a better answer than a drawer bolted onto this
+        one, and it is listed under <a href="#related">related calculators</a>.
+      </p>
+
+      <p class="note">
+        In the meantime, the honest workaround: run this calculator on the amount you
+        already have to see what compounding does to it, and treat anything you pay in
+        later as separate. What you must not do is enter the total of all your future
+        deposits as the starting amount &mdash; money paid in five years from now has not
+        been compounding for those five years, and the formula would credit it as though
+        it had.
+      </p>
+    </section>
+
+    <!-- ============================ 10. factors ============================ -->
+
+    <section aria-labelledby="factors">
+      <h2 id="factors">What moves the number, and what this model can see</h2>
+
+      <div class="factors factors__wrap" tabindex="0" role="region"
+           aria-label="Factors and whether the model accounts for them, scrollable">
+        <table class="table">
+          <caption>Everything that changes what a balance actually becomes, and where each one stands relative to the arithmetic on this page.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Factor</th>
+              <th scope="col">What it does</th>
+              <th scope="col">Where it stands</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Starting amount</th>
+              <td>Scales the result in direct proportion. Twice the amount is exactly twice the balance and exactly twice the interest.</td>
+              <td><span class="tag tag--in">In the formula</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Interest rate</th>
+              <td>Sits inside the base of the exponent, so its effect is more than proportional and grows with the horizon.</td>
+              <td><span class="tag tag--in">In the formula</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Compounding frequency</th>
+              <td>Splits the annual rate into smaller, more numerous applications. Real, and much smaller than expected.</td>
+              <td><span class="tag tag--in">In the formula</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Time</th>
+              <td>Sits in the exponent itself, which is why it is the most powerful input on the page.</td>
+              <td><span class="tag tag--in">In the formula</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Inflation</th>
+              <td>Does not change the balance at all. Changes what the balance is worth, which is a different question and a separate division.</td>
+              <td><span class="tag tag--side">You supply it</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Regular contributions</th>
+              <td>Add to the total and compound on their own account, but on an annuity formula rather than this one.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Withdrawals</th>
+              <td>Remove principal and everything that principal would have earned afterwards.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Income tax on interest</th>
+              <td>Reduces what is left to compound each period, so it compounds against you.</td>
+              <td><span class="tag tag--out">Outside the model</span> &mdash; but you can enter an after-tax rate</td>
+            </tr>
+            <tr>
+              <th scope="row">Account fees and expense ratios</th>
+              <td>Act as a permanent reduction in the rate, taken before compounding rather than after.</td>
+              <td><span class="tag tag--out">Outside the model</span> &mdash; but you can enter a net rate</td>
+            </tr>
+            <tr>
+              <th scope="row">Rate changes over time</th>
+              <td>Break the single-rate assumption entirely. A variable account is a sequence of different rates, not one average rate.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Rounding of each interest credit</th>
+              <td>A real account rounds every credit to the cent. Worth a few cents over a decade, and it can fall either way.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Day-count conventions</th>
+              <td>Some accounts divide by 360 rather than 365, or count actual days. This page uses 365 and ignores leap years.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Minimum balances and tiered rates</th>
+              <td>Many accounts pay one rate below a threshold and another above it, so the rate changes as the balance grows.</td>
+              <td><span class="tag tag--out">Outside the model</span></td>
+            </tr>
+            <tr>
+              <th scope="row">What an investment will actually return</th>
+              <td>Shares, funds, and property do not pay a fixed rate. Their returns vary, and a variable series does not compound at its own average.</td>
+              <td><span class="tag tag--never">Not estimable</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The four tags are the whole point of the table. <strong>In the formula</strong>
+        means the figure is one of the four symbols above.
+        <strong>You supply it</strong> means the page will carry it, separately
+        labelled, if you enter it, and will not guess it if you do not.
+        <strong>Outside the model</strong> means it is real and this arithmetic does not
+        describe it. <strong>Not estimable</strong> means no calculator could produce it
+        honestly from what this one is given, and a figure offered anyway would be
+        invented rather than computed.
+      </p>
+
+      <p>
+        Two of the &ldquo;outside the model&rdquo; rows have a workaround worth knowing.
+        Tax and fees both act, to a first approximation, as a reduction in the rate: if
+        interest is taxed at 30%, entering 3.5% instead of 5% models it, and if a fund
+        charges 0.5% a year, entering 4.5% instead of 5% does the same. Neither is
+        offered as an input here, because there is no universal tax treatment to assume
+        &mdash; the right rate depends on your jurisdiction, your bracket, and whether
+        the account is sheltered &mdash; and a calculator that picked one for you would
+        be inventing a figure rather than computing one.
+      </p>
+    </section>
+
+    <!-- ============================ 11. misconceptions ============================ -->
+
+    <section aria-labelledby="misconceptions">
+      <h2 id="misconceptions">Common misconceptions</h2>
+
+      <h3 id="misconception-annual">&ldquo;5% interest means 5% more money every year&rdquo;</h3>
+
+      <p>
+        Only when interest is added once a year. Under monthly compounding the account
+        applies 0.4167% a month twelve times, and because each application joins the
+        balance, the year comes to 5.116%. The quoted rate and the yearly growth are
+        two different numbers whenever interest is added more than once a year, and the
+        gap between them is exactly what the effective annual rate measures.
+      </p>
+
+      <h3 id="misconception-daily">&ldquo;Daily compounding makes a big difference&rdquo;</h3>
+
+      <p>
+        It makes a small one. On $1,000 at 5% over ten years, daily compounding
+        is worth $19.77 more than annual &mdash; and monthly already
+        collects $18.12 of that. The returns diminish sharply, because
+        each further split of the year applies a smaller rate over a shorter interval.
+        An account advertising daily compounding at a lower rate is almost always worse
+        than one compounding monthly at a higher one; compare the APYs, not the
+        frequencies.
+      </p>
+
+      <h3 id="misconception-apr">&ldquo;APR and APY are the same thing&rdquo;</h3>
+
+      <p>
+        They are related and they are not equal. APY is the effective annual rate, which
+        includes the effect of compounding; APR is the nominal rate, which does not, and
+        on a loan it also folds in certain fees. A 5% APY and a 5% APR compounded
+        monthly are different accounts. The formula on this page takes the nominal
+        rate &mdash; see <a href="#apr-apy">APR and APY are not the same thing</a> for
+        converting between them.
+      </p>
+
+      <h3 id="misconception-contributions">&ldquo;Compound interest includes the money I add each month&rdquo;</h3>
+
+      <p>
+        It does not. <em>P</em> is what you start with, and nothing in
+        <em>A</em>&nbsp;=&nbsp;<em>P</em>(1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>
+        represents a later deposit. Regular payments have their own formula and are
+        added to this one rather than being part of it. The mistake matters because it
+        runs in the expensive direction: entering the total of your future deposits as
+        the starting amount credits every one of them with growth it has not had.
+      </p>
+
+      <h3 id="misconception-forecast">&ldquo;This is what my investment will be worth&rdquo;</h3>
+
+      <p>
+        It is what a <em>constant</em> rate would produce. Savings accounts and
+        certificates come close to that for as long as the rate holds. Shares, funds,
+        and property do not: their returns vary year to year, and a variable series does
+        not compound at its own average &mdash; a year of &minus;20% followed by a year
+        of +20% averages zero and leaves you down 4%. Treat the output as arithmetic
+        about a rate, not a forecast about a market.
+      </p>
+
+      <h3 id="misconception-inflation">&ldquo;Compound interest already accounts for inflation&rdquo;</h3>
+
+      <p>
+        Nothing in the formula knows what money buys. The result is a count of future
+        dollars, and future dollars are worth less than today&rsquo;s. This is the single
+        most common way a compound interest figure misleads someone, which is why the
+        page offers <a href="#purchasing-power">an explicit adjustment</a> and keeps its
+        answer visibly separate from the balance rather than blending the two.
+      </p>
+    </section>
+
+    <!-- ============================ 12. limitations ============================ -->
+
+    <section aria-labelledby="limitations">
+      <h2 id="limitations">What this calculator does not include</h2>
+
+      <p>
+        Being explicit about this is more useful than quietly modelling a guess. None of
+        the following is accounted for:
+      </p>
+
+      <ul>
+        <li><strong>Money paid in or taken out.</strong> Deposits after the first and
+        withdrawals of any kind. Both change the balance the rate is applied to, and
+        neither appears in the formula.</li>
+        <li><strong>Tax on the interest.</strong> Interest is generally taxable income,
+        and tax paid each year is money that does not compound in the years after. There
+        is no universal treatment to assume.</li>
+        <li><strong>Fees, expense ratios, and penalties.</strong> Including early
+        withdrawal penalties on certificates, which can exceed the interest earned.</li>
+        <li><strong>Rate changes.</strong> One rate, held for the whole period, is an
+        assumption and rarely a fact.</li>
+        <li><strong>Rounding of each interest credit.</strong> Real accounts round to
+        the cent every period; the formula does not.</li>
+        <li><strong>Day-count conventions.</strong> 365 days, no leap years, no 30/360.</li>
+        <li><strong>Minimum balances, tiered rates, and promotional periods.</strong>
+        Common on real accounts, and all of them make the rate a function of the balance
+        or the date.</li>
+        <li><strong>Currency and jurisdiction.</strong> All figures are United States
+        dollars, and no deposit insurance limit, reporting rule, or account type is
+        modelled.</li>
+        <li><strong>Any judgement about whether this is a good idea.</strong> This page
+        computes arithmetic. It has no view on what you should do with your money.</li>
+      </ul>
+    </section>
+
+    <!-- ============================ 13. edge cases ============================ -->
+
+    <section aria-labelledby="edge-cases">
+      <h2 id="edge-cases">Edge cases</h2>
+
+      <h3 id="edge-zero-rate">A zero rate</h3>
+
+      <p>
+        The balance is the amount you started with, at every frequency and over any
+        length of time: (1&nbsp;+&nbsp;0)<sup><em>nt</em></sup> is 1 whatever the
+        exponent. The effective annual rate is zero, the growth multiple is 1.00, and
+        there is no doubling time to report, so the page does not offer one. Both charts
+        flatten and say so rather than drawing a line that implies growth.
+      </p>
+
+      <h3 id="edge-negative-rate">A negative rate</h3>
+
+      <p>
+        Accepted, down to &minus;20%. Negative deposit rates were policy across much of
+        Europe and in Japan between 2014 and 2022, the arithmetic describes them
+        perfectly well, and refusing them would be the calculator declining to describe
+        something that existed. The balance decays instead of growing, and the page
+        reports a decline rather than calling a loss &ldquo;interest earned&rdquo;.
+      </p>
+
+      <p>
+        One genuine surprise here: at a negative rate, compounding <em>more often leaves
+        you with more money</em>, not less. Taking 5% off once gets you to 0.95 of the
+        balance; taking 2.5% off twice gets you to 0.9506, because the second deduction
+        comes off an amount the first one already reduced. Continuous compounding is the
+        best case in both directions rather than the best in one and the worst in the
+        other.
+      </p>
+
+      <h3 id="edge-zero-time">Zero time, and fractions of a year</h3>
+
+      <p>
+        At <em>t</em>&nbsp;=&nbsp;0 the balance is the starting amount, whatever the rate:
+        no period has elapsed. Fractional years are allowed and are not rounded to whole
+        periods &mdash; eighteen months is
+        <em>t</em>&nbsp;=&nbsp;1.5, and the Years/Months toggle exists so you can type
+        whichever you actually have.
+      </p>
+
+      <h3 id="edge-partial">A partial compounding period</h3>
+
+      <p>
+        If <em>n</em>&nbsp;&times;&nbsp;<em>t</em> is not a whole number &mdash; annual
+        compounding over ten and a half years, say &mdash; the formula raises the base to
+        a fractional power, which prorates that last part-period. It is the standard
+        reading of the equation and it is what this page does, but it is a modelling
+        choice rather than a fact about accounts: many real accounts credit only
+        completed periods and would pay nothing for the extra six months. The calculator
+        says so under the time field whenever the situation arises, rather than leaving
+        it in the assumptions where nobody would look.
+      </p>
+
+      <p>
+        The same fractional exponent produces the reversal mentioned earlier. Over
+        <em>less</em> than one full period, compound interest is worth slightly less than
+        simple interest: half a year of annual compounding at 5% turns $1,000 into
+        $1,024.70, where simple interest would give $1,025.00. Both are correct; they are
+        answers to different questions.
+      </p>
+
+      <h3 id="edge-large">Very large numbers</h3>
+
+      <p>
+        The form accepts up to $100,000,000, up to 25%, and up to 100 years. All three
+        at once produces a figure with nineteen digits in front of the decimal point, and
+        at that size cents are no longer a fact about the money: a JavaScript number
+        carries about fifteen significant digits, so a balance in the trillions cannot
+        distinguish one cent from the next. Rather than print a fabricated
+        &ldquo;.00&rdquo;, the page drops to whole dollars above a trillion &mdash; every
+        figure below that line is exact to the cent, and no amount you can type is
+        anywhere near it. Anything beyond the bounds themselves is refused outright,
+        because past them a compound interest figure is theatre rather than information.
+      </p>
+    </section>
+
+    <!-- ============================ 14. faq ============================ -->
+
+    <section aria-labelledby="faq">
+      <h2 id="faq">Frequently asked questions</h2>
+
+      <h3 id="faq-what">What is compound interest?</h3>
+
+      <p>
+        Compound interest is interest calculated on a balance that already includes the interest added before it. Simple interest is always worked out on the amount you started with; compound interest is worked out on the balance as it stands, so each round of interest becomes part of the amount the next round is calculated on. That is the whole of it, and it is why the growth curves rather than running straight.
+      </p>
+
+      <h3 id="faq-formula">What is the compound interest formula?</h3>
+
+      <p>
+        A = P(1 + r/n)^(nt), where P is the amount you start with, r is the annual rate written as a decimal, n is the number of times a year interest is added, and t is the number of years. Under continuous compounding it becomes A = Pe^(rt), which is a different equation rather than a very large value of n. Both are set out symbol by symbol at the top of this page.
+      </p>
+
+      <h3 id="faq-frequency">What does compounding frequency mean, and is monthly better than annual?</h3>
+
+      <p>
+        The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12 &mdash; and everything beyond monthly, up to and including continuous compounding, is worth another $1.71.
+      </p>
+
+      <h3 id="faq-apr-apy">What is the difference between APR and APY?</h3>
+
+      <p>
+        APY, the annual percentage yield, is the effective annual rate: what a year of the account&rsquo;s compounding actually comes to. APR is the nominal rate, before compounding is accounted for. A 5% nominal rate compounded monthly has an APY of 5.116%. On a loan, APR usually means something broader again, because United States lenders must fold certain fees into it, so an APR on a mortgage quote and an APY on a savings account are not two names for one idea.
+      </p>
+
+      <h3 id="faq-continuous">What is continuous compounding?</h3>
+
+      <p>
+        Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny &mdash; six cents on $1,000 at 5% over ten years.
+      </p>
+
+      <h3 id="faq-contributions">Does this calculator include monthly contributions?</h3>
+
+      <p>
+        No, deliberately. This page works out what a single amount grows to on its own. Money paid in later is an annuity riding on top of compound interest, it has a formula of its own, and folding it in here would mean the equation printed above the calculator was no longer the equation that produced the answer. The section on adding money every month sets out the mathematics and the timing distinction between an ordinary annuity and an annuity due.
+      </p>
+
+      <h3 id="faq-inflation">Does compound interest account for inflation?</h3>
+
+      <p>
+        No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today&rsquo;s money, which is a separate calculation applied afterwards rather than part of the formula &mdash; and it is kept visibly separate in the result panel for that reason.
+      </p>
+
+      <h3 id="faq-different">Why does my bank or investment account show a different number?</h3>
+
+      <p>
+        Several ordinary reasons, and usually more than one at once. Real accounts round every interest credit to the cent and this page does not. Banks differ on day-count conventions. Rates change, and this page assumes one constant rate. Fees and tax are taken out along the way. And an investment account does not earn a fixed rate at all: its returns vary, and a variable series does not compound at its own average.
+      </p>
+
+      <h3 id="faq-loans">Does compound interest apply to loans and credit cards?</h3>
+
+      <p>
+        Yes, in the same way and against you. Credit card interest is typically compounded daily on the balance carried, which is why an unpaid balance grows faster than the quoted annual rate suggests. Mortgages work differently again, because the balance falls as you pay it down, so the arithmetic there is amortization rather than growth.
+      </p>
+    </section>
+
+    <!-- ============================ 15. assumptions ============================ -->
+
+    <section aria-labelledby="assumptions">
+      <h2 id="assumptions">Assumptions</h2>
+
+      <ul>
+        <li>One interest rate, constant for the whole period.</li>
+        <li>Interest is added to the balance and compounds from then on; none of it is paid out.</li>
+        <li>Nothing is paid in and nothing is withdrawn after the starting amount.</li>
+        <li>Daily compounding means 365 periods a year. Leap years are ignored, and the 30/360 convention is not offered.</li>
+        <li>Nothing is rounded per period. Each figure is the formula evaluated once, and rounding happens only for display.</li>
+        <li>A part-period at the end is prorated by the formula rather than dropped.</li>
+        <li>Continuous compounding uses <em>A</em>&nbsp;=&nbsp;<em>Pe</em><sup><em>rt</em></sup>, which is the limit of the discrete formula and not an approximation of it.</li>
+        <li>All figures are in United States dollars.</li>
+      </ul>
+
+      <p class="note">
+        This page is an explanation of arithmetic, not financial advice, a rate quote, or
+        a forecast of investment returns. Curiosity Mapped does not track, publish, or
+        offer savings rates. Use the figures your bank or account provider gives you.
+      </p>
+    </section>
+
+    <!-- ============================ 16. methodology ============================ -->
+
+    <section aria-labelledby="methodology">
+      <h2 id="methodology">Methodology</h2>
+
+      <ul>
+        <li>
+          <strong>Money is carried in double-precision dollars, not integer cents.</strong>
+          This is the opposite of the decision the
+          <a href="/tools/mortgage-calculator.html#methodology">mortgage calculator</a>
+          made, and the reason is worth stating because a reader who checks will notice.
+          That page accumulates a schedule three hundred and sixty rows deep, where
+          binary fractions drift and a column stops adding up; integer cents fix it.
+          Nothing here accumulates &mdash; every figure is one closed form, evaluated
+          once &mdash; so there is no drift to prevent. And cents would actively break:
+          at the largest inputs the form accepts, the balance in cents exceeds the
+          largest integer JavaScript can represent exactly, and the arithmetic would
+          quietly return a wrong whole number.
+        </li>
+        <li>
+          <strong>Every row comes from the formula, not from the row above it.</strong>
+          The year-by-year table evaluates
+          <em>A</em>&nbsp;=&nbsp;<em>P</em>(1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>
+          at each year rather than carrying a running balance forward. The last row is
+          therefore the headline figure itself, not a number that resembles it.
+        </li>
+        <li>
+          <strong>The percentage becomes a decimal exactly once.</strong> At the edge of
+          the calculation, and nowhere else. The parameter table prints both forms so
+          the conversion is visible rather than assumed.
+        </li>
+        <li>
+          <strong>Rounding to the cent happens only for display.</strong> With one
+          deliberate exception: a difference between two figures already printed on the
+          page is taken from the printed values. The gap between annual and monthly
+          compounding is $18.1149; rounded once it is $18.11, but the two balances in the
+          table read $1,628.89 and $1,647.01, and a reader who subtracts them
+          gets $18.12. A difference column that cannot be checked against
+          the rows beside it is worse than one that is a hundredth of a cent coarse.
+        </li>
+        <li>
+          <strong>Per-period rounding is not modelled, and the size of that is known.</strong>
+          A real account rounds every interest credit to the nearest cent. On the default
+          scenario the difference between doing that and not is about three cents over
+          ten years; compounded daily over the same ten years it is about thirty-two
+          cents. Both directions are possible. The figure is asserted in the test suite
+          rather than estimated here.
+        </li>
+        <li>
+          <strong>The charts are drawn from the same functions that produced the
+          markup.</strong> The paths in the page source are not a hand-drawn imitation of
+          the live chart; they are the live chart, rendered ahead of time by the code
+          that later updates it. That is what makes the page correct with JavaScript
+          switched off.
+        </li>
+        <li>
+          <strong>Everything runs in the browser, and nothing reaches the address bar.</strong>
+          There is no server, no network request, and no stored state. There is also
+          deliberately no shareable link that carries your figures: a URL is the one
+          thing analytics records verbatim, so putting an amount into it would leak
+          through a channel consent does not govern. The test suite fails if this file
+          grows a reference to the network, to storage, or to the address bar.
+        </li>
+        <li>
+          <strong>The arithmetic has unit tests.</strong> Known values for every
+          frequency, cross-checks that reach the same balance by a second route, a sweep
+          asserting that nothing the form accepts can produce NaN or infinity, and the
+          rounding figure quoted above. The cross-checks are the point: a test that only
+          confirms the implementation agrees with itself proves nothing.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============================ 17. related ============================ -->
+
+    <section aria-labelledby="related">
+      <h2 id="related">Related calculators and concepts</h2>
+
+      <ul class="cards">
+        <li>
+          <a class="card card--tools card--link" href="/tools/mortgage-calculator.html">
+            <span class="card__label">Calculator</span>
+            <span class="card__title">Mortgage Calculator</span>
+            <span class="card__text">The same arithmetic pointed the other way: what it takes to retire a balance rather than what a balance grows to. The monthly payment, the formula that produced it, and the full amortization schedule.</span>
+            <span class="card__go">Open the calculator &rarr;</span>
+          </a>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Savings Growth</span>
+          <span class="card__text">Compound interest with regular contributions, on the annuity formula this page deliberately leaves out. Ordinary annuity and annuity due, kept visibly apart.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Simple Interest</span>
+          <span class="card__text">Interest worked out on the starting amount only, for the cases where that is genuinely what is happening rather than a mistake.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">APY and Effective Rate</span>
+          <span class="card__text">Converting between a nominal rate and an effective one in both directions, for comparing accounts that compound on different schedules.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+      </ul>
+
+      <p class="visually-hidden">
+        The tools above shown as plain text rather than as links are not yet
+        published, because there is nowhere for a link to go.
+      </p>
+
+      <p>
+        Every tool on this site is listed at <a href="/tools/">Tools</a>.
+      </p>
+
+      <h3 id="related-concepts">Concepts this page relies on</h3>
+
+      <p>
+        Five ideas do most of the work above. None of them has a page of its own yet;
+        until one does, each link goes to the place on this page where the idea is
+        explained rather than to a definition that does not exist.
+      </p>
+
+      <ul>
+        <li>
+          <strong><a href="#interest-on-interest">Interest on interest</a>.</strong> The
+          whole of compounding, and visible in a single cent between one period and the
+          next before it is visible in anything else.
+        </li>
+        <li>
+          <strong><a href="#nominal-periodic-effective">Nominal, periodic, and effective rates</a>.</strong>
+          Three numbers describing one account. Only the first goes into the formula, and
+          only the third tells you what you get.
+        </li>
+        <li>
+          <strong><a href="#apr-apy">APR and APY</a>.</strong> The regulated names for two
+          of those three, plus a complication on the lending side that makes them not
+          quite mirror images.
+        </li>
+        <li>
+          <strong><a href="#compound-vs-simple">Simple interest</a>.</strong> The straight
+          line compound interest departs from &mdash; and, over less than one compounding
+          period, briefly beats.
+        </li>
+        <li>
+          <strong><a href="#purchasing-power">Real against nominal returns</a>.</strong>
+          The difference between more dollars and more purchasing power, which the
+          formula has no opinion about at all.
+        </li>
+      </ul>
+    </section>
+  </article>
+</main>
+
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
+    <nav class="footer__legal" aria-label="Footer">
+      <p class="visually-hidden">Anything here shown as plain text rather than as a link is not yet published.</p>
+      <span>About</span>
+      <span>Contact</span>
+      <a href="/privacy.html">Privacy</a>
+      <span>Accessibility</span>
+    </nav>
+    <button type="button" class="consent-manage" id="consent-manage">Privacy choices</button>
+    <p class="consent-status" id="consent-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
+  </div>
+</footer>
+</body>
+</html>
