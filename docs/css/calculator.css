@@ -1,7 +1,11 @@
 /*
- * Page-scoped styles for the calculator. Loaded only by
- * /tools/mortgage-calculator.html, so nothing here can cost the other pages a
- * byte. Declared into @layer components alongside components.css -- the layer
+ * Page-scoped styles for the calculators. Loaded only by the tool pages that
+ * carry one -- /tools/mortgage-calculator.html and
+ * /tools/compound-interest-calculator.html -- so nothing here can cost the rest
+ * of the site a byte. Most of it is shared; the page-specific blocks are the
+ * amortization tables (mortgage) and the worked substitution (compound
+ * interest), and each page simply does not use the other's.
+ * Declared into @layer components alongside components.css -- the layer
  * order is fixed by the document's @layer statement, so this sheet can arrive in
  * any order without changing what wins.
  */
@@ -207,12 +211,23 @@
    * rather than "monthly payment" -- because it is a different quantity, and the
    * whole point of the section above it is that the formula never produced it.
    */
-  .result__housing {
+  /*
+   * A quantity the formula did not produce, kept deliberately below the headline
+   * rather than beside it: lighter type, a dashed rule, and a label that never
+   * reuses the headline's noun. The mortgage page's housing total and the
+   * compound page's inflation-adjusted figure are the same kind of object, so
+   * they share the treatment -- but not the name, because "housing" on a
+   * compound interest page would be a lie and a second copy of these
+   * declarations would be a worse fix than a second selector.
+   */
+  .result__housing,
+  .result__real {
     margin-block-start: var(--s-5);
     padding-block-start: var(--s-5);
     border-block-start: 1px dashed var(--edge);
   }
-  .result__housing-amount {
+  .result__housing-amount,
+  .result__real-amount {
     display: block;
     margin-block-start: var(--s-1);
     font-size: var(--t-2);
@@ -220,7 +235,8 @@
     font-variant-numeric: tabular-nums;
     color: var(--text-dim);
   }
-  .result__housing-note { margin-block-start: var(--s-2); font-size: var(--t--1); color: var(--text-dim); }
+  .result__housing-note,
+  .result__real-note { margin-block-start: var(--s-2); font-size: var(--t--1); color: var(--text-dim); }
 
   /* ---------- the explanation ---------- */
 
@@ -433,6 +449,55 @@
     clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* ---------- the worked substitution ---------- */
+
+  /*
+   * The formula again, with the reader's figures in it. Framed rather than ruled,
+   * so it reads as a consequence of the section it sits in rather than as a
+   * second statement of the equation at the top of the page. Rebuilt as real
+   * MathML on every keystroke, which is why it carries no text of its own.
+   */
+  .formula--worked {
+    border-block: 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding-block-end: var(--s-3);
+  }
+  /* The scroll belongs to the inner box, not the figure: a <figure> that became
+     a focusable region would stop being a figure, and the substitution is long
+     enough to need scrolling on a narrow screen. */
+  .formula--worked { overflow-x: visible; }
+  .formula--worked #substitution-math { overflow-x: auto; }
+  .formula--worked math { font-size: var(--t-1); }
+  .formula--worked .chart__caption { margin-block: var(--s-3) 0; color: var(--text-dim); font-weight: 400; }
+
+  /* ---------- the period table ---------- */
+
+  /* Four columns, three of them currency. Narrower than the mortgage schedule's
+     five, so it needs less room before it starts to scroll. */
+  .amort--periods .table { min-inline-size: 28rem; }
+
+  /* ---------- the comparison chart ---------- */
+
+  /*
+   * Two lines in one plot, and they are told apart by shape before colour: the
+   * compound line curves and the simple line is straight, the simple line is
+   * dashed, and the region between them is hatched. Strip every colour out and
+   * the picture still reads.
+   */
+  .chart__line--muted {
+    stroke: var(--text-dim);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+  }
+  .chart__band--gap { fill-opacity: 1; }
+  .chart__swatch--compound { background: var(--accent); }
+  .chart__swatch--simple {
+    background: var(--text-dim);
+    background-image: linear-gradient(90deg, var(--surface) 40%, transparent 40% 60%, var(--surface) 60%);
   }
 
   /* ---------- the one new breakpoint ---------- */

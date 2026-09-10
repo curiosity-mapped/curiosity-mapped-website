@@ -19,14 +19,18 @@ docs/404.html            not-found page (GitHub Pages serves it for any missing 
 docs/tools/index.html    the Tools hub, served at /tools/
 docs/tools/mortgage-calculator.html
                          the first published tool
+docs/tools/compound-interest-calculator.html
+                         the second: what a balance grows to, rather than what it
+                         takes to retire one
 docs/css/tokens.css      colour / type / space tokens, and the light + dark + high-contrast ramps
 docs/css/base.css        element defaults
 docs/css/components.css  the blocks on the page
-docs/css/calculator.css  page-scoped; loaded ONLY by the calculator
+docs/css/calculator.css  page-scoped; loaded ONLY by the two calculator pages
 docs/css/utilities.css   last layer, so it wins
 docs/js/main.js          theme toggle and footer year; every page works without it
 docs/js/consent.js       the analytics consent panel and the footer control; every page
-docs/js/mortgage.js      the calculator's arithmetic and behaviour; loaded only by that page
+docs/js/mortgage.js      the mortgage calculator's arithmetic and behaviour; that page only
+docs/js/compound.js      the compound interest calculator's; that page only
 docs/assets/             og image and raster icons
 docs/favicon.ico         the bare /favicon.ico browsers ask for unprompted
 docs/site.webmanifest    name, colours, and the 192/512 icons
@@ -34,7 +38,8 @@ docs/robots.txt          and docs/sitemap.xml
 docs/CNAME               custom domain, read by GitHub Pages
 docs/.nojekyll           serve files as-is instead of running them through Jekyll
 
-tests/mortgage.test.mjs  the calculator's unit tests; repository furniture, never served
+tests/mortgage.test.mjs  the mortgage calculator's unit tests; repository furniture, never served
+tests/compound.test.mjs  the compound interest calculator's, on the same pattern
 tests/consent.test.mjs   the stored-choice logic, plus assertions over the built pages
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 README.md                this file
@@ -44,10 +49,19 @@ TOOL-TIERS.md            the content standard every tool page is written against
 `docs/tools/` is the first subdirectory in the published tree. Every path in the site
 is root-absolute, so its depth changes nothing.
 
+`calculator.css` is shared by both calculator pages. Most of it always was generic --
+the formula block, the parameter table, the result panel, the charts, the live region --
+and the page-specific parts are small enough that the second page carrying a few rules
+it never uses is cheaper than a third stylesheet. Where two pages need the same
+treatment under different names, the selector list carries both names rather than the
+declarations being copied: see `.result__housing, .result__real`.
+
 What goes *on* a tool page is governed by `TOOL-TIERS.md`. Every tool is classified
 `SIMPLE`, `MODERATE`, or `DEEP` before it is built, and the tier fixes the minimum
 sections the page must carry. The mortgage calculator is the canonical `DEEP` page;
-read the standard before adding a tool, not after.
+read the standard before adding a tool, not after. Both published tools are `DEEP`,
+which is a fact about what has been built so far rather than a default: a tool whose
+result is hard to misread belongs in a lower tier and should stay there.
 
 Each tool page records its own tier. The classification and a map from every required
 area of that tier to the section that satisfies it sit in an HTML comment at the top of
@@ -82,7 +96,7 @@ resolve against the missing directory and 404 in turn.
 
 ## Tests
 
-The mortgage calculator's arithmetic and the analytics consent logic have tests. There
+Both calculators' arithmetic and the analytics consent logic have tests. There
 is nothing to install: they run on Node's own test runner against the files the browser
 loads, not against copies of them.
 
@@ -90,19 +104,30 @@ loads, not against copies of them.
 node --test "tests/**/*.test.mjs"
 ```
 
-`docs/js/mortgage.js` ends with a `typeof module` guard whose only purpose is to make
-its pure functions reachable from Node. In a browser that block is skipped and the file
-stays a plain `<script defer>`. Run the tests before changing anything in the top half
-of that file — the property-style suite asserts that the schedule sums to the loan
-amount exactly, in integer cents, across a matrix of rates, terms, and principals.
+`docs/js/mortgage.js` and `docs/js/compound.js` each end with a `typeof module` guard
+whose only purpose is to make their pure functions reachable from Node. In a browser
+that block is skipped and the file stays a plain `<script defer>`. Run the tests before
+changing anything in the top half of either file.
+
+The two suites assert different invariants, because the two files carry money
+differently and deliberately so. `mortgage.test.mjs` asserts that the schedule sums to
+the loan amount exactly, in integer cents, across a matrix of rates, terms, and
+principals. `compound.test.mjs` asserts closed-form values against independently derived
+ones, reaches the same balance by a second route, and sweeps the whole accepted input
+range for a non-finite result — because compound growth has no accumulation to drift,
+and at the bounds the form accepts, a balance in cents would exceed the largest integer
+a double can hold exactly.
 
 `tests/consent.test.mjs` does the same for `docs/js/consent.js`, and then reads the
 published HTML, because with no build step the generated pages *are* the artefact. It
 asserts that the consent defaults are queued before `gtag.js` is fetched, that the block
 appears exactly once per page, that both default calls carry all four Consent Mode
-signals with the regional one first, and that the calculator has not grown a route to
-the network. Run it after `./scripts/apply-gtag.sh`, since half of what it checks is
-that script's output.
+signals with the regional one first, and that neither calculator has grown a route to
+the network. It also asserts two things that can only rot silently on a site with no
+build step: that every element a calculator's script reaches for still exists in its
+page, and that the static default figures each page ships — for readers without
+JavaScript — are still what the shipped functions actually produce. Run it after
+`./scripts/apply-gtag.sh`, since half of what it checks is that script's output.
 
 ## Deploying
 
@@ -226,8 +251,10 @@ not reach analytics. `#calc-form` and `#costs-form` also block submission outrig
 neither can submit today -- no action, no submit button -- but adding one button would
 turn Enter into a GET of the same page with the loan amount in the query string.
 
-`tests/consent.test.mjs` fails if `mortgage.js` grows a reference to `gtag`, `fetch`,
-`document.cookie`, `location`, or the History API. That is the invariant, enforced.
+`tests/consent.test.mjs` fails if either calculator's script grows a reference to
+`gtag`, `fetch`, `document.cookie`, `location`, or the History API. That is the
+invariant, enforced. It is also why neither page offers a shareable link carrying the
+reader's figures: a URL is the one thing analytics records verbatim.
 
 ## When the site grows
 
@@ -239,17 +266,36 @@ them:
   other page's JSON-LD references by `@id`; reference them, never redefine them.
 - `docs/privacy.html` — its own `canonical` and `og:url`. Copy its head as the starting
   point for a new indexable page; `404.html` is the `noindex` variant.
-- `docs/tools/index.html` and `docs/tools/mortgage-calculator.html` — their own
-  `canonical`, `og:url`, and the absolute URLs throughout their JSON-LD graphs,
-  including every `BreadcrumbList` item.
-- Every page with the primary nav shares it: `index.html`, `tools/index.html`, and the
-  calculator. Publishing one of its remaining spans means turning it into an
+- `docs/tools/index.html`, `docs/tools/mortgage-calculator.html`, and
+  `docs/tools/compound-interest-calculator.html` — their own `canonical`, `og:url`, and
+  the absolute URLs throughout their JSON-LD graphs, including every `BreadcrumbList`
+  item.
+- Every page with the primary nav shares it: `index.html`, `tools/index.html`, and both
+  calculators. Publishing one of its remaining spans means turning it into an
   `<a class="nav__item nav__item--link">` in all three and rewording the
   visually-hidden line above them, which explains why the rest are inert. The same
   applies to the `.footer__legal` nav, which every page carries.
 - The Tools hub lists planned calculators as inert `.card__soon` tiles. Publishing one
   means turning its `<li class="card">` into `<li><a class="card card--link">` and
   rewording the visually-hidden line below the list.
+- **Prose that counts things has to be found and edited every time; prose that
+  describes them does not.** The home page's hero note said Tools "has its first
+  square on it, a mortgage calculator" and went stale the day a second tool
+  shipped. That rule retired "the mortgage calculator already borders on them" on
+  the Tools hub, the "only the X calculator above is published" lines under each
+  tool page's related list, and the footer's "only the Privacy page is published
+  so far" on all six pages. The nav's visually-hidden sentence is the model to
+  copy: "Tools is the first area to take shape; Journal and Reference will follow"
+  is a claim about the three sections, not an inventory, so it stays true at any
+  number of tools. Before writing a sentence about what exists, check whether
+  publishing the next thing would make it false.
+- `docs/index.html` — **the hero note names every published tool, and it is the one
+  deliberate exception to the rule above: the only copy on the site that has to
+  change when a tool ships.** It names each calculator and links to it, because the
+  home page is the strongest page on the site and a link from it into a tool is
+  worth more than a link into `/tools/`. The cost is one sentence to edit per tool;
+  "Tools is growing" carries the part that would otherwise need counting. Add the
+  new tool to that sentence when you publish it.
 - `docs/sitemap.xml` — add each new page, and bump `lastmod`.
 - `docs/robots.txt` — only the `Sitemap:` line is absolute.
 - The Google Analytics tag is per-file, since nothing templates the head. Run

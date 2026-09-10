@@ -27,7 +27,8 @@ const PAGES = [
   'docs/404.html',
   'docs/privacy.html',
   'docs/tools/index.html',
-  'docs/tools/mortgage-calculator.html'
+  'docs/tools/mortgage-calculator.html',
+  'docs/tools/compound-interest-calculator.html'
 ];
 
 /* ------------------------------------------------------- stored choice */
@@ -171,28 +172,114 @@ test('the inline block and consent.js agree on the stored format', () => {
 const code = (path) =>
   read(path).replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
 
-test('the calculator has no route to analytics or to the network', () => {
-  const js = code('docs/js/mortgage.js');
-  for (const forbidden of [
-    'gtag', 'dataLayer', 'fetch(', 'XMLHttpRequest', 'sendBeacon', 'new Image',
-    'document.cookie', 'document.title', 'localStorage', 'sessionStorage',
-    'location', 'pushState', 'replaceState', 'URLSearchParams', 'innerHTML'
-  ]) {
-    assert.ok(!js.includes(forbidden),
-      `docs/js/mortgage.js must not reference ${forbidden}`);
+const FORBIDDEN = [
+  'gtag', 'dataLayer', 'fetch(', 'XMLHttpRequest', 'sendBeacon', 'new Image',
+  'document.cookie', 'document.title', 'localStorage', 'sessionStorage',
+  'location', 'pushState', 'replaceState', 'URLSearchParams', 'innerHTML'
+];
+
+test('no calculator has a route to analytics or to the network', () => {
+  /* Every tool that takes a number from a reader, not just the first one. */
+  for (const path of ['docs/js/mortgage.js', 'docs/js/compound.js']) {
+    const js = code(path);
+    for (const forbidden of FORBIDDEN) {
+      assert.ok(!js.includes(forbidden), `${path} must not reference ${forbidden}`);
+    }
   }
 });
 
-test('neither calculator form can put its fields into the URL', () => {
-  const html = read('docs/tools/mortgage-calculator.html');
-  const forms = html.match(/<form[^>]*>/g) || [];
-  assert.equal(forms.length, 2, 'expected exactly the two known forms');
-  for (const form of forms) {
-    assert.ok(!/\saction=/.test(form), `form must have no action: ${form}`);
-    assert.ok(!/\smethod=/.test(form), `form must have no method: ${form}`);
+test('no calculator form can put its fields into the URL', () => {
+  /* The form count is asserted per page rather than in general: a page growing a
+     form nobody wrote a rule for is exactly the regression this catches. */
+  for (const [page, script, expected] of [
+    ['docs/tools/mortgage-calculator.html', 'docs/js/mortgage.js', 2],
+    ['docs/tools/compound-interest-calculator.html', 'docs/js/compound.js', 1]
+  ]) {
+    const html = read(page);
+    const forms = html.match(/<form[^>]*>/g) || [];
+    assert.equal(forms.length, expected, `${page}: expected exactly the known forms`);
+    for (const form of forms) {
+      assert.ok(!/\saction=/.test(form), `${page}: form must have no action: ${form}`);
+      assert.ok(!/\smethod=/.test(form), `${page}: form must have no method: ${form}`);
+    }
+    assert.ok(!/type="submit"/.test(html), `${page}: no submit button may exist`);
+    /* Belt to that braces: implicit submission is suppressed outright. */
+    assert.match(read(script), /addEventListener\('submit', blockSubmit\)/, script);
   }
-  assert.ok(!/type="submit"/.test(html), 'no submit button may exist');
-  /* Belt to that braces: implicit submission is suppressed outright. */
-  assert.match(read('docs/js/mortgage.js'),
-    /addEventListener\('submit', blockSubmit\)/);
+});
+
+/* ------------------------------------------------- the pages as artefacts */
+
+/*
+ * With no build step the published HTML is the artefact, and two things about a
+ * tool page can rot silently: an element the script reaches for can be renamed,
+ * and the static figures the page ships for readers without JavaScript can drift
+ * away from what the code actually produces. Neither shows up in a unit test of
+ * the maths, and neither is visible on the page with JavaScript switched on.
+ */
+
+test('every element the compound calculator reaches for exists in its page', () => {
+  const js = read('docs/js/compound.js');
+  const html = read('docs/tools/compound-interest-calculator.html');
+  const wanted = [...js.matchAll(/\$\('([^']+)'\)/g)].map((m) => m[1]);
+  assert.ok(wanted.length > 40, `expected a full ui map, found ${wanted.length}`);
+  for (const id of new Set(wanted)) {
+    assert.ok(html.includes(`id="${id}"`),
+      `compound.js looks up #${id}, which the page does not contain`);
+  }
+});
+
+test('the compound page ships the figures its own code produces', () => {
+  /*
+   * The default scenario is written into the markup so the page is complete and
+   * correct without JavaScript. This asserts the markup is what the shipped
+   * functions actually return, rather than what someone typed while looking at
+   * them.
+   */
+  const C = require('../docs/js/compound.js');
+  const html = read('docs/tools/compound-interest-calculator.html');
+  const m = C.buildModel({
+    principal: 1000, ratePct: 5, frequencyKey: '12', years: 10,
+    unit: 'years', inflationPct: null
+  });
+
+  for (const value of [
+    C.money(m.amount),                    /* $1,647.01 */
+    C.money(m.interest),                  /* $647.01   */
+    C.pctTrim(m.ear),                     /* 5.116%    */
+    C.multiple(m.growth),                 /* 1.65x     */
+    C.pctSig(m.periodicRate),             /* 0.4167%   */
+    'Balance after ' + m.durationText
+  ]) {
+    assert.ok(html.includes(value), `the page should carry ${value}`);
+  }
+
+  /* Both chart paths, generated by the same functions that redraw them. */
+  const balances = [m.principal].concat(m.yearly.map((y) => y.balance));
+  const max = Math.max(m.principal, m.amount);
+  assert.ok(html.includes(C.seriesLine(balances, max)), 'balance line path has drifted');
+  assert.ok(html.includes(C.seriesBand(balances.map(() => m.principal), balances, max)),
+    'interest band path has drifted');
+
+  /* And the explanation, sentence for sentence. */
+  for (const paragraph of C.explainParagraphs(m)) {
+    if (!paragraph) continue;
+    const escaped = paragraph.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    assert.ok(html.includes(escaped), `explanation has drifted: ${paragraph.slice(0, 60)}...`);
+  }
+});
+
+test('the compound page declares its tier and links only to pages that exist', () => {
+  const html = read('docs/tools/compound-interest-calculator.html');
+  assert.match(html, /CONTENT COMPLEXITY TIER: DEEP/);
+  /* Every internal link must resolve to a file that is actually published. */
+  const published = new Set([
+    '/', '/tools/', '/privacy.html',
+    '/tools/mortgage-calculator.html', '/tools/compound-interest-calculator.html'
+  ]);
+  for (const href of [...html.matchAll(/href="(\/[^"#]*)(#[^"]*)?"/g)].map((m) => m[1])) {
+    if (href.startsWith('/css/') || href.startsWith('/js/') || href.startsWith('/assets/')) continue;
+    if (href === '/site.webmanifest' || href === '/favicon.ico') continue;
+    assert.ok(published.has(href), `links to ${href}, which is not a published page`);
+  }
 });
