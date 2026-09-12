@@ -42,11 +42,14 @@
   }
 
   /*
-   * The two words are set as a grid so the tracking can differ per line. The
-   * looser, lighter second line optically matches the width of the first.
+   * Mark and type sit on one row; the two words are set as a grid inside it so
+   * the tracking can differ per line. The looser, lighter second line optically
+   * matches the width of the first.
    */
   .wordmark {
-    display: grid;
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
     font-size: 0.95rem;
     line-height: 1.18;
     text-transform: uppercase;
@@ -55,6 +58,18 @@
        wordmark is the link home and must not pick up default underlining. */
     text-decoration: none;
   }
+  /*
+   * Sized in rem so it tracks the type beside it rather than a device pixel, and
+   * given both dimensions so the row never reflows while the SVG is fetched. The
+   * artwork carries its own tile and rounded corners, which is why this is the
+   * one brand asset on the page with no light and dark variant.
+   */
+  .wordmark__mark {
+    flex: none;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+  }
+  .wordmark__text { display: grid; }
   .wordmark__line { font-weight: 600; letter-spacing: var(--track-wide); }
   .wordmark__line--wide {
     font-weight: 400;

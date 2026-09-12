@@ -33,7 +33,8 @@ docs/js/consent.js       the analytics consent panel and the footer control; eve
 docs/js/mortgage.js      the mortgage calculator's arithmetic and behaviour; that page only
 docs/js/compound.js      the compound interest calculator's; that page only
 docs/js/loan.js          the loan calculator's; that page only
-docs/assets/             one og card per indexable page, and the raster icons
+docs/assets/             one og card per indexable page, the brand mark, and the raster icons
+docs/assets/cm-icon.svg  the mark itself; the favicon and the header logo are the same file
 docs/favicon.ico         the bare /favicon.ico browsers ask for unprompted
 docs/site.webmanifest    name, colours, and the 192/512 icons
 docs/robots.txt          and docs/sitemap.xml
@@ -47,6 +48,7 @@ tests/consent.test.mjs   the stored-choice logic, plus assertions over the built
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 scripts/build-og.mjs     re-renders the share cards from scripts/og-card.html
 scripts/og-card.html     the share card design; never served, rendered to PNG
+scripts/build-ico.mjs    repacks docs/favicon.ico from the two favicon PNGs
 README.md                this file
 TOOL-TIERS.md            the content standard every tool page is written against
 ```
@@ -332,3 +334,31 @@ page needs an entry in that script's `CARDS` list and its own `og:image`, and th
 suite fails if two pages share one or if a card's real dimensions disagree with the
 meta tags that describe it. `docs/404.html` has no card on purpose: it is `noindex` and
 there is nothing to share.
+
+## The mark
+
+Everything with the logo in it comes from the `curiosity-mapped-brand-v1` package, which
+is the source of truth and is not vendored here — only its output is. The mark is the
+C and M read as one figure: a cartographic C, an engineered M, and a wayfinding axis
+through the middle, in a violet-to-green gradient.
+
+It reaches the site in three forms, and they are not interchangeable.
+
+- `docs/assets/cm-icon.svg` is the square tile, and it does double duty as the favicon
+  and as the logo in every page header. It carries its own navy ground, which is why it
+  is the one piece of artwork on the site with no light and dark variant: a tile reads
+  against paper and against ink alike, and a theme-switching SVG would in any case have
+  disagreed with the fixed-colour PNGs sitting behind it in the `rel=icon` list.
+- The raster icons beside it — `favicon-16`, `favicon-32`, `apple-touch-icon`,
+  `icon-192`, `icon-512` — are the same tile, copied from the package for the browsers
+  and platforms that will not take an SVG. `docs/favicon.ico` wraps the 16 and 32px PNGs
+  in an icon directory; `node scripts/build-ico.mjs` rebuilds it after they change.
+- `scripts/og-card.html` inlines the *untiled* mark instead, because the tile's navy
+  would read as a panel against the card's near-black ground. It is the only copy of the
+  artwork that lives in markup rather than in a file, and it is inline because the card
+  is rasterised locally and never served.
+
+The brand package also ships a palette and full horizontal and stacked lockups. Neither
+is used: the site keeps its own colour tokens, and the header sets "Curiosity Mapped" in
+the site's own type next to the mark rather than dropping in a lockup whose wordmark
+would not follow the tokens or the dark theme.
