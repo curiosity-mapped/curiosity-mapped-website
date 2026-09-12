@@ -275,7 +275,8 @@ test('the compound page declares its tier and links only to pages that exist', (
   /* Every internal link must resolve to a file that is actually published. */
   const published = new Set([
     '/', '/tools/', '/privacy.html',
-    '/tools/mortgage-calculator.html', '/tools/compound-interest-calculator.html'
+    '/tools/mortgage-calculator.html', '/tools/compound-interest-calculator.html',
+    '/tools/loan-calculator.html'
   ]);
   for (const href of [...html.matchAll(/href="(\/[^"#]*)(#[^"]*)?"/g)].map((m) => m[1])) {
     if (href.startsWith('/css/') || href.startsWith('/js/') || href.startsWith('/assets/')) continue;
