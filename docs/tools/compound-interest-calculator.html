@@ -306,7 +306,7 @@
           "name": "What does compounding frequency mean, and is monthly better than annual?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12 — and everything beyond monthly, up to and including continuous compounding, is worth another $1.71."
+            "text": "The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12, and everything beyond monthly, up to and including continuous compounding, is worth another $1.71."
           }
         },
         {
@@ -322,7 +322,7 @@
           "name": "What is continuous compounding?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny — six cents on $1,000 at 5% over ten years."
+            "text": "Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny: six cents on $1,000 at 5% over ten years."
           }
         },
         {
@@ -338,7 +338,7 @@
           "name": "Does compound interest account for inflation?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today’s money, which is a separate calculation applied afterwards rather than part of the formula — and it is kept visibly separate in the result panel for that reason."
+            "text": "No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today’s money, which is a separate calculation applied afterwards rather than part of the formula, and it is kept visibly separate in the result panel for that reason."
           }
         },
         {
@@ -403,7 +403,7 @@
   </nav>
 
   <!--
-    CONTENT COMPLEXITY TIER: DEEP  (see /TOOL-TIERS.md)
+    CONTENT COMPLEXITY TIER: DEEP  (see TOOL-TIERS.md in the repository root)
 
     Classified DEEP rather than MODERATE. The arithmetic is one line, but the
     number it returns is routinely mistaken for something it is not: a forecast of
@@ -458,7 +458,7 @@
       it is the only thing the formula below produces. Money paid in later, tax on the
       interest, account fees, and inflation are all real, and none of them is in the
       equation. What each of them would do is set out further down, and one of
-      them&nbsp;&mdash; inflation &mdash; can be applied to the answer afterwards, clearly
+      them, inflation, can be applied to the answer afterwards, clearly
       labelled as a separate step.
     </p>
 
@@ -536,7 +536,7 @@
 
       <div class="params">
         <table class="table">
-          <caption>Every symbol in the formula: what it means, the unit it is carried in, the value it currently holds in the calculator below, and the direction it moves <em>A</em> in. The last three rows are not inputs &mdash; they are figures the first four produce.</caption>
+          <caption>Every symbol in the formula: what it means, the unit it is carried in, the value it currently holds in the calculator below, and the direction it moves <em>A</em> in. The last three rows are not inputs: they are figures the first four produce.</caption>
           <thead>
             <tr>
               <th scope="col">Symbol</th>
@@ -637,7 +637,7 @@
               </div>
               <p class="field__hint" id="principal-hint">
                 A single amount, put in once and left alone. Money you plan to add later
-                is not part of this calculation &mdash; see
+                is not part of this calculation; see
                 <a href="#contributions">what if you add money every month</a>.
               </p>
               <p class="field__error" id="principal-error" hidden></p>
@@ -918,8 +918,8 @@
 
       <p>
         Going from annual to monthly compounding is worth $18.12 on these
-        figures. Going from monthly all the way to continuous &mdash; past daily, past
-        hourly, past every subdivision there is &mdash; is worth another
+        figures. Going from monthly all the way to continuous (past daily, past
+        hourly, past every subdivision there is) is worth another
         $1.71. Continuous compounding beats daily by
         $0.06.
       </p>
@@ -961,8 +961,8 @@
         <strong>APY</strong>, annual percentage yield, is the effective annual rate
         under another name. It is the figure a savings account is required to advertise,
         precisely because it makes accounts with different compounding frequencies
-        comparable. <strong>APR</strong>, annual percentage rate, is the nominal rate
-        &mdash; and on a loan it usually means something broader still, because United
+        comparable. <strong>APR</strong>, annual percentage rate, is the nominal rate,
+        and on a loan it usually means something broader still, because United
         States lenders must fold certain fees into it. So an APR on a mortgage quote
         and an APY on a savings account are not two words for one idea, and neither is
         the number this formula takes.
@@ -1149,7 +1149,7 @@
       <p>
         A cent a month sounds like nothing, and over one month it is. Run it for ten
         years and the same effect is the difference between the first year, which earns
-        $51.16, and the tenth, which earns $80.16 &mdash; on an
+        $51.16, and the tenth, which earns $80.16, on an
         unchanged rate and without another dollar going in. That is what the widening
         band in the first chart above is showing.
       </p>
@@ -1159,7 +1159,7 @@
       <p>
         Simple interest is always worked out on the amount you started with. At 5% on
         $1,000 that is a flat $50 a year, forever, and after ten years the
-        balance is $1,500 &mdash; the straight line in the second chart. Compound
+        balance is $1,500, the straight line in the second chart. Compound
         interest reaches $1,647.01 over the same ten years at the same rate. The gap,
         $147.01, is precisely the interest that earned interest of its own.
       </p>
@@ -1167,7 +1167,7 @@
       <p>
         The two are not always in that order. Over a period <em>shorter</em> than one
         compounding period, compound interest is worth slightly <em>less</em> than
-        simple interest &mdash; see <a href="#edge-partial">a partial compounding
+        simple interest; see <a href="#edge-partial">a partial compounding
         period</a>. It is a genuine reversal rather than a rounding artefact, and it
         catches people out.
       </p>
@@ -1186,7 +1186,7 @@
         72&nbsp;&divide;&nbsp;5&nbsp;=&nbsp;<span id="doubling-rule">14.4 years</span>,
         against the exact 13.89 years. It is a mental shortcut, it is accurate enough
         for rates in the low single and double digits, and it is <em>not</em> used
-        anywhere in this calculator &mdash; every figure on this page comes from the
+        anywhere in this calculator: every figure on this page comes from the
         formula, not from the rule.
       </p>
     </section>
@@ -1314,8 +1314,8 @@
         The formula returns a number of <em>future dollars</em>. It says nothing at all
         about what those dollars will buy, and the difference is not small. Growing
         $1,000 to $1,647.01 over ten years is a 5% nominal return; if prices
-        rise 3% a year over the same decade, the amount that actually matters &mdash;
-        what the balance buys &mdash; has grown by about 1.94% a year, not 5%.
+        rise 3% a year over the same decade, the amount that actually matters,
+        what the balance buys, has grown by about 1.94% a year, not 5%.
       </p>
 
       <p>
@@ -1358,8 +1358,8 @@
       <p>
         For a payment <em>PMT</em> made at the end of every period, the payments alone
         grow to
-        <em>PMT</em>&nbsp;&times;&nbsp;[((1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>&nbsp;&minus;&nbsp;1)&nbsp;/&nbsp;(<em>r</em>/<em>n</em>)]
-        &mdash; an <strong>ordinary annuity</strong>. Paid at the <em>start</em> of each
+        <em>PMT</em>&nbsp;&times;&nbsp;[((1&nbsp;+&nbsp;<em>r</em>/<em>n</em>)<sup><em>nt</em></sup>&nbsp;&minus;&nbsp;1)&nbsp;/&nbsp;(<em>r</em>/<em>n</em>)],
+        an <strong>ordinary annuity</strong>. Paid at the <em>start</em> of each
         period instead, every payment compounds one period longer, so the whole thing is
         multiplied by (1&nbsp;+&nbsp;<em>r</em>/<em>n</em>); that is an
         <strong>annuity due</strong>. The timing is not a detail: $100 a year for five
@@ -1383,7 +1383,7 @@
         In the meantime, the honest workaround: run this calculator on the amount you
         already have to see what compounding does to it, and treat anything you pay in
         later as separate. What you must not do is enter the total of all your future
-        deposits as the starting amount &mdash; money paid in five years from now has not
+        deposits as the starting amount: money paid in five years from now has not
         been compounding for those five years, and the formula would credit it as though
         it had.
       </p>
@@ -1444,12 +1444,12 @@
             <tr>
               <th scope="row">Income tax on interest</th>
               <td>Reduces what is left to compound each period, so it compounds against you.</td>
-              <td><span class="tag tag--out">Outside the model</span> &mdash; but you can enter an after-tax rate</td>
+              <td><span class="tag tag--out">Outside the model</span>, but you can enter an after-tax rate</td>
             </tr>
             <tr>
               <th scope="row">Account fees and expense ratios</th>
               <td>Act as a permanent reduction in the rate, taken before compounding rather than after.</td>
-              <td><span class="tag tag--out">Outside the model</span> &mdash; but you can enter a net rate</td>
+              <td><span class="tag tag--out">Outside the model</span>, but you can enter a net rate</td>
             </tr>
             <tr>
               <th scope="row">Rate changes over time</th>
@@ -1496,9 +1496,9 @@
         Tax and fees both act, to a first approximation, as a reduction in the rate: if
         interest is taxed at 30%, entering 3.5% instead of 5% models it, and if a fund
         charges 0.5% a year, entering 4.5% instead of 5% does the same. Neither is
-        offered as an input here, because there is no universal tax treatment to assume
-        &mdash; the right rate depends on your jurisdiction, your bracket, and whether
-        the account is sheltered &mdash; and a calculator that picked one for you would
+        offered as an input here, because there is no universal tax treatment to assume.
+        The right rate depends on your jurisdiction, your bracket, and whether
+        the account is sheltered, and a calculator that picked one for you would
         be inventing a figure rather than computing one.
       </p>
     </section>
@@ -1522,7 +1522,7 @@
 
       <p>
         It makes a small one. On $1,000 at 5% over ten years, daily compounding
-        is worth $19.77 more than annual &mdash; and monthly already
+        is worth $19.77 more than annual, and monthly already
         collects $18.12 of that. The returns diminish sharply, because
         each further split of the year applies a smaller rate over a shorter interval.
         An account advertising daily compounding at a lower rate is almost always worse
@@ -1537,7 +1537,7 @@
         includes the effect of compounding; APR is the nominal rate, which does not, and
         on a loan it also folds in certain fees. A 5% APY and a 5% APR compounded
         monthly are different accounts. The formula on this page takes the nominal
-        rate &mdash; see <a href="#apr-apy">APR and APY are not the same thing</a> for
+        rate; see <a href="#apr-apy">APR and APY are not the same thing</a> for
         converting between them.
       </p>
 
@@ -1558,7 +1558,7 @@
         It is what a <em>constant</em> rate would produce. Savings accounts and
         certificates come close to that for as long as the rate holds. Shares, funds,
         and property do not: their returns vary year to year, and a variable series does
-        not compound at its own average &mdash; a year of &minus;20% followed by a year
+        not compound at its own average: a year of &minus;20% followed by a year
         of +20% averages zero and leaves you down 4%. Treat the output as arithmetic
         about a rate, not a forecast about a market.
       </p>
@@ -1648,7 +1648,7 @@
       <p>
         At <em>t</em>&nbsp;=&nbsp;0 the balance is the starting amount, whatever the rate:
         no period has elapsed. Fractional years are allowed and are not rounded to whole
-        periods &mdash; eighteen months is
+        periods: eighteen months is
         <em>t</em>&nbsp;=&nbsp;1.5, and the Years/Months toggle exists so you can type
         whichever you actually have.
       </p>
@@ -1656,8 +1656,8 @@
       <h3 id="edge-partial">A partial compounding period</h3>
 
       <p>
-        If <em>n</em>&nbsp;&times;&nbsp;<em>t</em> is not a whole number &mdash; annual
-        compounding over ten and a half years, say &mdash; the formula raises the base to
+        If <em>n</em>&nbsp;&times;&nbsp;<em>t</em> is not a whole number (annual
+        compounding over ten and a half years, say), the formula raises the base to
         a fractional power, which prorates that last part-period. It is the standard
         reading of the equation and it is what this page does, but it is a modelling
         choice rather than a fact about accounts: many real accounts credit only
@@ -1682,7 +1682,7 @@
         at that size cents are no longer a fact about the money: a JavaScript number
         carries about fifteen significant digits, so a balance in the trillions cannot
         distinguish one cent from the next. Rather than print a fabricated
-        &ldquo;.00&rdquo;, the page drops to whole dollars above a trillion &mdash; every
+        &ldquo;.00&rdquo;, the page drops to whole dollars above a trillion. Every
         figure below that line is exact to the cent, and no amount you can type is
         anywhere near it. Anything beyond the bounds themselves is refused outright,
         because past them a compound interest figure is theatre rather than information.
@@ -1709,7 +1709,7 @@
       <h3 id="faq-frequency">What does compounding frequency mean, and is monthly better than annual?</h3>
 
       <p>
-        The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12 &mdash; and everything beyond monthly, up to and including continuous compounding, is worth another $1.71.
+        The frequency is how many times a year interest is added to the balance. More often is worth more, because interest starts earning sooner, but the effect is far smaller than most people expect. On $1,000 at 5% over ten years, monthly compounding beats annual by $18.12, and everything beyond monthly, up to and including continuous compounding, is worth another $1.71.
       </p>
 
       <h3 id="faq-apr-apy">What is the difference between APR and APY?</h3>
@@ -1721,7 +1721,7 @@
       <h3 id="faq-continuous">What is continuous compounding?</h3>
 
       <p>
-        Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny &mdash; six cents on $1,000 at 5% over ten years.
+        Continuous compounding is the limit you reach as interest is added more and more often: not monthly or daily but at every instant. It has its own formula, A = Pe^(rt), rather than being a very large n. It is the ceiling on what a given nominal rate can produce, and the gap between it and daily compounding is tiny: six cents on $1,000 at 5% over ten years.
       </p>
 
       <h3 id="faq-contributions">Does this calculator include monthly contributions?</h3>
@@ -1733,7 +1733,7 @@
       <h3 id="faq-inflation">Does compound interest account for inflation?</h3>
 
       <p>
-        No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today&rsquo;s money, which is a separate calculation applied afterwards rather than part of the formula &mdash; and it is kept visibly separate in the result panel for that reason.
+        No. The formula returns a number of future dollars and says nothing about what those dollars will buy. The optional adjustment on this page divides the answer by (1 + i)^t to show it in today&rsquo;s money, which is a separate calculation applied afterwards rather than part of the formula, and it is kept visibly separate in the result panel for that reason.
       </p>
 
       <h3 id="faq-different">Why does my bank or investment account show a different number?</h3>
@@ -1785,8 +1785,8 @@
           made, and the reason is worth stating because a reader who checks will notice.
           That page accumulates a schedule three hundred and sixty rows deep, where
           binary fractions drift and a column stops adding up; integer cents fix it.
-          Nothing here accumulates &mdash; every figure is one closed form, evaluated
-          once &mdash; so there is no drift to prevent. And cents would actively break:
+          Nothing here accumulates, because every figure is one closed form
+          evaluated once, so there is no drift to prevent. And cents would actively break:
           at the largest inputs the form accepts, the balance in cents exceeds the
           largest integer JavaScript can represent exactly, and the arithmetic would
           quietly return a wrong whole number.
@@ -1922,7 +1922,7 @@
         </li>
         <li>
           <strong><a href="#compound-vs-simple">Simple interest</a>.</strong> The straight
-          line compound interest departs from &mdash; and, over less than one compounding
+          line compound interest departs from and, over less than one compounding
           period, briefly beats.
         </li>
         <li>

@@ -1015,10 +1015,10 @@
     /* Under continuous compounding there is no period and no periodic rate, and
        saying so is better than printing a dash the reader has to interpret. */
     text(ui.pPeriodic, m.n === null
-      ? 'None — interest is added continuously'
+      ? 'None: interest is added continuously'
       : pctSig(m.periodicRate) + ' a ' + m.freq.period);
     text(ui.pPeriods, m.n === null
-      ? 'None — there are no discrete periods'
+      ? 'None: there are no discrete periods'
       : numTrim(m.periods) + ' ' + plural(m.periods, 'period'));
     text(ui.pAmount, money(m.amount));
 

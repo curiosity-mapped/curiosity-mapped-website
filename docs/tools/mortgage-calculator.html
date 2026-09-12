@@ -377,7 +377,7 @@
   </nav>
 
   <!--
-    CONTENT COMPLEXITY TIER: DEEP  (see /TOOL-TIERS.md)
+    CONTENT COMPLEXITY TIER: DEEP  (see TOOL-TIERS.md in the repository root)
 
     Classified DEEP, and the canonical example of it: the arithmetic is one
     formula, but the number it returns is routinely mistaken for the whole cost
@@ -1175,7 +1175,7 @@
             <tr>
               <th scope="row">Mortgage insurance</th>
               <td>Usually required above 80% loan-to-value. An insurance premium, not interest, and it reduces nothing.</td>
-              <td><span class="tag tag--side">You supply it</span> &mdash; <span class="tag tag--never">Not estimable</span> from what this page knows</td>
+              <td><span class="tag tag--side">You supply it</span>, or <span class="tag tag--never">Not estimable</span> from what this page knows</td>
             </tr>
             <tr>
               <th scope="row">Association dues</th>
@@ -1185,7 +1185,7 @@
             <tr>
               <th scope="row">Credit score, income, debt-to-income</th>
               <td>Determine the rate you are offered and whether you are offered one at all.</td>
-              <td><span class="tag tag--out">Outside the model</span> &mdash; they reach it only as the rate you type</td>
+              <td><span class="tag tag--out">Outside the model</span>: they reach it only as the rate you type</td>
             </tr>
             <tr>
               <th scope="row">Discount points and closing costs</th>
@@ -1205,7 +1205,7 @@
             <tr>
               <th scope="row">Tax reassessment, insurance renewal, escrow analysis</th>
               <td>Move the escrowed portion of the payment every year or two, in either direction.</td>
-              <td><span class="tag tag--out">Outside the model</span> &mdash; your figures are held constant</td>
+              <td><span class="tag tag--out">Outside the model</span>: your figures are held constant</td>
             </tr>
             <tr>
               <th scope="row">Maintenance, utilities, appreciation, the mortgage interest deduction</th>
@@ -1333,7 +1333,7 @@
         payments. Every payment is then pure principal, the balance falls by the
         same amount every month, and the first chart is a straight line rather than
         a curve. The threshold is not exactly zero but 10<sup>&minus;9</sup> a
-        month &mdash; about 0.0000012% a year &mdash; below which the denominator
+        month, about 0.0000012% a year, below which the denominator
         has no significant digits left to divide by anyway.
       </p>
 
@@ -1355,7 +1355,7 @@
         If a payment does not cover the interest that accrues in a month, the
         balance grows instead of shrinking and the loan never retires. The schedule
         builder is bounded so that this terminates rather than looping, with the
-        whole remaining balance falling due on the last row &mdash; but the case is
+        whole remaining balance falling due on the last row. But the case is
         unreachable from this page, and provably so: the level payment is
         <em>P</em>&thinsp;<em>i</em> divided by a denominator that is always less
         than one, so it is always larger than <em>P</em>&thinsp;<em>i</em>, the
@@ -1393,7 +1393,7 @@
         loan becomes the input and the home price the consequence, which is what a
         refinance actually looks like. With the down payment expressed as a
         percentage that inversion is a division rather than a subtraction, and at
-        100% it has no solution &mdash; there is no price at which the whole of it
+        100% it has no solution: there is no price at which the whole of it
         is a down payment and a loan remains.
       </p>
     </section>
@@ -1530,7 +1530,7 @@
         </li>
         <li>
           <strong>The payment is rounded once</strong>, to the cent, and the
-          schedule then uses that rounded figure &mdash; because that is what you
+          schedule then uses that rounded figure, because that is what you
           would actually pay. Each month&rsquo;s interest is rounded to the cent
           before it is subtracted, which is what a servicer does, and which is what
           makes interest + principal = payment hold exactly in every row rather

@@ -414,6 +414,57 @@ test('every tool page ships the figures its own code produces', () => {
   }
 });
 
+test('no tool page or tool script uses an em dash in copy', () => {
+  /*
+   * A house rule, enforced because a prose rule nobody can check rots on the next
+   * tool. Two exemptions, and only two.
+   *
+   * HTML comments are not copy. They explain the markup to whoever edits it next,
+   * and they never reach a reader.
+   *
+   * An em dash alone in a table cell is not punctuation, it is the standard
+   * typographic mark for "not applicable", and the sensitivity and frequency
+   * tables use it for the row the other rows are measured against. Replacing
+   * those with a comma would be replacing a symbol with a mistake. This is the
+   * trap the rule contains: a find-and-replace over these files would look
+   * finished and would have broken five tables.
+   */
+  const EM = /&mdash;|\u2014/;
+
+  for (const { page } of TOOLS) {
+    const copy = read(page)
+      .replace(/<!--[\s\S]*?-->/g, ' ')          /* comments are not copy */
+      .replace(/<td>(&mdash;|\u2014)<\/td>/g, ' '); /* the not-applicable cell */
+    assert.ok(!EM.test(copy),
+      `${page}: em dash in copy near ${JSON.stringify(
+        copy.slice(Math.max(0, copy.search(EM) - 70), copy.search(EM) + 40))}`);
+  }
+
+  for (const { script } of TOOLS) {
+    /* Comments stripped, then the standalone placeholder string removed; what is
+       left is prose the page will print. */
+    const prose = code(script).replace(/'(&mdash;|\u2014)'/g, "''");
+    assert.ok(!EM.test(prose),
+      `${script}: em dash in a prose string near ${JSON.stringify(
+        prose.slice(Math.max(0, prose.search(EM) - 70), prose.search(EM) + 40))}`);
+  }
+});
+
+test('every tool page cites the content standard at a path that exists', () => {
+  /*
+   * TOOL-TIERS.md is repository furniture: it is gitignored and never served, so
+   * the tier comments' original "(see /TOOL-TIERS.md)" pointed at a URL that
+   * would 404 for anyone who tried it.
+   */
+  for (const { page } of TOOLS) {
+    const html = read(page);
+    assert.ok(!html.includes('/TOOL-TIERS.md'),
+      `${page}: cites TOOL-TIERS.md as a served path, which it is not`);
+    assert.ok(html.includes('TOOL-TIERS.md in the repository root'),
+      `${page}: should cite TOOL-TIERS.md in the repository root`);
+  }
+});
+
 test('every tool page declares its tier, and every page links only to pages that exist', () => {
   for (const { page } of TOOLS) {
     assert.match(read(page), /CONTENT COMPLEXITY TIER: (SIMPLE|MODERATE|DEEP)/, page);
