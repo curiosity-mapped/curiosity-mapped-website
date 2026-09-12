@@ -631,3 +631,256 @@ test('charts: paths are well formed and stay inside the frame', () => {
   /* A single point has no span to divide by, and must not produce NaN. */
   assert.equal(L.seriesLine([50], 100), 'M0.00,120.00');
 });
+
+/* ================================================================
+ * The sentence planner
+ *
+ * These are the tests that keep the page from lying. The arithmetic tests above
+ * can all pass while a paragraph says something false about the numbers beside
+ * it, and a false sentence next to a correct figure is worse than a wrong figure
+ * on its own, because it teaches.
+ * ================================================================ */
+
+const SCENARIOS = [
+  ['the default scenario', {}],
+  ['zero rate', { ratePct: 0 }],
+  ['near-zero rate', { ratePct: 1e-8 }],
+  ['a single payment', { principal: 1000, ratePct: 12, years: 1 / 12 }],
+  ['the degenerate case', { principal: 1000, ratePct: 30, years: 31 }],
+  ['semimonthly', { frequencyKey: '24' }],
+  ['biweekly', { frequencyKey: '26' }],
+  ['weekly', { frequencyKey: '52' }],
+  ['an extra payment', { extra: 100 }],
+  ['an extra payment, biweekly', { frequencyKey: '26', extra: 19.34 }],
+  ['an extra payment at zero rate', { ratePct: 0, extra: 100 }],
+  ['a large extra payment', { extra: 5000 }],
+  ['the longest term', { years: 40, frequencyKey: '52' }],
+  ['the shortest term', { years: 0.5 }],
+  ['the rate ceiling', { ratePct: 60 }]
+];
+
+test('prose: no scenario produces a malformed sentence', () => {
+  for (const [label, over] of SCENARIOS) {
+    const m = model(over);
+    const paragraphs = L.explainParagraphs(m);
+    assert.equal(paragraphs.length, 5, `${label}: five slots, always`);
+
+    for (const p of paragraphs.concat([L.summarySentence(m), L.chartDescription(m)])) {
+      assert.equal(typeof p, 'string', `${label}: every slot is a string`);
+      if (!p) continue;
+      assert.ok(!/NaN|Infinity|undefined|null|∞/.test(p), `${label}: leaked a value -> ${p}`);
+      assert.ok(!/ {2}/.test(p), `${label}: doubled space -> ${p}`);
+      assert.ok(!/\s+[.,]/.test(p), `${label}: space before punctuation -> ${p}`);
+      assert.ok(!/\$\s/.test(p), `${label}: empty money interpolation -> ${p}`);
+      assert.ok(/[.?]$/.test(p.trim()), `${label}: unterminated sentence -> ${p}`);
+      /* The page ships with no em dashes in copy, and the prose strings are copy
+         the same way the markup is. Enforced here as well as over the HTML so a
+         sentence added later cannot smuggle one in through the planner. */
+      assert.ok(!p.includes('—'), `${label}: em dash in prose -> ${p}`);
+    }
+  }
+});
+
+test('prose: the cadence noun always comes from the model', () => {
+  /*
+   * The default scenario is monthly, so a hardcoded "monthly" anywhere in the
+   * planner would stay invisible until a reader switched the select. This is the
+   * test that finds it, and it is why every cadence word lives in FREQUENCIES.
+   */
+  for (const key of ['24', '26', '52']) {
+    const m = model({ frequencyKey: key });
+    const text = L.explainParagraphs(m).join(' ') + ' ' + L.summarySentence(m);
+    /* Word boundaries matter here: "semimonthly" and "half-month" are the
+       semimonthly cadence's own vocabulary, and flagging them would be flagging
+       the correct answer. What must not appear is the monthly cadence's words. */
+    assert.ok(!/\bmonthly\b|\ba month\b|\beach month\b/.test(text),
+      `${key}/yr prose must not say monthly: ${text.match(/[^.]*month[^.]*\./) || ''}`);
+    assert.ok(text.includes(m.freq.each) || text.includes(m.freq.adjective),
+      `${key}/yr prose must name its own cadence`);
+  }
+  /* And the monthly scenario still reads as monthly rather than as a period. */
+  assert.ok(L.explainParagraphs(model()).join(' ').includes('each month'));
+});
+
+test('prose: zero rate replaces the interest clauses rather than filling them', () => {
+  /*
+   * "$0.00 of interest" in four places is what a template produces. At zero rate
+   * the sentences are different sentences.
+   */
+  const text = L.explainParagraphs(model({ ratePct: 0 })).join(' ');
+  assert.ok(!text.includes('$0.00 is interest'), 'must not narrate zero interest as a split');
+  assert.ok(!/interest share/.test(text), 'must not describe a share that does not exist');
+  assert.ok(text.includes('there is no interest'), 'says plainly that there is none');
+  assert.ok(text.includes('all of it principal'), 'and what the total is instead');
+  /* Never a saving claim: total interest is zero at every term. */
+  assert.ok(!/save|saving|cheaper|less interest/.test(text));
+});
+
+test('prose: a one-payment loan does not talk about a later payment', () => {
+  const text = L.explainParagraphs(model({ principal: 1000, ratePct: 12, years: 1 / 12 })).join(' ');
+  assert.ok(!text.includes('The first payment'), 'there is no first of one');
+  assert.ok(!/By payment/.test(text), 'there is no midpoint to move to');
+  assert.ok(!/Across all 1 payment/.test(text), 'and that phrase does not read');
+  assert.ok(text.includes('The only payment is'), 'it says what it is instead');
+});
+
+test('prose: the degenerate case says so instead of describing a schedule', () => {
+  const m = model({ principal: 1000, ratePct: 30, years: 31 });
+  const text = L.explainParagraphs(m).join(' ');
+  assert.equal(m.doesNotAmortize, true);
+  assert.ok(text.includes('does not amortize'), 'names what is happening');
+  assert.ok(!/interest share has fallen/.test(text), 'does not narrate a fall that never happens');
+  assert.ok(text.includes(L.moneyCents(m.finalPaymentCents)), 'and states what comes due');
+});
+
+test('prose: an early payoff is never blamed on the wrong cause', () => {
+  /*
+   * Both of these sentences are true in exactly one case and false in the other,
+   * and getting them the wrong way round is the most plausible regression in the
+   * whole file: the schedule runs short either because rounding sent a little
+   * extra to principal each period, or because the reader paid more. Only one of
+   * those is rounding.
+   */
+  const rounded = model({ principal: 400000, ratePct: 6.5, years: 30 });
+  const extra = model({ extra: 100 });
+
+  const roundedText = L.explainParagraphs(rounded).join(' ');
+  const extraText = L.explainParagraphs(extra).join(' ');
+
+  assert.ok(extra.count < extra.n, 'the extra payment does retire it early');
+  assert.ok(!/rounding the payment up/.test(extraText),
+    'an extra payment must never be explained as rounding');
+  assert.ok(!/absorbs what rounding/.test(extraText),
+    'nor must its short final row be');
+  assert.ok(/the extra had brought the balance down/.test(extraText),
+    'it is explained as what it is');
+
+  if (rounded.count < rounded.n) {
+    assert.ok(/rounding the payment up/.test(roundedText),
+      'and rounding is still explained as rounding when that is the cause');
+  }
+});
+
+test('prose: the extras paragraph appears only when there is something to say', () => {
+  assert.equal(L.explainParagraphs(model())[4], '', 'empty without an extra payment');
+  assert.equal(L.explainParagraphs(model({ extra: 0 }))[4], '', 'empty at zero');
+  assert.equal(L.explainParagraphs(model({ extra: null }))[4], '', 'empty at null');
+  assert.ok(L.explainParagraphs(model({ extra: 100 }))[4].length > 0, 'present at 100');
+});
+
+test('prose: the extras paragraph says where the saving actually comes from', () => {
+  /*
+   * The sentence the section exists for. Every extra-payment feature invites the
+   * reader to read the saving as something the schedule produced; it is the
+   * arithmetic of having paid more, and the page has to say so.
+   */
+  const m = model({ extra: 100 });
+  const p = L.explainParagraphs(m)[4];
+  assert.ok(p.includes('comes from paying more, not from paying differently'));
+  assert.ok(p.includes(L.moneyCents(m.extraCents * m.f)), 'and states the annual cost of it');
+});
+
+test('prose: never claims a saving the model has not computed', () => {
+  /*
+   * Extended from the mortgage suite's analogue to cover the cadence comparison,
+   * which is this page's version of the same trap: total interest falls as f
+   * rises, and calling that a saving would be false.
+   */
+  for (const [label, over] of SCENARIOS) {
+    const m = model(over);
+    const text = L.explainParagraphs(m).join(' ') + ' ' + L.summarySentence(m);
+    if (m.extraCents > 0) continue; /* the one place a saving is computed */
+    assert.ok(!/\bsaves\b|\bsaving\b|\bcheaper\b/.test(text),
+      `${label}: claims a saving it did not compute -> ${text}`);
+  }
+});
+
+test('prose: the live region is one sentence, not the essay', () => {
+  for (const [label, over] of SCENARIOS) {
+    const line = L.summarySentence(model(over));
+    assert.ok(line.length < 160, `${label}: the live region stays short -> ${line}`);
+    assert.ok(line.includes('payment:'), `${label}: it leads with the number`);
+  }
+  assert.equal(L.summarySentence(model({ frequencyKey: '26' })).slice(0, 18), 'Biweekly payment: ');
+});
+
+test('prose: the chart description is a description, not a caption', () => {
+  const m = model();
+  const d = L.chartDescription(m);
+  assert.ok(d.includes(L.moneyNatural(m.principal)), 'says where the balance starts');
+  assert.ok(d.includes('falls to zero'), 'and where it ends');
+  assert.ok(/curved/.test(d), 'and what shape it is');
+  assert.ok(/straight/.test(L.chartDescription(model({ ratePct: 0 }))), 'which is different at zero');
+});
+
+/* ================================================================
+ * Sensitivity
+ * ================================================================ */
+
+test('sensitivity: every row is priced by the engine that priced the headline', () => {
+  for (const [label, over] of SCENARIOS) {
+    const m = model(over);
+    const { rates, terms } = L.sensitivity(m);
+    for (const row of rates.concat(terms)) {
+      const check = L.scenario(m.principal, row.ratePct, row.years, m.f, m.extraCents);
+      assert.equal(row.paymentCents, check.paymentCents, `${label}: row payment is re-derivable`);
+      assert.equal(row.totalInterestCents, check.totalInterestCents, `${label}: row interest`);
+      assert.ok(row.ratePct >= 0 && row.ratePct <= L.HARD_MAX_RATE, `${label}: no row the form would reject`);
+      assert.ok(row.years > 0 && row.years <= L.HARD_MAX_YEARS, `${label}: no term the form would reject`);
+    }
+    assert.equal(rates.filter((r) => r.current).length, 1, `${label}: exactly one current rate row`);
+    assert.equal(terms.filter((r) => r.current).length, 1, `${label}: exactly one current term row`);
+  }
+});
+
+test('sensitivity: the current row has zero deltas, and deltas are subtractable', () => {
+  const m = model();
+  const { rates, terms } = L.sensitivity(m);
+  for (const rows of [rates, terms]) {
+    const current = rows.find((r) => r.current);
+    assert.equal(current.paymentDeltaCents, 0);
+    assert.equal(current.interestDeltaCents, 0);
+    for (const row of rows) {
+      /* A reader subtracting two printed cells must get the delta column. */
+      assert.equal(row.paymentDeltaCents, row.paymentCents - m.paymentCents);
+      assert.equal(row.interestDeltaCents, row.totalInterestCents - m.totalInterestCents);
+    }
+  }
+});
+
+test('sensitivity: stepRate survives binary arithmetic', () => {
+  /* 6.1 - 0.5 is 5.6000000000000005, and the current row is found by equality. */
+  assert.equal(L.stepRate(6.1, -0.5), 5.6);
+  assert.equal(L.stepRate(7, 1), 8);
+  assert.equal(L.stepRate(0.1, 0.2), 0.3);
+  assert.equal(L.stepRate(24.99, -2), 22.99);
+});
+
+test('sensitivity: captions never claim a saving at a zero rate', () => {
+  const m = model({ ratePct: 0 });
+  const { rates, terms } = L.sensitivity(m);
+  const caption = L.termCaptionText(m, terms);
+  /* Tested against the affirmative phrasings the code can actually produce. The
+     caption legitimately contains the word "save" inside its denial of one, and
+     an assertion that cannot tell a claim from its negation is worse than none. */
+  assert.ok(!/would save|cut the interest by|add .* in interest/.test(caption),
+    `zero-rate term caption must not claim a saving -> ${caption}`);
+  assert.ok(caption.includes('no interest for a shorter term to save'));
+  for (const text of [caption, L.rateCaptionText(m, rates)]) {
+    assert.ok(!/NaN|Infinity|undefined/.test(text));
+    assert.ok(!text.includes('—'), 'no em dash in a caption');
+  }
+});
+
+test('sensitivity: captions hold at every scenario', () => {
+  for (const [label, over] of SCENARIOS) {
+    const m = model(over);
+    const { rates, terms } = L.sensitivity(m);
+    for (const text of [L.rateCaptionText(m, rates), L.termCaptionText(m, terms)]) {
+      assert.ok(!/NaN|Infinity|undefined|null/.test(text), `${label}: ${text}`);
+      assert.ok(!/ {2}/.test(text), `${label}: doubled space`);
+      assert.ok(!text.includes('—'), `${label}: em dash`);
+      assert.ok(/\.$/.test(text.trim()), `${label}: unterminated -> ${text}`);
+    }
+  }
+});

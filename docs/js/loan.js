@@ -309,6 +309,7 @@
   var FMT_PCT_SIG = new Intl.NumberFormat('en-US', {
     style: 'percent', maximumSignificantDigits: 4
   });
+  var FMT_PCT_0 = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 0 });
   var FMT_NUM_TRIM = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
   var FMT_INT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
@@ -329,6 +330,13 @@
   function pctSig(n) { return FMT_PCT_SIG.format(n); }
   function numTrim(n) { return FMT_NUM_TRIM.format(n); }
   function integer(n) { return FMT_INT.format(n); }
+  /* "about 19% of what you borrowed": a share of the principal, where a decimal
+     place would imply a precision the word "about" has already disclaimed. */
+  function pctWhole(n) { return FMT_PCT_0.format(n); }
+
+  /* Cadence adjectives are stored lower case, because that is how they read in
+     the middle of a sentence. One of them starts a sentence in the live region. */
+  function capitalize(word) { return word.charAt(0).toUpperCase() + word.slice(1); }
 
   /*
    * "+$118.61", "-$118.61", "$0.00", with a true minus sign. Used only in the
@@ -537,6 +545,333 @@
   }
 
   /* ================================================================
+   * The explanation. A sentence planner rather than string concatenation:
+   * each sentence is only built if its condition holds, the paragraph is
+   * dropped when nothing survives, and the one place that joins a series is
+   * joinList -- which is the difference between prose and fragments.
+   *
+   * Two rules this page adds to the mortgage page's version. Every cadence word
+   * comes from m.freq, because the default scenario is monthly and a hardcoded
+   * "monthly" would stay invisible until a reader switched the select. And the
+   * degenerate cases get sentences of their own rather than the ordinary ones
+   * filled with $0.00: a zero-rate loan has no interest to narrate, and a
+   * one-payment loan has no "first payment" to contrast with a later one.
+   * ================================================================ */
+
+  function explainParagraphs(m) {
+    var zero = m.periodicRate === 0;
+    var single = m.count === 1;
+    var out = [];
+    var s;
+
+    /* --- the setup --- */
+    s = ['A ' + moneyNatural(m.principal) + ' loan at ' + pctTrim(m.rate) + ' repaid over ' +
+         m.durationText + ', with ' + integer(m.f) + ' payments a year.'];
+    out.push(s.join(' '));
+
+    /* --- the arithmetic, made visible --- */
+    s = [];
+    if (zero) {
+      s.push('At ' + pctTrim(0) + ' there is no interest, so every payment is principal and the ' +
+             integer(m.n) + ' ' + plural(m.n, 'payment') + ' simply divide the ' +
+             moneyNatural(m.principal) + '.');
+      s.push('That is ' + money(m.payment) + ' ' + m.freq.each + '.');
+    } else {
+      s.push(pctTrim(m.rate) + ' a year is ' + pctSig(m.periodicRate) + ' ' + m.freq.each +
+             ', and ' + m.durationText + ' of ' + m.freq.adjective + ' payments is ' +
+             integer(m.n) + ' of them.');
+      s.push('Those two numbers, with the ' + moneyNatural(m.principal) +
+             ', are the whole formula. They give ' + money(m.payment) + ' ' + m.freq.each + '.');
+    }
+    out.push(s.join(' '));
+
+    /* --- what the first payment actually does --- */
+    s = [];
+    if (zero) {
+      s.push('Every payment is principal. There is no interest to separate out, so the balance falls by the same amount each period and the line on the chart below is straight.');
+    } else {
+      s.push((single ? 'The only payment is ' : 'The first payment is ') +
+             moneyCents(m.firstRow.paymentCents) + '. Of that, ' +
+             moneyCents(m.firstRow.interestCents) + ' is interest on the full ' +
+             moneyNatural(m.principal) + ' and ' + moneyCents(m.firstRow.principalCents) +
+             ' comes off the balance.');
+      /* "Most" would be wrong at both ends of the range: a payment that retires
+         the balance outright has no remainder to be most of, and one that covers
+         only the interest leaves nothing for principal at all. */
+      if (m.firstRow.principalCents === 0) {
+        s.push('None of it reaches the balance, because the interest alone accounts for the whole payment.');
+      } else if (single) {
+        s.push('There is no schedule to follow: one payment retires the loan.');
+      } else if (m.firstRow.interestCents > m.firstRow.principalCents) {
+        s.push('Most of that first payment is interest, which is normal and is simply a consequence of the balance being at its largest.');
+      } else if (m.firstRow.principalCents > m.firstRow.interestCents) {
+        s.push('Most of it already goes to principal, which happens when the rate is low or the term is short.');
+      }
+    }
+    out.push(s.join(' '));
+
+    /* --- how the split moves, and the lifetime totals --- */
+    s = [];
+    if (m.doesNotAmortize) {
+      /*
+       * The payment does not cover the first period's interest, so the balance
+       * never falls and the whole of it comes due at the end. Saying that
+       * plainly is the only honest option; the ordinary sentences would describe
+       * a schedule that is not happening.
+       */
+      s.push('This loan does not amortize. The payment of ' + money(m.payment) +
+             ' does not cover the ' + moneyCents(m.firstRow.interestCents) +
+             ' of interest the first period charges, so the balance never falls and the whole of it, ' +
+             moneyCents(m.finalPaymentCents) + ', comes due on the last payment.');
+      s.push('A schedule like this is a sign that the term is too long for the rate, not a plan anyone would be offered.');
+    } else if (!single && !zero) {
+      var mid = Math.ceil(m.count / 2);
+      s.push('By payment ' + integer(mid) + ' the interest share has fallen to ' +
+             moneyCents(m.schedule.rows[mid - 1].interestCents) + ', and by the last one it is ' +
+             moneyCents(m.lastRow.interestCents) + ' against ' +
+             moneyCents(m.lastRow.principalCents) + ' of principal.');
+    }
+    if (!m.doesNotAmortize) {
+      s.push((single ? 'In total you would pay ' : 'Across all ' + integer(m.count) + ' ' +
+               plural(m.count, 'payment') + ' you would pay ') +
+             moneyCents(m.totalPaidCents) + (zero
+               ? ', all of it principal.'
+               : ', of which ' + moneyCents(m.totalInterestCents) + ' is interest, about ' +
+                 pctWhole(m.totalInterestCents / toCents(m.principal)) + ' of what you borrowed.'));
+      if (m.count < m.n && m.extraCents === 0) {
+        /* Gated on there being no extra payment. With one, the schedule runs
+           short because the reader paid more, which the fifth paragraph says
+           properly; blaming rounding there would be plainly false. */
+        s.push('The schedule runs to ' + integer(m.count) + ' payments rather than ' + integer(m.n) +
+               ', because rounding the payment up to the nearest cent sends slightly more to principal every period than the formula assumed.');
+      } else if (m.finalPaymentCents !== m.duePerPeriodCents) {
+        if (m.extraCents > 0) {
+          /* Same gate, same reason: with an extra payment the short final row is
+             a remainder the reader created, not one rounding left behind. */
+          s.push('The last payment is only ' + moneyCents(m.finalPaymentCents) +
+                 ', because by then the extra had brought the balance down to almost nothing.');
+        } else {
+          s.push('The last payment is ' + moneyCents(m.finalPaymentCents) + ' rather than ' +
+                 moneyCents(m.duePerPeriodCents) + ', because it absorbs what rounding every earlier payment to the cent left over.');
+        }
+      }
+    }
+    out.push(s.join(' '));
+
+    /* --- the extra payment, only when there is one --- */
+    s = [];
+    if (m.extraCents > 0) {
+      s.push('You are adding ' + moneyCents(m.extraCents) + ' to every payment, so ' +
+             moneyCents(m.duePerPeriodCents) + ' leaves your account ' + m.freq.each +
+             ' rather than ' + moneyCents(m.paymentCents) + '.');
+      if (m.periodsSaved > 0 || m.interestSavedCents > 0) {
+        s.push('That retires the loan in ' + integer(m.count) + ' ' + plural(m.count, 'payment') +
+               ' instead of ' + integer(m.baseSchedule.count) + ', which is ' + m.payoffText +
+               ' rather than ' + payoffText(m.baseSchedule.count, m.f) + ', and cuts the interest by ' +
+               moneyCents(m.interestSavedCents) + '.');
+      }
+      /*
+       * The sentence the section exists for. Every extra-payment feature on
+       * every calculator invites the reader to read the saving as something the
+       * schedule produced, and it is not: it is the arithmetic of having paid
+       * more. Saying so costs one sentence and is the difference between a tool
+       * and an advertisement.
+       */
+      s.push('The saving comes from paying more, not from paying differently: over a year the extra adds up to ' +
+             moneyCents(m.extraCents * m.f) + '.');
+    }
+    out.push(s.join(' '));
+
+    return out;
+  }
+
+  /*
+   * One line, for the live region. Not the whole explanation: a screen-reader
+   * user moving through the fields needs the number, not the essay.
+   */
+  function summarySentence(m) {
+    var line = capitalize(m.freq.adjective) + ' payment: ' + money(m.payment) + '.';
+    if (m.extraCents > 0) {
+      line += ' With the extra, ' + moneyCents(m.duePerPeriodCents) + '.';
+    }
+    line += ' Total interest ' + moneyCents(m.totalInterestCents) + ' over ' +
+      integer(m.count) + ' ' + plural(m.count, 'payment') + '.';
+    return line;
+  }
+
+  /*
+   * The textual alternative for the charts, which is a real description rather
+   * than a restatement of the caption: where the balance starts, how it bends,
+   * and where it ends. A reader who cannot see the picture should learn the same
+   * thing from this that the picture teaches.
+   */
+  function chartDescription(m) {
+    if (!m.yearly.length) return '';
+    var parts = [];
+    var last = m.yearly.length;
+    parts.push('The balance starts at ' + moneyNatural(m.principal) + ' and falls to zero over ' +
+      integer(last) + ' ' + plural(last, 'year') + '.');
+    var samples = [];
+    for (var k = 0; k < m.yearly.length; k++) {
+      if (k === 0 || k === Math.floor((m.yearly.length - 1) / 2) || k === m.yearly.length - 1) {
+        samples.push('year ' + m.yearly[k].year + ', ' + moneyNaturalCents(m.yearly[k].endingBalanceCents));
+      }
+    }
+    parts.push('End of ' + joinList(samples) + '.');
+    if (m.periodicRate === 0) {
+      parts.push('The line is straight, because every payment reduces the balance by the same amount.');
+    } else {
+      parts.push('The line is slightly curved rather than straight: early payments are mostly interest, so the balance falls slowly at first and faster as the interest share shrinks.');
+    }
+    return parts.join(' ');
+  }
+
+  /* ================================================================
+   * Sensitivity. The same arithmetic run again against inputs the reader did
+   * not enter, so that "what if the rate were a point higher" is answered by a
+   * schedule rather than by a rule of thumb. A point of rate is worth different
+   * money at every principal, term and cadence, which is exactly why the answer
+   * cannot be written into the prose once and left there.
+   * ================================================================ */
+
+  /* Percentage points, added to the rate the reader entered. */
+  var RATE_STEPS = [-2, -1, 0, 1, 2];
+
+  /* Years. The reader's own term joins this list wherever it sorts, so the
+     table always contains the row its deltas are measured against. */
+  var TERM_STEPS = [3, 5, 7];
+
+  /*
+   * One alternative loan, priced from scratch. The payment is rounded to the
+   * cent exactly as the headline figure is, and the totals come from a real
+   * schedule rather than from payment times n -- so a row in the sensitivity
+   * table and the result panel can never disagree about the same loan.
+   */
+  function scenario(principal, ratePct, years, f, extraCents) {
+    var i = ratePct / 100 / f;
+    var n = Math.round(years * f);
+    var pmt = Math.round(payment(principal, i, n) * 100) / 100;
+    var s = buildSchedule(principal, i, n, pmt, extraCents || 0);
+    return {
+      ratePct: ratePct,
+      years: years,
+      f: f,
+      n: n,
+      paymentCents: toCents(pmt),
+      totalInterestCents: s.totalInterestCents,
+      totalPaidCents: s.totalPaidCents,
+      count: s.count
+    };
+  }
+
+  function withDeltas(s, m, isCurrent) {
+    s.current = !!isCurrent;
+    /* Deltas are taken between two figures the page has already printed, so a
+       reader who subtracts two cells gets the number the delta column shows. */
+    s.paymentDeltaCents = centDelta(s.paymentCents, m.paymentCents);
+    s.interestDeltaCents = centDelta(s.totalInterestCents, m.totalInterestCents);
+    return s;
+  }
+
+  /* Rates carry three decimals at most, and 6.1 - 0.5 is 5.6000000000000005 in
+     binary. Rounding here is what lets the current row be found by equality
+     rather than by tolerance. */
+  function stepRate(ratePct, step) {
+    return Math.round((ratePct + step) * 1000) / 1000;
+  }
+
+  function sensitivity(m) {
+    var rates = [];
+    var terms = [];
+    var seen = {};
+    var years = TERM_STEPS.slice();
+    var k, r, y;
+
+    for (k = 0; k < RATE_STEPS.length; k++) {
+      r = stepRate(m.ratePct, RATE_STEPS[k]);
+      /*
+       * Anything the form itself would reject is left out of the table. A
+       * scenario the calculator refuses to compute is not a scenario worth
+       * offering, and a clamped row would be a different loan wearing the label
+       * of the one asked for.
+       */
+      if (r < 0 || r > HARD_MAX_RATE || seen[r]) continue;
+      seen[r] = true;
+      rates.push(withDeltas(scenario(m.principal, r, m.years, m.f, m.extraCents), m, RATE_STEPS[k] === 0));
+    }
+
+    if (years.indexOf(m.years) === -1) years.push(m.years);
+    years.sort(function (a, b) { return a - b; });
+    for (k = 0; k < years.length; k++) {
+      y = years[k];
+      if (y <= 0 || y > HARD_MAX_YEARS || Math.round(y * m.f) > MAX_PAYMENTS) continue;
+      terms.push(withDeltas(scenario(m.principal, m.ratePct, y, m.f, m.extraCents), m, y === m.years));
+    }
+
+    return { rates: rates, terms: terms };
+  }
+
+  function findRate(rows, ratePct) {
+    for (var k = 0; k < rows.length; k++) if (rows[k].ratePct === ratePct) return rows[k];
+    return null;
+  }
+
+  /*
+   * The caption is the whole point of the rate table: the table shows five
+   * loans, and this says what the distance between two of them costs. Taken from
+   * a row rather than from a remembered figure, and phrased downward when a rate
+   * a point higher would be outside what the form accepts.
+   */
+  function rateCaptionText(m, rows) {
+    var lead = 'The same ' + moneyNatural(m.principal) + ' over ' + m.durationText +
+      ', paid ' + m.freq.adverb + ', priced at other rates. Your own row is marked.';
+    var up = findRate(rows, stepRate(m.ratePct, 1));
+    var down = findRate(rows, stepRate(m.ratePct, -1));
+    if (up) {
+      return lead + ' One percentage point more would add ' + moneyCents(up.paymentDeltaCents) +
+        ' to each payment, and ' + moneyCents(up.interestDeltaCents) + ' in interest over the whole term.';
+    }
+    if (down) {
+      return lead + ' One percentage point less would save ' + moneyCents(-down.paymentDeltaCents) +
+        ' on each payment, and ' + moneyCents(-down.interestDeltaCents) + ' in interest over the whole term.';
+    }
+    return lead;
+  }
+
+  /*
+   * The term table's trade is the one people most often take only half of: the
+   * payment and the total move in opposite directions, and both numbers belong
+   * in the same sentence.
+   */
+  function termCaptionText(m, rows) {
+    var lead = 'The same ' + moneyNatural(m.principal) + ' at ' + pctTrim(m.rate) +
+      ', over other terms. Your own row is marked.';
+    if (m.periodicRate === 0) {
+      /* At a zero rate there is no interest for a shorter term to save, and a
+         caption that claimed one would be the easiest false sentence on the
+         page to write. The mortgage suite pins the analogue. */
+      return lead + ' At a zero rate the term changes the payment and nothing else: there is no interest for a shorter term to save.';
+    }
+    var shorter = null;
+    var longer = null;
+    for (var k = 0; k < rows.length; k++) {
+      if (rows[k].years < m.years) shorter = rows[k];
+      else if (rows[k].years > m.years && !longer) longer = rows[k];
+    }
+    if (shorter) {
+      return lead + ' Retiring it in ' + durationText(shorter.years) + ' rather than ' + m.durationText +
+        ' would raise each payment by ' + moneyCents(shorter.paymentDeltaCents) +
+        ' and cut the interest by ' + moneyCents(-shorter.interestDeltaCents) + '.';
+    }
+    if (longer) {
+      return lead + ' Spreading it over ' + durationText(longer.years) + ' rather than ' + m.durationText +
+        ' would lower each payment by ' + moneyCents(-longer.paymentDeltaCents) +
+        ' and add ' + moneyCents(longer.interestDeltaCents) + ' in interest.';
+    }
+    return lead;
+  }
+
+  /* ================================================================
    * Node's test runner loads this file to exercise the functions above. In a
    * browser `module` is undefined, the block is skipped, and the file stays a
    * plain script -- no bundler, no build step, no type="module". The
@@ -576,6 +911,8 @@
       pctSig: pctSig,
       numTrim: numTrim,
       integer: integer,
+      pctWhole: pctWhole,
+      capitalize: capitalize,
       centDelta: centDelta,
       joinList: joinList,
       plural: plural,
@@ -586,7 +923,17 @@
       seriesLine: seriesLine,
       seriesArea: seriesArea,
       seriesBand: seriesBand,
-      buildModel: buildModel
+      buildModel: buildModel,
+      explainParagraphs: explainParagraphs,
+      summarySentence: summarySentence,
+      chartDescription: chartDescription,
+      RATE_STEPS: RATE_STEPS,
+      TERM_STEPS: TERM_STEPS,
+      scenario: scenario,
+      stepRate: stepRate,
+      sensitivity: sensitivity,
+      rateCaptionText: rateCaptionText,
+      termCaptionText: termCaptionText
     };
   }
 })();
