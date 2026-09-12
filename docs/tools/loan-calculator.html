@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script>
+  /* Consent Mode defaults, declared before the tag loads. The order is
+     load-bearing: gtag.js drains whatever is already queued in dataLayer, so a
+     default that arrived after the loader would not apply to the first hit. */
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  /* Denied by default in the EEA, the UK, and Switzerland. Google resolves the
+     region from the request IP, which is the only geography a static site can
+     consult without adding a third-party lookup to every page load. */
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    region: ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB',
+             'GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO',
+             'PL','PT','RO','SE','SI','SK']
+  });
+
+  /* Everywhere else analytics is on until the visitor says otherwise. The three
+     advertising signals stay denied in every region: the banner asks about
+     analytics only, and granting what was never asked for would misreport it. */
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'granted'
+  });
+
+  gtag('set', 'ads_data_redaction', true);
+
+  /* The only code on the site that speaks to Google. The banner in consent.js
+     calls set() and never touches gtag itself, so the consent interface can be
+     replaced -- by a certified CMP, if advertising is ever added -- without any
+     of this moving. */
+  window.cmConsent = (function () {
+    var ID = 'G-6ZT7DLXEBG';
+    var KEY = 'cm-consent';
+    var VERSION = 1;
+    var MAX_AGE = 31536000000; /* 12 months, in milliseconds */
+    var KEEP = /^(utm_source|utm_medium|utm_campaign|utm_term|utm_content|gclid|gbraid|wbraid)$/;
+
+    /* Fails closed. Anything this cannot positively recognise as a current,
+       unexpired choice reads as no choice at all, which leaves the regional
+       default in force and shows the banner. localStorage throws rather than
+       returning null in a private window, hence the catch. */
+    function read() {
+      try {
+        var c = JSON.parse(localStorage.getItem(KEY));
+        if (!c || c.v !== VERSION) return null;
+        if (c.analytics !== 'granted' && c.analytics !== 'denied') return null;
+        if (typeof c.ts !== 'number' || Date.now() - c.ts > MAX_AGE) return null;
+        return c.analytics;
+      } catch (e) { return null; }
+    }
+
+    function write(state) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(
+          { v: VERSION, analytics: state, ts: Date.now() }
+        ));
+      } catch (e) {}
+    }
+
+    /* Strips every query parameter the site does not put there itself, so that
+       no future URL can carry a browser-tool input into page_location. Nothing
+       on the site writes to the URL today; this is what keeps that true if one
+       day something does. The allowlist is what leaves campaign attribution
+       working, should it ever be used. */
+    function url(href) {
+      if (!href) return href;
+      var a = document.createElement('a');
+      a.href = href;
+      var kept = [];
+      var parts = a.search.replace(/^\?/, '').split('&');
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i] && KEEP.test(parts[i].split('=')[0])) kept.push(parts[i]);
+      }
+      return a.protocol + '//' + a.host + a.pathname +
+             (kept.length ? '?' + kept.join('&') : '');
+    }
+
+    /* Withdrawal has to remove what is already there: a consent update stops GA
+       writing cookies, it does not clear the ones written before it. */
+    function purge() {
+      var all = document.cookie.split(';');
+      for (var i = 0; i < all.length; i++) {
+        var name = all[i].split('=')[0].replace(/^\s+|\s+$/g, '');
+        if (name.indexOf('_ga') !== 0) continue;
+        document.cookie = name + '=; Max-Age=0; path=/';
+        var domain = location.hostname;
+        while (domain.indexOf('.') > -1) {
+          document.cookie = name + '=; Max-Age=0; path=/; domain=' + domain;
+          document.cookie = name + '=; Max-Age=0; path=/; domain=.' + domain;
+          domain = domain.slice(domain.indexOf('.') + 1);
+        }
+      }
+    }
+
+    function apply(state) {
+      gtag('consent', 'update', { analytics_storage: state });
+      /* Advanced consent mode keeps sending cookieless pings while storage is
+         denied. That is the right behaviour for someone who has not answered
+         yet, and it is not what Reject means, so an explicit denial also trips
+         Google's own per-measurement-ID kill switch. Assigned rather than set,
+         because the flag is read at hit time: leaving it true would silently
+         make a later change of mind do nothing. */
+      window['ga-disable-' + ID] = state === 'denied';
+    }
+
+    var api = {
+      ID: ID,
+      KEY: KEY,
+      VERSION: VERSION,
+      MAX_AGE: MAX_AGE,
+      read: read,
+      url: url,
+      state: read(),
+
+      set: function (state) {
+        write(state);
+        apply(state);
+        /* No page view is replayed here. Where the default was already
+           granted -- everywhere outside the denied regions -- this document was
+           counted on load, and sending another would count it twice. Where the
+           default was denied, accepting costs the entry page view and every
+           page after it is measured normally. An overcount corrupts the numbers
+           for most visitors; an undercount of one view understates them for
+           some. gtag does not replay it either, which was measured rather than
+           assumed. */
+        if (state === 'denied') purge();
+        api.state = state;
+      },
+
+      /* For another tab reacting to a storage event: the choice is already
+         written, only this document's Google state needs to catch up. */
+      sync: function (state) {
+        if (state) apply(state);
+        if (state === 'denied') purge();
+        api.state = state;
+      }
+    };
+
+    if (api.state) apply(api.state);
+    return api;
+  })();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6ZT7DLXEBG"></script>
+<script>
+  gtag('js', new Date());
+  (function () {
+    var cfg = { page_location: cmConsent.url(location.href) };
+    /* An external referrer is Google's to interpret and cannot carry anything
+       typed into this site. A same-origin one goes through the same sanitiser,
+       so a value that reached one page's URL could not follow the reader to the
+       next one either. */
+    if (document.referrer && document.referrer.indexOf(location.origin) === 0) {
+      cfg.page_referrer = cmConsent.url(document.referrer);
+    }
+    gtag('config', 'G-6ZT7DLXEBG', cfg);
+  })();
+</script>
+<!-- End Google tag -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Cascade layer order is declared in the document, not in the stylesheet, so it
+     can never depend on the order rules happen to appear in. -->
+<style>@layer tokens, base, components, utilities;</style>
+
+<title>Loan Calculator | Curiosity Mapped</title>
+<meta name="description" content="Work out a loan payment and see where it comes from: the periodic rate, the amortization schedule, and what the payment does and does not cover. Runs in your browser.">
+
+<link rel="canonical" href="https://curiositymapped.com/tools/loan-calculator.html">
+
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#02090e" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Curiosity Mapped">
+<meta property="og:title" content="Loan Calculator | Curiosity Mapped">
+<meta property="og:description" content="Work out a loan payment and see where it comes from: the periodic rate, the amortization schedule, and what the payment does and does not cover. Runs in your browser.">
+<meta property="og:url" content="https://curiositymapped.com/tools/loan-calculator.html">
+<meta property="og:locale" content="en_US">
+<!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
+<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Curiosity Mapped: follow the curiosity, map what you find, see where it leads.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- A favicon has no cascade to inherit, so it carries its own prefers-color-scheme block. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3E.b{fill:%23fbfcfa}.s{stroke:%23456339}.d{fill:%23456339}@media(prefers-color-scheme:dark){.b{fill:%2302090e}.s{stroke:%23b9e87f}.d{fill:%23b9e87f}}%3C/style%3E%3Crect class='b' width='32' height='32' rx='6'/%3E%3Cpath class='s' d='M6 23C12 23 12 18 17 17 22 16 22 10 26 8' fill='none' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle class='d' cx='6' cy='23' r='2.4'/%3E%3Ccircle class='d' cx='26' cy='8' r='2.4'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<script>
+  /* Same pre-paint theme boot as every other page; see index.html for why it is inline. */
+  try {
+    var t = localStorage.getItem('cm-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<!-- Loaded only by the calculator pages, so the rest of the site pays nothing for it. -->
+<link rel="stylesheet" href="/css/calculator.css">
+<link rel="stylesheet" href="/css/utilities.css">
+
+<script src="/js/main.js" defer></script>
+<script src="/js/consent.js" defer></script>
+<!-- Kept separate from main.js, which is on every page and must not grow. -->
+<script src="/js/loan.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://curiositymapped.com/tools/loan-calculator.html#app",
+      "name": "Loan Calculator",
+      "url": "https://curiositymapped.com/tools/loan-calculator.html",
+      "description": "Work out a loan payment and see where it comes from: the periodic rate, the amortization schedule, and what the payment does and does not cover.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript for live results; the formula, the worked example, the amortization charts, and the yearly schedule are readable without it.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "isPartOf": { "@id": "https://curiositymapped.com/#website" },
+      "publisher": { "@id": "https://curiositymapped.com/#org" },
+      "breadcrumb": { "@id": "https://curiositymapped.com/tools/loan-calculator.html#breadcrumb" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://curiositymapped.com/tools/loan-calculator.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://curiositymapped.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tools",
+          "item": "https://curiositymapped.com/tools/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Loan Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://curiositymapped.com/tools/loan-calculator.html#faq",
+      "isPartOf": { "@id": "https://curiositymapped.com/tools/loan-calculator.html#app" },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why is my last payment different from all the others?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Because the payment is rounded to the cent once and then used unchanged for every period, while the interest is worked out on the actual balance each time. Those two roundings do not cancel, and the difference has to land somewhere. It lands on the final payment. On the default scenario the regular payment is $495.03 and the sixtieth is $495.05. Over thirty years at 6.5% on $400,000 the gap reaches a few dollars. Your lender does the same thing, which is why a payoff quote is never exactly the payment you have been making."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does paying biweekly instead of monthly save money?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not on its own. Switch the cadence on this page and you will see the total interest move by about $55 on a five-year $25,000 loan, because a nominal rate divided by a larger number is not quite the same contract. What people usually mean by the biweekly trick is different: paying half the monthly payment every two weeks makes 26 payments a year, which is thirteen monthly payments' worth rather than twelve. That does retire the loan sooner, and it does cut the interest, because you paid more. The cadence is not what did it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the APR higher than the interest rate I was quoted?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The interest rate prices the money. The APR prices the loan, so it folds in origination fees, points, and anything else you paid to get it, spread across the term. If the loan has no fees the two are the same. If it has fees the APR is higher, and the gap is the honest measure of what the fees cost you. This calculator uses the interest rate, because that is the number the payment is actually computed from. It does not compute an APR, and a page that guessed at one would be inventing your fee schedule."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this the same as what my lender will quote me?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The payment should match to the cent if your loan is an ordinary fixed-rate installment loan accruing on the monthly actuarial convention, which most are. It will not match if your lender uses daily simple interest, which is common on car loans, or precomputed interest, which is uncommon and behaves quite differently if you pay early. It also will not match if fees were financed into the balance and you entered only the amount you borrowed. What this page cannot do at all is tell you what rate you would be offered."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between the interest rate and the periodic rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The interest rate is annual. The periodic rate is what actually gets applied to your balance each period, and it is the annual rate divided by the number of payments a year: 7% a year is 0.5833% each month. That division is a lending convention rather than a mathematical necessity. Compounding 0.5833% twelve times gives 7.229%, not 7%, which is why the effective annual rate on a 7% loan is slightly above 7%."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does the calculator not ask for my credit score?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Because a credit score is not in the formula. It is one of the things that determines what rate a lender offers you, along with income, the term, the collateral, and the lender's own cost of funds. Once you have a rate, the score has done its work and plays no further part in the arithmetic. This page starts where the rate starts. It is a calculator, not an underwriter, and it makes no judgement about whether you should borrow."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens if I pay the loan off early?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "On a normally amortizing loan, interest stops accruing on the part of the balance you retire, so paying early always costs less in total interest. The schedule below shows what you would owe at the end of every period. Two things can spoil it. A prepayment penalty is a fee for doing it, still legal on some loan types. Precomputed interest is worse: the total interest was fixed at origination, and paying early may earn you only a partial rebate of what you have not yet used."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this include insurance, taxes, or fees?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, and that is deliberate. The payment on this page is principal and interest and nothing else. A loan often arrives attached to costs that are not part of the loan payment: property taxes, homeowners insurance, mortgage insurance, and association dues with a mortgage; comprehensive insurance and registration with a car loan. They are real money and they are not in this formula. For the housing case the mortgage calculator models them explicitly and keeps them visibly separate from principal and interest."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does a longer term cost more when the payment is smaller?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Because interest is charged on what you still owe, and a longer term means you still owe more for longer. Stretching the default $25,000 loan from five years to seven drops the payment by $117.71 and adds $1,992.64 in interest. Both figures are real, and neither is the whole answer: a payment you can meet is worth something, and the sensitivity table further down shows you the trade in both columns at once rather than arguing for one of them."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="header">
+  <a class="wordmark" href="/">
+    <span class="wordmark__line">Curiosity</span>
+    <span class="wordmark__line wordmark__line--wide">Mapped</span>
+  </a>
+
+  <nav class="nav" aria-label="Primary">
+    <p class="visually-hidden">Some of the map is still blank. Tools is the first area to take shape; Journal and Reference will follow.</p>
+    <ul class="nav__list">
+      <li><span class="nav__item">Journal</span></li>
+      <li><a class="nav__item nav__item--link" href="/tools/">Tools</a></li>
+      <li><span class="nav__item">Reference</span></li>
+      <li><span class="nav__item">About</span></li>
+    </ul>
+  </nav>
+
+  <button class="toggle" type="button" id="theme-toggle" aria-label="Switch theme">
+    <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <span id="theme-label">Dark</span>
+  </button>
+</header>
+
+<main id="main" tabindex="-1">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb__list">
+      <li class="breadcrumb__item"><a href="/">Home</a></li>
+      <li class="breadcrumb__item"><a href="/tools/">Tools</a></li>
+      <li class="breadcrumb__item"><span aria-current="page">Loan Calculator</span></li>
+    </ol>
+  </nav>
+
+  <!--
+    CONTENT COMPLEXITY TIER: DEEP  (see TOOL-TIERS.md in the repository root)
+
+    Classified DEEP, and against the standard's own example list, which files a
+    Loan Payment Calculator under MODERATE. Three reasons to depart from it. The
+    standard's own rule is to choose the higher tier when uncertain. Five of its
+    six classification questions answer yes here: the result is routinely
+    misunderstood, because a payment is read as a cost; it rests on assumptions
+    the calculator cannot verify, because accrual conventions differ between
+    lenders; it is confused with more comprehensive measurements, namely APR and
+    total cost; a reader could make a materially different decision from it; and
+    interpreting it needs concepts the calculation does not contain. And the same
+    MODERATE example list contains the Compound Interest Calculator, which
+    shipped as DEEP. Shipped precedent beats the example list.
+
+    Every required area of the tier maps to a section below.
+
+      1  Title and introduction ......... #page-title and the lede
+      2  Interactive calculator ......... #calculator
+      3  Formula ........................ #how-the-math-works
+      4  Parameters / variables ......... the table under #how-the-math-works
+      5  Calculation method ............. #your-result, including the worked substitution
+      6  Result interpretation .......... #your-result and #understanding
+      7  Real-world context ............. #rate-vs-apr and #loan-types
+      8  Factors ........................ #factors
+      9  Assumptions .................... #assumptions
+     10  Visualization .................. the charts under #amortization
+     11  Detailed breakdown ............. the tables under #amortization
+     12  Scenarios / sensitivity ........ #sensitivity, #frequency, and #extra-payments
+     13  Common misconceptions .......... #misconceptions
+     14  Limitations .................... #limitations
+     15  Edge cases ..................... #edge-cases
+     16  FAQ ............................ #faq
+     17  Methodology .................... #methodology
+     18  Related tools and concepts ..... #related
+
+    Nothing here is present to satisfy the template. A section that could not
+    answer a question a reader actually has was not written.
+  -->
+
+  <!--
+    The stagger stops after the title and the lede, for the same reason it does on
+    the two calculators that came before: .rise fills backwards, so carrying it
+    down a document this long would hold the tail invisible for seconds on first
+    paint.
+  -->
+  <article class="prose" aria-labelledby="page-title">
+    <h1 class="prose__title rise" id="page-title" style="--i:0">Loan Calculator</h1>
+
+    <p class="prose__lede rise" style="--i:1">
+      Work out what a loan costs to repay, and see exactly which arithmetic produced
+      the figure. The formula sits above the calculator rather than behind it, every
+      number the page reports comes from the equation it shows you, and the schedule
+      below is the real one rather than a summary of it.
+    </p>
+
+    <p>
+      This calculator answers one question precisely: if you borrow an amount at a
+      fixed rate and repay it in equal instalments over a fixed term, what is each
+      instalment, and where does it go? That is a <strong>fully amortizing
+      fixed-rate loan</strong>, which covers most car loans, personal loans, student
+      loans on standard repayment, and mortgages. Interest-only loans, balloon loans,
+      and anything with a rate that moves are different models, not different numbers,
+      and they are named further down rather than quietly approximated here.
+    </p>
+
+    <p>
+      The payment this page reports is <strong>principal and interest only</strong>.
+      Loans often arrive attached to costs that are not part of the loan payment, and
+      keeping those out of the headline figure is the single most useful thing a
+      calculator like this can do. What they are, and where they belong instead, is
+      set out under <a href="#limitations">what this calculator does not include</a>.
+    </p>
+
+    <p>
+      It runs entirely in your browser. There is no server behind it and nothing you
+      type is transmitted anywhere.
+    </p>
+
+    <!-- ============================ 1. the maths ============================ -->
+
+    <section aria-labelledby="how-the-math-works">
+      <h2 id="how-the-math-works">How a loan payment is calculated</h2>
+
+      <p>
+        One equation produces the payment. It is the only thing on this page that is
+        not a consequence of it.
+      </p>
+
+      <figure class="formula" aria-labelledby="formula-caption">
+        <math display="block">
+          <semantics>
+            <mrow>
+              <mi>M</mi>
+              <mo>=</mo>
+              <mfrac>
+                <mrow><mi>P</mi><mo>&#x2062;</mo><mi>i</mi></mrow>
+                <mrow>
+                  <mn>1</mn>
+                  <mo>&#x2212;</mo>
+                  <msup>
+                    <mrow><mo>(</mo><mn>1</mn><mo>+</mo><mi>i</mi><mo>)</mo></mrow>
+                    <mrow><mo>&#x2212;</mo><mi>n</mi></mrow>
+                  </msup>
+                </mrow>
+              </mfrac>
+            </mrow>
+            <annotation encoding="application/x-tex">M = \frac{P i}{1 - (1 + i)^{-n}}</annotation>
+          </semantics>
+        </math>
+        <figcaption class="visually-hidden" id="formula-caption">
+          M equals P times i, divided by the quantity one minus open parenthesis one
+          plus i close parenthesis raised to the power of negative n.
+        </figcaption>
+      </figure>
+
+      <p>
+        <em>M</em> is the payment, <em>P</em> is the amount borrowed, <em>i</em> is the
+        <strong>periodic</strong> interest rate, and <em>n</em> is the total number of
+        payments. You will also meet this written as <em>M</em> = <em>P</em>&#x2009;<em>i</em>(1+<em>i</em>)<sup><em>n</em></sup>
+        / ((1+<em>i</em>)<sup><em>n</em></sup> &minus; 1). The two are the same equation
+        rearranged, and they agree to the last digit a computer can hold.
+      </p>
+
+      <h3 id="derived-inputs">The two numbers you are never asked for</h3>
+
+      <p>
+        Neither <em>i</em> nor <em>n</em> is something you know about your loan. You
+        know an annual rate, a term in years, and how often you pay. The calculator
+        derives the other two:
+      </p>
+
+      <p>
+        <em>i</em> = <em>r</em> / <em>f</em>, the annual rate divided by the number of
+        payments a year. <em>n</em> = years &times; <em>f</em>, the term multiplied by the
+        same number.
+      </p>
+
+      <p>
+        Asking you for a periodic rate would be asking you to perform the conversion
+        this page exists to show. So both derived values are displayed live, marked as
+        derived, in the table below and again beneath the term field in the calculator.
+        The division <em>i</em> = <em>r</em>/<em>f</em> is a
+        <strong>lending convention rather than a mathematical necessity</strong>, and
+        that distinction matters enough that the mortgage calculator gives it a section
+        of its own:
+        <a href="/tools/mortgage-calculator.html#periodic-rate">the periodic rate is a convention, not a derivation</a>.
+      </p>
+
+      <div class="params">
+        <table class="table">
+          <caption>
+            Every symbol in the formula: what it means, the value it currently holds in
+            the calculator below, and the direction it moves <em>M</em> in. The fifth
+            and sixth rows are not inputs. They are figures the first four produce.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Symbol</th>
+              <th scope="col">What it is</th>
+              <th scope="col">Your value</th>
+              <th scope="col">Moves <em>M</em></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">P</th>
+              <td>The principal: the amount financed, after any down payment and including any fees rolled into the loan. Dollars.</td>
+              <td><span class="params__value" id="p-principal">$25,000</span></td>
+              <td>Proportional</td>
+            </tr>
+            <tr>
+              <th scope="row">r</th>
+              <td>The annual nominal interest rate on the contract. Not the APR.</td>
+              <td><span class="params__value" id="p-rate">0.07 (7%)</span></td>
+              <td>Up, steeply</td>
+            </tr>
+            <tr>
+              <th scope="row">f</th>
+              <td>Payments a year: how often an instalment falls due.</td>
+              <td><span class="params__value" id="p-freq">12 (monthly)</span></td>
+              <td>Down, but barely</td>
+            </tr>
+            <tr>
+              <th scope="row">t</th>
+              <td>The term: how long you have to repay it. Years.</td>
+              <td><span class="params__value" id="p-term">5 years</span></td>
+              <td>Down, with a rising total</td>
+            </tr>
+            <tr>
+              <th scope="row">i</th>
+              <td>The periodic rate, <em>r</em>/<em>f</em>: the share of the annual rate applied to the balance each period. Derived, not entered.</td>
+              <td><span class="params__value" id="p-periodic">0.5833% each month</span></td>
+              <td>Derived</td>
+            </tr>
+            <tr>
+              <th scope="row">n</th>
+              <td>The total number of payments, <em>t</em> &times; <em>f</em>, and the exponent the whole formula turns on. Derived, not entered.</td>
+              <td><span class="params__value" id="p-count">60 payments</span></td>
+              <td>Derived</td>
+            </tr>
+            <tr>
+              <th scope="row">M</th>
+              <td>The payment: principal and interest, every period, unchanged for the life of the loan.</td>
+              <td><span class="params__value" id="p-payment">$495.03</span></td>
+              <td>The output</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================ 2. calculator ============================ -->
+
+    <section class="calc" aria-labelledby="calculator">
+      <h2 id="calculator">Calculate your loan</h2>
+
+      <div class="calc__layout">
+        <!--
+          One form, and it has no action, no method, and no submit button. That is
+          not an oversight: a submit button would turn Enter into a GET of this same
+          page with the amount in the query string, and page_location is the one
+          thing analytics records verbatim. loan.js blocks submission outright as
+          well, so the guarantee does not rest on an absence.
+        -->
+        <form class="calc__form" id="calc-form" novalidate>
+          <fieldset class="fieldset">
+            <legend class="fieldset__legend">The loan</legend>
+
+            <div class="field">
+              <label class="field__label" for="principal">Loan amount ($): the <em>P</em> in the formula</label>
+              <div class="field__control field__control--money">
+                <span class="field__adorn" aria-hidden="true">$</span>
+                <input class="field__input" id="principal" name="principal" type="text"
+                       inputmode="decimal" autocomplete="off" value="25000"
+                       aria-describedby="principal-hint principal-error">
+              </div>
+              <p class="field__hint" id="principal-hint">
+                The amount actually financed: the price less any down payment or
+                trade-in, plus any fees the lender rolled into the loan rather than
+                charging up front. If a fee was financed it is part of the balance and
+                belongs in this number.
+              </p>
+              <p class="field__error" id="principal-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="rate">Annual interest rate (%): the <em>r</em> in the formula</label>
+              <div class="field__control field__control--pct">
+                <input class="field__input" id="rate" name="rate" type="text"
+                       inputmode="decimal" autocomplete="off" value="7"
+                       aria-describedby="rate-hint rate-warn rate-error">
+                <span class="field__adorn field__adorn--end" aria-hidden="true">%</span>
+              </div>
+              <p class="field__hint" id="rate-hint">
+                The contractual interest rate, not the APR. If your paperwork shows
+                both, they differ by the fees, and <a href="#rate-vs-apr">which one to
+                use here</a> has a section of its own. 7% is an illustrative default
+                and not a rate quote; Curiosity Mapped does not offer or track lending
+                rates.
+              </p>
+              <p class="field__warn" id="rate-warn" hidden></p>
+              <p class="field__error" id="rate-error" hidden></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset__legend">The schedule</legend>
+
+            <div class="field">
+              <label class="field__label" for="term">Term: the <em>t</em> in the formula</label>
+              <div class="field__control">
+                <select class="field__input" id="term" name="term" autocomplete="off"
+                        aria-describedby="term-readout term-hint term-warn term-error">
+                  <option value="1">1 year</option>
+                  <option value="2">2 years</option>
+                  <option value="3">3 years</option>
+                  <option value="4">4 years</option>
+                  <option value="5" selected>5 years</option>
+                  <option value="6">6 years</option>
+                  <option value="7">7 years</option>
+                  <option value="10">10 years</option>
+                  <option value="15">15 years</option>
+                  <option value="20">20 years</option>
+                  <option value="30">30 years</option>
+                  <option value="other">Other&hellip;</option>
+                </select>
+              </div>
+              <div class="field" id="term-other-wrap" hidden>
+                <label class="field__label" for="term-other">Term in years</label>
+                <div class="field__control">
+                  <input class="field__input" id="term-other" name="term-other" type="text"
+                         inputmode="decimal" autocomplete="off" value="5"
+                         aria-describedby="term-readout term-hint term-warn term-error">
+                </div>
+              </div>
+              <p class="field__readout" id="term-readout">60 monthly payments</p>
+              <p class="field__hint" id="term-hint">
+                The term is in years rather than months because the number of payments
+                depends on how often you pay. That readout is <em>n</em>, and it changes
+                when you change the frequency below.
+              </p>
+              <p class="field__warn" id="term-warn" hidden></p>
+              <p class="field__error" id="term-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="frequency">Payment frequency: the <em>f</em> in the formula</label>
+              <div class="field__control">
+                <select class="field__input" id="frequency" name="frequency" autocomplete="off"
+                        aria-describedby="frequency-hint">
+                  <option value="12" selected>Monthly (12 a year)</option>
+                  <option value="24">Semimonthly (24 a year)</option>
+                  <option value="26">Biweekly (26 a year)</option>
+                  <option value="52">Weekly (52 a year)</option>
+                </select>
+              </div>
+              <p class="field__hint" id="frequency-hint">
+                Semimonthly is twice a month, 24 a year. Biweekly is every two weeks,
+                26 a year. They are not the same thing, and the difference is worth
+                more than it looks:
+                <a href="#frequency">what changing this actually does</a>.
+              </p>
+            </div>
+
+            <!--
+              One optional input, and it is inside the same form rather than a second
+              one. The mortgage page has a second form only because it needs four
+              fields; one field does not justify it, and the test suite counts forms
+              per page against a known map.
+            -->
+            <details class="disclosure calc__section">
+              <summary class="disclosure__summary">Add an extra payment toward principal</summary>
+              <div class="disclosure__body">
+                <div class="field">
+                  <label class="field__label" for="extra">Extra amount with every payment ($)</label>
+                  <div class="field__control field__control--money">
+                    <span class="field__adorn" aria-hidden="true">$</span>
+                    <input class="field__input" id="extra" name="extra" type="text"
+                           inputmode="decimal" autocomplete="off"
+                           aria-describedby="extra-hint extra-warn extra-error">
+                  </div>
+                  <p class="field__hint" id="extra-hint">
+                    Leave this blank and nothing is assumed. Enter an amount and it is
+                    added to every payment and applied straight to principal, which
+                    shortens the schedule. It is not part of the formula above: it is
+                    an addition to the payment the formula produced.
+                  </p>
+                  <p class="field__warn" id="extra-warn" hidden></p>
+                  <p class="field__error" id="extra-error" hidden></p>
+                </div>
+              </div>
+            </details>
+
+            <button class="btn btn--quiet" type="button" id="reset">Reset to the example</button>
+          </fieldset>
+
+          <p class="calc__privacy">
+            The numbers you enter stay in this browser. Nothing you type here is sent
+            anywhere, nothing is written to the address bar, and nothing is saved
+            between visits. The page itself uses Google Analytics, as described in the
+            <a href="/privacy.html">privacy policy</a>.
+          </p>
+        </form>
+
+        <div class="calc__results">
+          <div class="result" id="result-panel">
+            <span class="result__label" id="result-label">Monthly payment</span>
+            <!--
+              aria-live is switched off deliberately. <output> is a live region by
+              default in several screen readers, and this page already has exactly
+              one, #calc-status below, because two of them on one page talk over
+              each other and neither gets heard.
+            -->
+            <output class="result__amount" id="result-amount" for="principal rate term frequency extra" aria-live="off">$495.03</output>
+            <p class="result__stale-note" id="result-stale-note" hidden></p>
+
+            <div class="result__grid">
+              <div class="result__tile">
+                <span class="result__tile-label">Total interest</span>
+                <span class="result__tile-value" id="result-interest">$4,701.82</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Total paid</span>
+                <span class="result__tile-value" id="result-total">$29,701.82</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Number of payments</span>
+                <span class="result__tile-value" id="result-count">60</span>
+              </div>
+              <div class="result__tile">
+                <span class="result__tile-label">Final payment</span>
+                <span class="result__tile-value" id="result-final">$495.05</span>
+              </div>
+            </div>
+
+            <div class="result__early" id="result-early" hidden>
+              <span class="result__label">With the extra payment</span>
+              <span class="result__early-amount" id="result-early-amount"></span>
+              <p class="result__early-note" id="result-early-note"></p>
+            </div>
+
+            <p class="result__warn" id="result-warn" hidden></p>
+          </div>
+        </div>
+      </div>
+
+      <!--
+        The one live region on the page. Visually hidden, because the figures are
+        already on screen for anyone who can see them; written on a 500ms trailing
+        debounce, because a region that fires on every keystroke is unusable.
+      -->
+      <div class="status" id="calc-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </section>
+
+    <!-- ============================ 3. your result ============================ -->
+
+    <section aria-labelledby="your-result">
+      <h2 id="your-result">What your numbers mean</h2>
+
+      <div class="explain" id="explain">
+        <p>A $25,000 loan at 7% repaid over 5 years, with 12 payments a year.</p>
+        <p>7% a year is 0.5833% each month, and 5 years of monthly payments is 60 of them. Those two numbers, with the $25,000, are the whole formula. They give $495.03 each month.</p>
+        <p>The first payment is $495.03. Of that, $145.83 is interest on the full $25,000 and $349.20 comes off the balance. Most of it already goes to principal, which happens when the rate is low or the term is short.</p>
+        <p>By payment 30 the interest share has fallen to $81.67, and by the last one it is $2.87 against $492.18 of principal. Across all 60 payments you would pay $29,701.82, of which $4,701.82 is interest, about 19% of what you borrowed. The last payment is $495.05 rather than $495.03, because it absorbs what rounding every earlier payment to the cent left over.</p>
+        <p hidden></p>
+      </div>
+
+      <!--
+        The substitution, rebuilt on every keystroke. This is the part a generic
+        calculator leaves out: not the formula, and not the answer, but the one
+        standing between them with the reader's own figures in it.
+      -->
+      <figure class="formula formula--worked" id="substitution" aria-labelledby="substitution-caption">
+        <div id="substitution-math" tabindex="0" role="region"
+             aria-label="The formula with your figures in it, scrollable">
+          <math display="block">
+            <semantics>
+              <mrow>
+                <mi>M</mi><mo>=</mo>
+                <mfrac>
+                  <mrow>
+                    <mn>$25,000</mn><mo>&#x2062;</mo>
+                    <mfrac><mn>0.07</mn><mn>12</mn></mfrac>
+                  </mrow>
+                  <mrow>
+                    <mn>1</mn><mo>&#x2212;</mo>
+                    <msup>
+                      <mrow>
+                        <mo>(</mo><mn>1</mn><mo>+</mo>
+                        <mfrac><mn>0.07</mn><mn>12</mn></mfrac>
+                        <mo>)</mo>
+                      </mrow>
+                      <mrow><mo>&#x2212;</mo><mn>60</mn></mrow>
+                    </msup>
+                  </mrow>
+                </mfrac>
+                <mo>&#x2248;</mo>
+                <mn>$495.03</mn>
+              </mrow>
+            </semantics>
+          </math>
+        </div>
+        <figcaption class="chart__caption" id="substitution-caption">The formula with your figures in it.</figcaption>
+      </figure>
+
+      <p>
+        The payment is rounded to the cent once, and every period uses that same
+        figure. The interest, though, is worked out on the balance that actually
+        stands at each due date, and rounded to the cent there too. Those two
+        roundings do not cancel, so the last payment absorbs whatever is left:
+        <span id="final-sentence">$495.05 rather than $495.03</span>. That is why the
+        totals on this page are read off the schedule rather than multiplied out of the
+        payment. Sixty payments of $495.03 is $29,701.80, and the schedule totals
+        $29,701.82. Two cents is small, but a page whose headline disagrees with its
+        own table is not one you should trust with the large numbers either.
+      </p>
+    </section>
+
+    <!-- ============================ 4. amortization ============================ -->
+
+    <section aria-labelledby="amortization">
+      <h2 id="amortization">How the balance is paid down</h2>
+
+      <p>
+        The payment never changes. What changes is what it is made of. Interest is
+        charged on what you still owe, so it is largest at the start and shrinks with
+        the balance, and whatever the interest does not consume reduces the principal.
+        That leaves a little less to charge interest on next time. The effect compounds
+        in your favour, slowly at first and then quickly.
+      </p>
+
+      <div class="charts">
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-balance-caption">What you still owe</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-balance-caption" aria-describedby="chart-balance-desc"
+                 focusable="false">
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__area" id="chart-balance-area" d="M0.00,0.00L128.00,41.54L256.00,86.09L384.00,133.86L512.00,185.08L640.00,240.00L640.00,240.00L0.00,240.00Z"></path>
+              <path class="chart__line" id="chart-balance-line" d="M0.00,0.00L128.00,41.54L256.00,86.09L384.00,133.86L512.00,185.08L640.00,240.00"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-balance-ymax">$25,000</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-balance-xmax">Year 5</span></p>
+          <p class="visually-hidden" id="chart-balance-desc">The balance starts at $25,000 and falls to zero over 5 years. End of year 1, $20,672.55, year 3, $11,056.55, and year 5, $0. The line is slightly curved rather than straight: early payments are mostly interest, so the balance falls slowly at first and faster as the interest share shrinks.</p>
+        </figure>
+
+        <figure class="chart">
+          <figcaption class="chart__caption" id="chart-comp-caption">Where each year&rsquo;s payments go</figcaption>
+          <div class="chart__frame">
+            <svg class="chart__svg" viewBox="0 0 640 240" preserveAspectRatio="none"
+                 role="img" aria-labelledby="chart-comp-caption" aria-describedby="chart-comp-desc"
+                 focusable="false">
+              <defs>
+                <!--
+                  The interest band is hatched as well as tinted. Two areas told apart
+                  by hue alone would be unreadable to a colour-blind reader and would
+                  disappear entirely in forced-colors mode.
+                -->
+                <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <line class="chart__hatch" x1="0" y1="0" x2="0" y2="6"></line>
+                </pattern>
+              </defs>
+              <g class="chart__grid" aria-hidden="true">
+                <line x1="0" y1="60" x2="640" y2="60"></line>
+                <line x1="0" y1="120" x2="640" y2="120"></line>
+                <line x1="0" y1="180" x2="640" y2="180"></line>
+                <line x1="0" y1="239.5" x2="640" y2="239.5"></line>
+              </g>
+              <path class="chart__band--interest" id="chart-comp-interest" d="M0.00,174.84L160.00,187.47L320.00,201.03L480.00,215.56L640.00,231.14L640.00,240.00L480.00,240.00L320.00,240.00L160.00,240.00L0.00,240.00Z"></path>
+              <path id="chart-comp-interest-hatch" fill="url(#hatch)" d="M0.00,174.84L160.00,187.47L320.00,201.03L480.00,215.56L640.00,231.14L640.00,240.00L480.00,240.00L320.00,240.00L160.00,240.00L0.00,240.00Z"></path>
+              <path class="chart__band--principal" id="chart-comp-principal" d="M0.00,0.00L160.00,0.00L320.00,0.00L480.00,0.00L640.00,0.00L640.00,231.14L480.00,215.56L320.00,201.03L160.00,187.47L0.00,174.84Z"></path>
+            </svg>
+            <span class="chart__ymax" id="chart-comp-ymax">$5,940 a year</span>
+          </div>
+          <p class="chart__scale"><span>Year 0</span><span id="chart-comp-xmax">Year 5</span></p>
+          <p class="chart__legend">
+            <span class="chart__key"><span class="chart__swatch chart__swatch--interest" aria-hidden="true"></span> Interest (hatched, below)</span>
+            <span class="chart__key"><span class="chart__swatch chart__swatch--principal" aria-hidden="true"></span> Principal (solid, above)</span>
+          </p>
+          <p class="visually-hidden" id="chart-comp-desc">In year 1, $1,612.91 of the year&rsquo;s payments is interest and $4,327.45 is principal. In year 5, $219.24 is interest and $5,721.14 is principal. The total stays the same; only the split moves.</p>
+        </figure>
+      </div>
+
+      <div class="amort">
+        <div class="amort__wrap table-scroll" tabindex="0" role="region" aria-label="Yearly amortization summary, scrollable">
+          <table class="table">
+            <caption id="amort-yearly-caption">
+              A $25,000 loan at 7% over 5 years, paid monthly, summarised a year at a
+              time. Interest and principal are the totals for the year; the balance is
+              what stands at the end of it.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Year</th>
+                <th scope="col">Payments</th>
+                <th scope="col">Interest</th>
+                <th scope="col">Principal</th>
+                <th scope="col">Balance at year end</th>
+              </tr>
+            </thead>
+            <tbody id="amort-yearly">
+              <tr><th scope="row">1</th><td>12</td><td>$1,612.91</td><td>$4,327.45</td><td>$20,672.55</td></tr>
+              <tr><th scope="row">2</th><td>12</td><td>$1,300.10</td><td>$4,640.26</td><td>$16,032.29</td></tr>
+              <tr><th scope="row">3</th><td>12</td><td>$964.62</td><td>$4,975.74</td><td>$11,056.55</td></tr>
+              <tr><th scope="row">4</th><td>12</td><td>$604.95</td><td>$5,335.41</td><td>$5,721.14</td></tr>
+              <tr><th scope="row">5</th><td>12</td><td>$219.24</td><td>$5,721.14</td><td>$0.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="disclosure" id="payments-disclosure">
+          <summary class="disclosure__summary">Show every payment</summary>
+          <div class="disclosure__body">
+            <div class="amort__wrap amort--payments table-scroll" tabindex="0" role="region" aria-label="Per-payment amortization schedule, scrollable">
+              <table class="table">
+                <caption id="amort-payments-caption">
+                  Every payment, one row each. This table is built when you open it,
+                  so it needs JavaScript; the yearly summary above does not, and carries
+                  the same figures at a coarser grain.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Interest</th>
+                    <th scope="col">Principal</th>
+                    <th scope="col">Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="amort-payments"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============================ 5. understanding ============================ -->
+
+    <section aria-labelledby="understanding">
+      <h2 id="understanding">Understanding what you are looking at</h2>
+
+      <h3 id="payment-is-not-cost">A payment is not a cost</h3>
+
+      <p>
+        The payment is the most visible number on any loan and the least informative
+        one about what the loan costs. It is a rate of outflow, not a total. Two loans
+        with the same payment can differ by thousands of dollars in what you hand over,
+        because a payment can always be lowered by lengthening the term, and lengthening
+        the term always raises the total. Stretching the default loan here from five
+        years to seven drops the payment by $117.71 and adds $1,992.64 in interest. The
+        payment is what you can afford. The total is what it costs. They are different
+        questions and a single number cannot answer both.
+      </p>
+
+      <h3 id="front-loading">Why the early payments are mostly interest</h3>
+
+      <p>
+        Interest accrues on the balance outstanding, and the balance is largest on day
+        one. The payment is fixed, so whatever the interest does not consume is what
+        reduces the principal. On the default scenario the first payment is $145.83 of
+        interest and $349.20 of principal. Because that $349.20 makes the balance a
+        little smaller, the next month&rsquo;s interest is a little smaller, which leaves
+        a little more for principal. That is the whole mechanism.
+      </p>
+
+      <p>
+        It is also why the balance curve above bends rather than falling in a straight
+        line. The closed form for the balance after <em>k</em> payments is
+        <em>B<sub>k</sub></em> = <em>P</em>(1+<em>i</em>)<sup><em>k</em></sup> &minus;
+        <em>M</em>[((1+<em>i</em>)<sup><em>k</em></sup> &minus; 1) / <em>i</em>], and the
+        exponential terms in it are exactly where the curvature comes from. On a
+        five-year loan at 7% the bend is gentle. On a thirty-year mortgage it is
+        dramatic, which is the single fact that surprises people most about mortgages.
+      </p>
+
+      <h3 id="what-changes-what">What each input actually does</h3>
+
+      <p>
+        The <strong>principal</strong> scales everything: double it and the payment,
+        the interest, and the total all double exactly. The <strong>rate</strong> moves
+        the payment steeply and the total interest more steeply still, because it
+        compounds against a balance that is itself shrinking more slowly.
+        The <strong>term</strong> is the only input that moves the payment and the total
+        in opposite directions, which is what makes it the input people get wrong. The
+        <strong>frequency</strong> barely matters, and
+        <a href="#frequency">why it barely matters</a> is more interesting than the fact
+        that it does.
+      </p>
+    </section>
+
+    <!-- ============================ 6. frequency ============================ -->
+
+    <section aria-labelledby="frequency">
+      <h2 id="frequency">What changing the payment frequency actually does</h2>
+
+      <p>
+        Switch the frequency select above and four things change at once: the payment,
+        the number of payments, the periodic rate, and the total interest. It is
+        tempting to read the last of those as a saving. It is not one, and seeing why
+        is worth more than the calculator itself.
+      </p>
+
+      <div class="amort__wrap table-scroll" tabindex="0" role="region" aria-label="Payment frequency comparison, scrollable">
+        <table class="table">
+          <caption id="freq-caption">
+            The same $25,000 at 7% over 5 years, at each cadence the calculator offers.
+            Read the <em>paid per year</em> column before the interest column.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Cadence</th>
+              <th scope="col">Payments</th>
+              <th scope="col">Each payment</th>
+              <th scope="col">Paid per year</th>
+              <th scope="col">Total interest</th>
+              <th scope="col">Effective annual rate</th>
+            </tr>
+          </thead>
+          <tbody id="freq-table">
+            <tr><th scope="row">Monthly</th><td>60</td><td>$495.03</td><td>$5,940.36</td><td>$4,701.82</td><td>7.2290%</td></tr>
+            <tr><th scope="row">Semimonthly</th><td>120</td><td>$247.21</td><td>$5,933.04</td><td>$4,665.88</td><td>7.2399%</td></tr>
+            <tr><th scope="row">Biweekly</th><td>130</td><td>$228.18</td><td>$5,932.68</td><td>$4,662.85</td><td>7.2407%</td></tr>
+            <tr><th scope="row">Weekly</th><td>260</td><td>$114.02</td><td>$5,929.04</td><td>$4,646.62</td><td>7.2458%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="frequency-why">Why the interest column moves at all</h3>
+
+      <p>
+        Under <em>i</em> = <em>r</em>/<em>f</em>, changing <em>f</em> changes two things
+        together. A nominal rate divided by a bigger number and compounded more often is
+        not the same annual rate: 7% divided twelve ways compounds to 7.2290% a year,
+        and divided fifty-two ways it compounds to 7.2458%. That pushes the interest
+        <em>up</em>. At the same time, paying more often at a fixed term in years retires
+        principal sooner, which pulls the interest <em>down</em>. The second effect is
+        larger, so the column falls.
+      </p>
+
+      <p>
+        Neither of those is a saving, because <strong>those four rows are four different
+        contracts, not one loan at four cadences</strong>. The thing that makes them
+        comparable is the fourth column. Across all four, the amount leaving your account
+        each year differs by $11.32 on about $5,935, which is under two tenths of one
+        percent. The total interest differs by $55.20 over five years, and it differs
+        because the contracts differ, not because one schedule is cleverer than another.
+      </p>
+
+      <p>
+        <strong>Changing when you pay barely changes anything. You pay about the same
+        amount each year, so you get about the same result.</strong> If a lender offers
+        you a cadence and frames it as a saving, the fourth column is the one to ask
+        about.
+      </p>
+
+      <h3 id="semimonthly-vs-biweekly">Semimonthly and biweekly are not the same thing</h3>
+
+      <p>
+        Semimonthly means twice a month: 24 payments a year, always on the same two
+        dates. Biweekly means every fourteen days: 26 payments a year, drifting through
+        the calendar. The names sound interchangeable and the schedules are not. Two
+        extra payments a year is the entire difference, and it is the mechanism behind
+        every claim you have read that biweekly payments retire a loan early. See
+        <a href="#extra-payments">what paying extra actually does</a>, which is where
+        that claim turns out to be true for a reason that has nothing to do with the
+        cadence.
+      </p>
+
+      <p>
+        The related idea of how often interest is <em>added</em>, rather than how often
+        you pay, belongs to the compound interest calculator, which treats it at length:
+        <a href="/tools/compound-interest-calculator.html#frequency">compounding frequency</a>
+        and
+        <a href="/tools/compound-interest-calculator.html#nominal-periodic-effective">nominal, periodic, and effective rates</a>.
+        On an amortizing loan there is no separate compounding choice to make, because
+        interest that is paid every period never compounds at all.
+      </p>
+    </section>
+
+    <!-- ============================ 7. rate vs apr ============================ -->
+
+    <section aria-labelledby="rate-vs-apr">
+      <h2 id="rate-vs-apr">Interest rate, APR, and what your lender actually charges</h2>
+
+      <p>
+        Your paperwork will show two percentages and they will not match. The
+        <strong>interest rate</strong> prices the money: it is the number that goes into
+        the formula above, and the only one this calculator uses. The <strong>annual
+        percentage rate</strong> prices the loan, folding origination fees, points, and
+        other charges into a single figure spread across the term. A loan with no fees
+        has one number twice. A loan with fees has an APR above its interest rate, and
+        the gap is the honest measure of what the fees cost.
+      </p>
+
+      <p>
+        <strong>Enter the interest rate here, not the APR.</strong> Entering the APR
+        would produce a payment slightly larger than the one you will actually be billed,
+        because it would charge you for the fees twice: once when you paid them, and
+        again as a higher rate on the balance. This calculator does not compute an APR,
+        and it will not guess at one, because that would mean inventing a fee schedule
+        it has no way to know.
+      </p>
+
+      <p>
+        One case deserves care. If a fee was <em>financed</em> rather than paid up front,
+        it is part of the balance, so it belongs in the loan amount field. Then the
+        payment this page reports is correct, and the APR is still higher than the rate,
+        because you are paying interest on the fee.
+      </p>
+
+      <h3 id="accrual-conventions">Lenders differ in how interest accrues</h3>
+
+      <p>
+        The formula above assumes interest is computed on the balance standing at each
+        due date. That is not the only convention in use, and the differences are not
+        cosmetic.
+      </p>
+
+      <ul>
+        <li>
+          <strong>Monthly actuarial.</strong> Interest is computed on the balance at
+          each due date. This is what the page models, and what standard fixed-rate
+          installment loans and United States mortgages use.
+        </li>
+        <li>
+          <strong>Daily simple interest.</strong> Interest accrues every day on the
+          outstanding balance. Common on car loans. Paying a few days early or late
+          changes what you owe, which a periodic model cannot see at all. Over a full
+          term the totals land close; month to month they do not.
+        </li>
+        <li>
+          <strong>Precomputed interest.</strong> The total interest is fixed when the
+          loan is written and spread across the payments. The Consumer Financial
+          Protection Bureau describes this as an uncommon way of calculating interest on
+          a car loan, and notes that paying off early may earn only a partial rebate of
+          the interest you have not yet used. This is the one case where this
+          calculator&rsquo;s early-payoff arithmetic would be actively wrong, so it is
+          worth knowing which kind of loan you have.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============================ 8. loan types ============================ -->
+
+    <section aria-labelledby="loan-types">
+      <h2 id="loan-types">Not every loan works this way</h2>
+
+      <p>
+        The formula above describes a loan that is <em>fully amortizing</em>: every
+        payment is identical, every payment covers all the interest due plus some
+        principal, and the last one leaves a balance of zero. Most consumer loans are
+        like this. Several common ones are not, and for those this page will give you a
+        confident wrong answer rather than no answer, which is why they are listed.
+      </p>
+
+      <ul>
+        <li>
+          <strong>Interest-only loans</strong> charge the interest and nothing else for a
+          period, so the balance does not move. The payment is simply <em>P</em> &times;
+          <em>i</em>, and the formula above does not apply until the amortizing phase
+          begins.
+        </li>
+        <li>
+          <strong>Balloon loans</strong> are amortized against a long term but come due
+          on a short one, leaving a large final payment. You can approximate the payment
+          here by entering the amortization term, but the payoff is not what this page
+          will show you.
+        </li>
+        <li>
+          <strong>Adjustable-rate loans</strong> have a rate that changes on a schedule.
+          Everything here assumes a fixed rate, so the figures hold only until the first
+          adjustment.
+        </li>
+        <li>
+          <strong>Credit cards and other revolving credit</strong> have no term and no
+          fixed payment. There is nothing for this formula to describe.
+        </li>
+        <li>
+          <strong>Income-driven student loan repayment</strong> sets the payment from
+          your income rather than from the balance, and the balance can grow. A standard
+          ten-year repayment plan, on the other hand, is exactly the model above.
+        </li>
+      </ul>
+
+      <h3 id="mortgages">Mortgages are this loan, plus other things</h3>
+
+      <p>
+        A mortgage is a loan of exactly this kind: same formula, same schedule, same
+        arithmetic. What makes it its own subject is everything attached to it, namely
+        collateral, and costs that travel with the property rather than with the debt.
+        Property taxes, homeowners insurance, mortgage insurance, and association dues
+        are billed alongside the payment and are not part of it. If that is what you are
+        working out, the
+        <a href="/tools/mortgage-calculator.html">mortgage calculator</a> models those
+        separately and keeps them visibly apart from principal and interest, which is
+        the whole reason it is a different page.
+      </p>
+    </section>
+
+    <!-- ============================ 9. sensitivity ============================ -->
+
+    <section aria-labelledby="sensitivity">
+      <h2 id="sensitivity">What happens when you change one input</h2>
+
+      <p>
+        A percentage point is worth different money at every principal, every term, and
+        every cadence, so a rule of thumb cannot answer this and these tables are
+        recomputed from scratch instead. Each row is a real loan, priced by the same
+        engine that produced the headline figure, with a real schedule behind it.
+      </p>
+
+      <h3 id="sens-rate">If the rate were different</h3>
+
+      <div class="sens__wrap table-scroll" tabindex="0" role="region" aria-label="Rate sensitivity, scrollable">
+        <table class="table sens">
+          <caption id="sens-rate-caption">The same $25,000 over 5 years, paid monthly, priced at other rates. Your own row is marked. One percentage point more would add $11.88 to each payment, and $712.80 in interest over the whole term.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Rate</th>
+              <th scope="col">Payment</th>
+              <th scope="col">Difference</th>
+              <th scope="col">Total interest</th>
+              <th scope="col">Difference</th>
+            </tr>
+          </thead>
+          <tbody id="sens-rate">
+            <tr><th scope="row">5%</th><td>$471.78</td><td>&minus;$23.25</td><td>$3,306.88</td><td>&minus;$1,394.94</td></tr>
+            <tr><th scope="row">6%</th><td>$483.32</td><td>&minus;$11.71</td><td>$3,999.23</td><td>&minus;$702.59</td></tr>
+            <tr class="sens__row--current"><th scope="row">7% <span class="sens__tag">yours</span></th><td>$495.03</td><td>$0.00</td><td>$4,701.82</td><td>$0.00</td></tr>
+            <tr><th scope="row">8%</th><td>$506.91</td><td>+$11.88</td><td>$5,414.62</td><td>+$712.80</td></tr>
+            <tr><th scope="row">9%</th><td>$518.96</td><td>+$23.93</td><td>$6,137.53</td><td>+$1,435.71</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="sens-term">If the term were different</h3>
+
+      <div class="sens__wrap table-scroll" tabindex="0" role="region" aria-label="Term sensitivity, scrollable">
+        <table class="table sens">
+          <caption id="sens-term-caption">The same $25,000 at 7%, over other terms. Your own row is marked. Retiring it in 3 years rather than 5 years would raise each payment by $276.90 and cut the interest by $1,912.40.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Term</th>
+              <th scope="col">Payment</th>
+              <th scope="col">Difference</th>
+              <th scope="col">Total interest</th>
+              <th scope="col">Difference</th>
+            </tr>
+          </thead>
+          <tbody id="sens-term">
+            <tr><th scope="row">3 years</th><td>$771.93</td><td>+$276.90</td><td>$2,789.42</td><td>&minus;$1,912.40</td></tr>
+            <tr class="sens__row--current"><th scope="row">5 years <span class="sens__tag">yours</span></th><td>$495.03</td><td>$0.00</td><td>$4,701.82</td><td>$0.00</td></tr>
+            <tr><th scope="row">7 years</th><td>$377.32</td><td>&minus;$117.71</td><td>$6,694.46</td><td>+$1,992.64</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The two columns in the term table move in opposite directions, and that is the
+        trade people most often take only half of. A lower payment is a real benefit and
+        a higher total is a real cost. This page will not tell you which matters more to
+        you, because it does not know anything about you.
+      </p>
+    </section>
+
+    <!-- ============================ 10. extra payments ============================ -->
+
+    <section aria-labelledby="extra-payments">
+      <h2 id="extra-payments">What paying extra actually does</h2>
+
+      <p>
+        Money paid above the scheduled payment goes straight to principal, which means
+        the next period&rsquo;s interest is charged on a smaller balance, which leaves
+        more of the following payment for principal. The schedule simply ends early. Open
+        the extra payment field in the calculator and the result panel gains a second
+        block showing how much earlier and how much less.
+      </p>
+
+      <p>
+        There is one thing to check with your lender first: that extra money is applied
+        to <em>principal</em> rather than held as a prepayment of next month&rsquo;s
+        instalment. Those two are very different, and the second saves you nothing.
+      </p>
+
+      <h3 id="biweekly-trick">The biweekly trick, and what is actually doing the work</h3>
+
+      <p>
+        The most repeated piece of loan advice is that paying biweekly retires a loan
+        early. The section on <a href="#frequency">payment frequency</a> shows that
+        switching cadence on its own does almost nothing, so something else must be
+        going on, and it is this: the advice is not really about cadence.
+      </p>
+
+      <p>
+        Take the default loan. The monthly payment is $495.03. Pay <em>half of that</em>,
+        $247.52, every two weeks, and you make 26 payments a year, which is
+        <strong>thirteen monthly payments&rsquo; worth rather than twelve</strong>. The
+        loan is retired in 119 payments instead of 130, which is 4 years and 7 months
+        instead of 5 years, and the interest falls from $4,662.85 to $4,215.77.
+      </p>
+
+      <p>
+        That saving is real. What produced it is not the cadence: it is the extra
+        $495.16 a year. Paying the same extra amount monthly would do the same work. The
+        genuine advantage of the biweekly framing is behavioural rather than
+        mathematical, because two of your twenty-six payments fall in months where you
+        make three of them, and a schedule that hides the extra payment inside a rhythm
+        is easier to keep than one that asks for it. That is a real benefit. It is just
+        not arithmetic, and a calculator should say which is which.
+      </p>
+    </section>
+
+    <!-- ============================ 11. factors ============================ -->
+
+    <section aria-labelledby="factors">
+      <h2 id="factors">What moves the number, and what this model can see</h2>
+
+      <p>
+        Four inputs produce the payment. A great many other things determine what your
+        loan actually costs, and the useful distinction is not between large and small
+        but between what is inside the formula, what sits beside it, and what this page
+        cannot see at all.
+      </p>
+
+      <div class="factors__wrap table-scroll" tabindex="0" role="region" aria-label="Factors and whether the model includes them, scrollable">
+        <table class="table factors">
+          <caption>Where each factor sits relative to the formula above.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Factor</th>
+              <th scope="col">Status</th>
+              <th scope="col">What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Amount financed</th>
+              <td><span class="tag tag--in">In the formula</span></td>
+              <td>Scales the payment and the interest proportionally.</td>
+            </tr>
+            <tr>
+              <th scope="row">Interest rate</th>
+              <td><span class="tag tag--in">In the formula</span></td>
+              <td>Raises the payment steeply and the total interest more steeply.</td>
+            </tr>
+            <tr>
+              <th scope="row">Term</th>
+              <td><span class="tag tag--in">In the formula</span></td>
+              <td>Lowers the payment and raises the total. The only input that does both.</td>
+            </tr>
+            <tr>
+              <th scope="row">Payment frequency</th>
+              <td><span class="tag tag--in">In the formula</span></td>
+              <td>Changes the periodic rate and the payment count. Barely changes the annual outlay.</td>
+            </tr>
+            <tr>
+              <th scope="row">Extra payments</th>
+              <td><span class="tag tag--side">Applied alongside</span></td>
+              <td>Added to the payment and applied to principal, so the schedule ends early.</td>
+            </tr>
+            <tr>
+              <th scope="row">Origination fees and points</th>
+              <td><span class="tag tag--out">Outside the model</span></td>
+              <td>Raise the APR above the rate. In the loan amount only if they were financed.</td>
+            </tr>
+            <tr>
+              <th scope="row">Accrual convention</th>
+              <td><span class="tag tag--out">Outside the model</span></td>
+              <td>Daily simple interest and precomputed interest behave differently, especially on early payoff.</td>
+            </tr>
+            <tr>
+              <th scope="row">Prepayment penalties</th>
+              <td><span class="tag tag--out">Outside the model</span></td>
+              <td>A fee for retiring the loan early, which the schedule here does not charge.</td>
+            </tr>
+            <tr>
+              <th scope="row">Insurance, taxes, and dues</th>
+              <td><span class="tag tag--out">Outside the model</span></td>
+              <td>Billed alongside the loan, never part of the payment. See the mortgage calculator for the housing case.</td>
+            </tr>
+            <tr>
+              <th scope="row">Late fees and missed payments</th>
+              <td><span class="tag tag--never">Never modelled</span></td>
+              <td>Every figure here assumes every payment is made on time and in full.</td>
+            </tr>
+            <tr>
+              <th scope="row">Your credit, income, and circumstances</th>
+              <td><span class="tag tag--never">Never modelled</span></td>
+              <td>They determine the rate you are offered. Once you have a rate they play no further part.</td>
+            </tr>
+            <tr>
+              <th scope="row">Inflation</th>
+              <td><span class="tag tag--never">Never modelled</span></td>
+              <td>Fixed payments get easier in real terms over a long term. Nothing here adjusts for it.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================ 12. misconceptions ============================ -->
+
+    <section aria-labelledby="misconceptions">
+      <h2 id="misconceptions">Common misconceptions</h2>
+
+      <h3 id="mis-payment">&ldquo;A lower payment means a cheaper loan&rdquo;</h3>
+      <p>
+        It usually means a longer one. The payment falls because the same principal is
+        spread over more periods, and more periods means more interest. The term table
+        above shows both columns at once for exactly this reason.
+      </p>
+
+      <h3 id="mis-total">&ldquo;Total paid is the payment times the number of payments&rdquo;</h3>
+      <p>
+        Close, and wrong in a way that matters more than the amount. Sixty payments of
+        $495.03 is $29,701.80. The schedule totals $29,701.82, because the final payment
+        absorbs the rounding. The habit of multiplying out is the same habit that leads
+        people to trust a payment figure carried to two decimals over a schedule that
+        actually adds up.
+      </p>
+
+      <h3 id="mis-biweekly">&ldquo;Paying biweekly saves money&rdquo;</h3>
+      <p>
+        Switching cadence and keeping the annual outlay the same changes very little:
+        $11.32 a year on the default loan. Paying half the monthly payment every two
+        weeks does save money, and the reason is that it is thirteen monthly payments a
+        year rather than twelve. The saving comes from paying more, not from paying more
+        often.
+      </p>
+
+      <h3 id="mis-interest-first">&ldquo;The lender takes all the interest first&rdquo;</h3>
+      <p>
+        Nothing is front-loaded by design. Interest is charged on the balance
+        outstanding, the balance is largest at the beginning, and that is the entire
+        explanation. Nobody chose to weight it that way; it falls out of charging
+        interest on what is owed.
+      </p>
+
+      <h3 id="mis-apr">&ldquo;The APR is the interest rate&rdquo;</h3>
+      <p>
+        The APR is the interest rate <em>plus the fees</em>, expressed as a rate. If
+        they are equal, the loan has no fees. Use the interest rate in this calculator,
+        because that is the number the payment is computed from.
+      </p>
+
+      <h3 id="mis-everything">&ldquo;The calculator includes everything I pay each month&rdquo;</h3>
+      <p>
+        It includes principal and interest and nothing else. A mortgage arrives with
+        property taxes, insurance, possibly mortgage insurance, and possibly association
+        dues. A car loan arrives with comprehensive insurance and registration. Those are
+        real obligations and they are not part of the loan payment, so a calculator that
+        folded them into one figure would make the payment look larger and the loan look
+        more expensive than it is.
+      </p>
+
+      <h3 id="mis-extra">&ldquo;Extra payments reduce my monthly payment&rdquo;</h3>
+      <p>
+        They reduce the <em>number</em> of payments, not their size. The payment is fixed
+        by the contract; paying extra retires the balance sooner. Some lenders will
+        recast a loan on request, which does lower the payment, but that is a separate
+        thing you have to ask for and it is not what this schedule shows.
+      </p>
+    </section>
+
+    <!-- ============================ 13. limitations ============================ -->
+
+    <section aria-labelledby="limitations">
+      <h2 id="limitations">What this calculator does not include</h2>
+
+      <p>
+        Everything in this list is real money or a real risk. None of it is in the
+        formula, and listing it is more useful than approximating it.
+      </p>
+
+      <ul>
+        <li>
+          <strong>Fees of any kind.</strong> Origination fees, application fees, points,
+          documentation fees, and prepayment penalties are outside the model. If a fee
+          was financed it belongs in the loan amount; if you paid it up front it does
+          not, and the loan still cost you that money.
+        </li>
+        <li>
+          <strong>The APR.</strong> Not computed, and not guessable from what you have
+          entered.
+        </li>
+        <li>
+          <strong>Costs billed alongside the loan.</strong> Property taxes, homeowners
+          insurance, mortgage insurance, and association dues on a mortgage; insurance
+          and registration on a car loan. The
+          <a href="/tools/mortgage-calculator.html">mortgage calculator</a> models the
+          housing set explicitly, deliberately kept separate from principal and interest.
+        </li>
+        <li>
+          <strong>Accrual conventions other than periodic.</strong> Daily simple interest
+          and precomputed interest are described above and not modelled.
+        </li>
+        <li>
+          <strong>Anything that does not amortize.</strong> Interest-only periods,
+          balloon payments, deferred interest, grace periods, and adjustable rates are
+          different models rather than different inputs.
+        </li>
+        <li>
+          <strong>Tax treatment.</strong> Mortgage interest and student loan interest can
+          be deductible in the United States under conditions that depend entirely on
+          your circumstances. Nothing here accounts for it.
+        </li>
+        <li>
+          <strong>Whether you should borrow.</strong> This page computes a payment. It
+          makes no judgement about affordability and is not advice.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============================ 14. edge cases ============================ -->
+
+    <section aria-labelledby="edge-cases">
+      <h2 id="edge-cases">Edge cases</h2>
+
+      <h3 id="edge-final-payment">The final payment is almost never equal to the others</h3>
+      <p>
+        The payment is rounded to the cent once and used unchanged; the interest is
+        rounded to the cent at every due date. The residue lands on the last payment.
+        Here that is $495.05 against a regular $495.03. On a thirty-year mortgage the gap
+        can reach a few dollars. The result panel reports the final payment separately
+        rather than letting the schedule quietly disagree with the headline.
+      </p>
+
+      <h3 id="edge-zero-rate">A zero-interest loan</h3>
+      <p>
+        At 0% the formula divides by zero, so the calculator uses the limit it tends to:
+        the principal divided by the number of payments. Enter 0 and the explanation
+        changes to match, because a loan with no interest has no split to narrate. The
+        threshold is a very small number rather than exact zero, since a rate of
+        0.0000001% is not meaningfully different from none and the closed form loses
+        precision there.
+      </p>
+
+      <h3 id="edge-no-amortization">A loan that never amortizes</h3>
+      <p>
+        Stretch a term far enough at a high enough rate and the payment converges toward
+        the interest alone. Once rounded to the cent it can <em>equal</em> the first
+        period&rsquo;s interest exactly, at which point nothing comes off the balance
+        and no amount of time retires it. $1,000 at 30% over 31 years is such a case: the
+        payment is $25.00 and the first month&rsquo;s interest is $25.00. The calculator
+        detects this, says so, and shows the whole balance falling due on the final
+        payment, which is what would actually happen. It is a sign the term is too long
+        for the rate rather than a loan anyone would be offered.
+      </p>
+
+      <h3 id="edge-one-payment">A single payment</h3>
+      <p>
+        A term short enough to produce one payment is a valid loan and an unusual one.
+        The explanation collapses accordingly rather than talking about a first payment
+        and a later one when there is only the one.
+      </p>
+
+      <h3 id="edge-bounds">Values the calculator refuses</h3>
+      <p>
+        Rates above 60% and terms beyond 40 years are rejected rather than computed,
+        because past those points the schedule is theatre rather than information. Rates
+        above 36% are computed but flagged, since 36% is where United States
+        consumer-lending convention places the responsible-lending ceiling. Nothing is
+        ever silently clamped: an input the calculator will not accept produces an error
+        and the previous result stays on screen, marked as out of date, rather than being
+        replaced by a figure for a loan you did not describe.
+      </p>
+    </section>
+
+    <!-- ============================ 15. faq ============================ -->
+
+    <section aria-labelledby="faq">
+      <h2 id="faq">Frequently asked questions</h2>
+
+      <h3>Why is my last payment different from all the others?</h3>
+      <p>
+        Because the payment is rounded to the cent once and then used unchanged for every
+        period, while the interest is worked out on the actual balance each time. Those
+        two roundings do not cancel, and the difference has to land somewhere. It lands
+        on the final payment. On the default scenario the regular payment is $495.03 and
+        the sixtieth is $495.05. Over thirty years at 6.5% on $400,000 the gap reaches a
+        few dollars. Your lender does the same thing, which is why a payoff quote is
+        never exactly the payment you have been making.
+      </p>
+
+      <h3>Does paying biweekly instead of monthly save money?</h3>
+      <p>
+        Not on its own. Switch the cadence on this page and you will see the total
+        interest move by about $55 on a five-year $25,000 loan, because a nominal rate
+        divided by a larger number is not quite the same contract. What people usually
+        mean by the biweekly trick is different: paying half the monthly payment every
+        two weeks makes 26 payments a year, which is thirteen monthly payments&rsquo;
+        worth rather than twelve. That does retire the loan sooner, and it does cut the
+        interest, because you paid more. The cadence is not what did it.
+      </p>
+
+      <h3>Why is the APR higher than the interest rate I was quoted?</h3>
+      <p>
+        The interest rate prices the money. The APR prices the loan, so it folds in
+        origination fees, points, and anything else you paid to get it, spread across the
+        term. If the loan has no fees the two are the same. If it has fees the APR is
+        higher, and the gap is the honest measure of what the fees cost you. This
+        calculator uses the interest rate, because that is the number the payment is
+        actually computed from. It does not compute an APR, and a page that guessed at
+        one would be inventing your fee schedule.
+      </p>
+
+      <h3>Is this the same as what my lender will quote me?</h3>
+      <p>
+        The payment should match to the cent if your loan is an ordinary fixed-rate
+        installment loan accruing on the monthly actuarial convention, which most are. It
+        will not match if your lender uses daily simple interest, which is common on car
+        loans, or precomputed interest, which is uncommon and behaves quite differently
+        if you pay early. It also will not match if fees were financed into the balance
+        and you entered only the amount you borrowed. What this page cannot do at all is
+        tell you what rate you would be offered.
+      </p>
+
+      <h3>What is the difference between the interest rate and the periodic rate?</h3>
+      <p>
+        The interest rate is annual. The periodic rate is what actually gets applied to
+        your balance each period, and it is the annual rate divided by the number of
+        payments a year: 7% a year is 0.5833% each month. That division is a lending
+        convention rather than a mathematical necessity. Compounding 0.5833% twelve times
+        gives 7.229%, not 7%, which is why the effective annual rate on a 7% loan is
+        slightly above 7%.
+      </p>
+
+      <h3>Why does the calculator not ask for my credit score?</h3>
+      <p>
+        Because a credit score is not in the formula. It is one of the things that
+        determines what rate a lender offers you, along with income, the term, the
+        collateral, and the lender&rsquo;s own cost of funds. Once you have a rate, the
+        score has done its work and plays no further part in the arithmetic. This page
+        starts where the rate starts. It is a calculator, not an underwriter, and it
+        makes no judgement about whether you should borrow.
+      </p>
+
+      <h3>What happens if I pay the loan off early?</h3>
+      <p>
+        On a normally amortizing loan, interest stops accruing on the part of the balance
+        you retire, so paying early always costs less in total interest. The schedule
+        below shows what you would owe at the end of every period. Two things can spoil
+        it. A prepayment penalty is a fee for doing it, still legal on some loan types.
+        Precomputed interest is worse: the total interest was fixed at origination, and
+        paying early may earn you only a partial rebate of what you have not yet used.
+      </p>
+
+      <h3>Does this include insurance, taxes, or fees?</h3>
+      <p>
+        No, and that is deliberate. The payment on this page is principal and interest and
+        nothing else. A loan often arrives attached to costs that are not part of the loan
+        payment: property taxes, homeowners insurance, mortgage insurance, and association
+        dues with a mortgage; comprehensive insurance and registration with a car loan.
+        They are real money and they are not in this formula. For the housing case the
+        mortgage calculator models them explicitly and keeps them visibly separate from
+        principal and interest.
+      </p>
+
+      <h3>Why does a longer term cost more when the payment is smaller?</h3>
+      <p>
+        Because interest is charged on what you still owe, and a longer term means you
+        still owe more for longer. Stretching the default $25,000 loan from five years to
+        seven drops the payment by $117.71 and adds $1,992.64 in interest. Both figures
+        are real, and neither is the whole answer: a payment you can meet is worth
+        something, and the sensitivity table further down shows you the trade in both
+        columns at once rather than arguing for one of them.
+      </p>
+    </section>
+
+    <!-- ============================ 16. assumptions ============================ -->
+
+    <section aria-labelledby="assumptions">
+      <h2 id="assumptions">Assumptions</h2>
+
+      <ul>
+        <li>
+          The rate is <strong>fixed</strong> for the whole term, and every payment is
+          made in full and on time.
+        </li>
+        <li>
+          Interest accrues on the balance standing at each due date, at
+          <em>i</em> = <em>r</em>/<em>f</em>. This is the monthly actuarial convention,
+          and it is a convention rather than a derivation.
+        </li>
+        <li>
+          Payments fall at the <strong>end</strong> of each period, which is the
+          ordinary-annuity convention installment loans use. A loan paid at the start of
+          each period would cost slightly less.
+        </li>
+        <li>
+          <strong>Periods are treated as exact fractions of a year.</strong> They are not
+          always. Twelve months and twenty-four half-months land on a calendar year, but
+          26 biweekly payments span 26 &times; 14 = 364 days and 52 weekly payments span
+          52 &times; 7 = 364, against a calendar year of 365.2425 days. So a five-year
+          term paid biweekly or weekly is really 4.983 years of calendar time. The model
+          treats <em>n</em> = <em>t</em> &times; <em>f</em> as exact and does not adjust
+          for the drift.
+        </li>
+        <li>
+          The payment is rounded to the cent <strong>once</strong>, and the final payment
+          absorbs the difference.
+        </li>
+        <li>
+          Extra payments, where entered, are applied <strong>to principal</strong> in the
+          same period they are made.
+        </li>
+        <li>
+          Figures are in United States dollars and formatted for a United States reader.
+          The arithmetic is not specific to any currency.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============================ 17. methodology ============================ -->
+
+    <section aria-labelledby="methodology">
+      <h2 id="methodology">Methodology</h2>
+
+      <p>
+        The payment comes from the closed form shown at the top of this page. Everything
+        else on the page comes from a schedule built by recurrence, one period at a time,
+        rather than from a second closed form. That is deliberate: a recurrence is what
+        makes the rows add up to the totals printed beside them.
+      </p>
+
+      <p>
+        Money is carried as <strong>integer cents</strong> from the moment it is parsed
+        until the moment it is formatted for display. Interest is rounded to the cent
+        before it is subtracted from the payment, which is what a servicer does, and
+        which is what makes interest plus principal equal the payment exactly in every
+        row rather than nearly. The principal column sums to the amount borrowed exactly,
+        to the cent, at every input the calculator accepts.
+      </p>
+
+      <p>
+        Total paid and total interest are read off the schedule, never computed as the
+        payment multiplied by the number of payments. The difference is two cents on the
+        default scenario and it is the difference between a page that agrees with itself
+        and one that does not.
+      </p>
+
+      <p>
+        The schedule loop is bounded by a known number of payments rather than by the
+        balance reaching zero. A loan whose payment does not cover its first
+        period&rsquo;s interest would never terminate under the latter, and such loans
+        exist: see <a href="#edge-no-amortization">a loan that never amortizes</a>.
+      </p>
+
+      <p>
+        The same functions that draw the charts generated the paths in this page&rsquo;s
+        markup, so the chart you see without JavaScript is not an imitation of the live
+        one, it is the live one rendered ahead of time. The unit tests load the file the
+        browser loads, rather than a copy, and every expected value in them was derived
+        independently rather than by recording what the implementation said.
+      </p>
+
+      <p>
+        Nothing you enter leaves your browser. There is no network request in the
+        calculator, no value written to the address bar, and nothing stored between
+        visits. This is enforced by the test suite as well as intended.
+      </p>
+    </section>
+
+    <!-- ============================ 18. related ============================ -->
+
+    <section aria-labelledby="related">
+      <h2 id="related">Related calculators and concepts</h2>
+
+      <ul class="cards">
+        <li>
+          <a class="card card--tools card--link" href="/tools/mortgage-calculator.html">
+            <span class="card__label">Calculator</span>
+            <span class="card__title">Mortgage Calculator</span>
+            <span class="card__text">This same loan, plus collateral and the costs that travel with a property. Taxes, insurance, mortgage insurance, and association dues, kept visibly separate from principal and interest.</span>
+            <span class="card__go">Open the calculator &rarr;</span>
+          </a>
+        </li>
+        <li>
+          <a class="card card--tools card--link" href="/tools/compound-interest-calculator.html">
+            <span class="card__label">Calculator</span>
+            <span class="card__title">Compound Interest Calculator</span>
+            <span class="card__text">The same arithmetic pointed the other way: what a balance grows to rather than what it takes to retire one. It also takes the nominal against effective distinction further, from the saving side.</span>
+            <span class="card__go">Open the calculator &rarr;</span>
+          </a>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Amortization Schedule</span>
+          <span class="card__text">The schedule on its own, starting from a payoff balance and a payment on a loan already in progress, with payment dates, printing, and export.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+        <li class="card card--tools">
+          <span class="card__label">Calculator</span>
+          <span class="card__title">Refinance Break-Even</span>
+          <span class="card__text">How many months of a lower payment it takes to recover what the refinance cost to close.</span>
+          <span class="card__soon">Coming soon</span>
+        </li>
+      </ul>
+
+      <p class="visually-hidden">
+        The tools above shown as plain text rather than as links are not yet
+        published, because there is nowhere for a link to go.
+      </p>
+
+      <p>
+        Every tool on this site is listed at <a href="/tools/">Tools</a>.
+      </p>
+
+      <h3 id="related-concepts">Concepts this page relies on</h3>
+
+      <ul>
+        <li>
+          <strong>Amortization.</strong> Repaying a debt with level payments, each of
+          which covers the interest due and reduces the principal by whatever is left.
+        </li>
+        <li>
+          <strong>The periodic rate.</strong> The annual rate divided by the number of
+          payments a year, applied to the outstanding balance. A convention, treated at
+          length on the
+          <a href="/tools/mortgage-calculator.html#periodic-rate">mortgage calculator</a>.
+        </li>
+        <li>
+          <strong>Effective annual rate.</strong> What a periodic rate actually compounds
+          to over a year, and the reason the frequency table&rsquo;s last column is not
+          flat. The
+          <a href="/tools/compound-interest-calculator.html#nominal-periodic-effective">compound interest calculator</a>
+          derives it.
+        </li>
+        <li>
+          <strong>Annual percentage rate.</strong> The interest rate with the fees folded
+          in, which is what makes it the right number for comparing offers and the wrong
+          number for computing a payment.
+        </li>
+        <li>
+          <strong>Present value.</strong> The formula above is a present-value identity
+          rearranged: the loan is worth what the stream of payments is worth today, and
+          solving for the payment is what produces <em>M</em>.
+        </li>
+        <li>
+          <strong>Ordinary annuity.</strong> A fixed payment at the end of each period,
+          which is the structure every figure here assumes.
+        </li>
+      </ul>
+    </section>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
+    <nav class="footer__legal" aria-label="Footer">
+      <p class="visually-hidden">Anything here shown as plain text rather than as a link is not yet published.</p>
+      <span>About</span>
+      <span>Contact</span>
+      <a href="/privacy.html">Privacy</a>
+      <span>Accessibility</span>
+    </nav>
+    <button type="button" class="consent-manage" id="consent-manage">Privacy choices</button>
+    <p class="consent-status" id="consent-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <p>&copy; <span class="year">2026</span> Curiosity Mapped</p>
+  </div>
+</footer>
+</body>
+</html>
