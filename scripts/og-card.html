@@ -117,11 +117,32 @@
 <div class="ground"></div>
 
 <div class="wordmark">
-  <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
-    <path d="M6 23C12 23 12 18 17 17 22 16 22 10 26 8" fill="none"
-          stroke="#b9e87f" stroke-width="2.2" stroke-linecap="round"></path>
-    <circle cx="6" cy="23" r="2.4" fill="#b9e87f"></circle>
-    <circle cx="26" cy="8" r="2.4" fill="#b9e87f"></circle>
+  <!--
+    The brand mark, inlined from curiosity-mapped-brand-v1/mark/cm-mark.svg. The
+    untiled variant rather than the square icon the site uses for its favicon: the
+    icon's navy tile would read as a panel against this card's near-black ground.
+  -->
+  <svg width="60" height="48" viewBox="0 0 136 108" aria-hidden="true">
+    <defs>
+      <linearGradient id="cm-mark-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#8B6FE8"></stop>
+        <stop offset="100%" stop-color="#55C98A"></stop>
+      </linearGradient>
+    </defs>
+    <g fill="none" stroke="url(#cm-mark-gradient)" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke-width="7" d="M68 26 A44 44 0 1 0 68 94"></path>
+      <path stroke-width="2.3" d="M60 37 C47 35 36 42 34 52 C32 62 42 68 51 66 C60 64 64 55 57 49 C51 44 43 48 43 54 C43 60 49 62 54 59"></path>
+      <path stroke-width="2.1" d="M63 31 C49 28 34 34 27 46 C20 58 25 72 37 79 C47 85 58 82 63 76"></path>
+      <path stroke-width="7" d="M67 95 V28 L91 54 L115 28 V95"></path>
+      <path stroke-width="3" d="M68 49 L91 73 L114 49"></path>
+      <path stroke-width="2.2" d="M82 67 H73"></path><circle cx="70" cy="67" r="3.2" stroke-width="2.2"></circle>
+      <path stroke-width="2.2" d="M101 58 H110"></path><circle cx="113" cy="58" r="3.2" stroke-width="2.2"></circle>
+      <path stroke-width="2.2" d="M100 80 H108 V85"></path><circle cx="108" cy="88" r="3.2" stroke-width="2.2"></circle>
+    </g>
+    <g fill="url(#cm-mark-gradient)">
+      <rect x="64.5" y="13" width="5" height="91" rx="2.5"></rect>
+      <path d="M67 4 L59 18 H75 Z"></path>
+    </g>
   </svg>
   <span class="wordmark__text">
     <span class="wordmark__line">CURIOSITY</span>
