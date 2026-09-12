@@ -18,20 +18,22 @@ docs/privacy.html        privacy policy; the template for any indexable page
 docs/404.html            not-found page (GitHub Pages serves it for any missing path)
 docs/tools/index.html    the Tools hub, served at /tools/
 docs/tools/mortgage-calculator.html
-                         the first published tool
+                         what a house costs each month, and what else arrives with it
 docs/tools/compound-interest-calculator.html
-                         the second: what a balance grows to, rather than what it
-                         takes to retire one
+                         what a balance grows to, when it is left alone
+docs/tools/loan-calculator.html
+                         what it takes to retire a balance, in level instalments
 docs/css/tokens.css      colour / type / space tokens, and the light + dark + high-contrast ramps
 docs/css/base.css        element defaults
 docs/css/components.css  the blocks on the page
-docs/css/calculator.css  page-scoped; loaded ONLY by the two calculator pages
+docs/css/calculator.css  page-scoped; loaded ONLY by the calculator pages
 docs/css/utilities.css   last layer, so it wins
 docs/js/main.js          theme toggle and footer year; every page works without it
 docs/js/consent.js       the analytics consent panel and the footer control; every page
 docs/js/mortgage.js      the mortgage calculator's arithmetic and behaviour; that page only
 docs/js/compound.js      the compound interest calculator's; that page only
-docs/assets/             og image and raster icons
+docs/js/loan.js          the loan calculator's; that page only
+docs/assets/             one og card per indexable page, and the raster icons
 docs/favicon.ico         the bare /favicon.ico browsers ask for unprompted
 docs/site.webmanifest    name, colours, and the 192/512 icons
 docs/robots.txt          and docs/sitemap.xml
@@ -40,8 +42,11 @@ docs/.nojekyll           serve files as-is instead of running them through Jekyl
 
 tests/mortgage.test.mjs  the mortgage calculator's unit tests; repository furniture, never served
 tests/compound.test.mjs  the compound interest calculator's, on the same pattern
+tests/loan.test.mjs      the loan calculator's, likewise
 tests/consent.test.mjs   the stored-choice logic, plus assertions over the built pages
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
+scripts/build-og.mjs     re-renders the share cards from scripts/og-card.html
+scripts/og-card.html     the share card design; never served, rendered to PNG
 README.md                this file
 TOOL-TIERS.md            the content standard every tool page is written against
 ```
@@ -56,12 +61,26 @@ it never uses is cheaper than a third stylesheet. Where two pages need the same
 treatment under different names, the selector list carries both names rather than the
 declarations being copied: see `.result__housing, .result__real`.
 
+The three calculators overlap in arithmetic and not in purpose, and each page says
+which question it is answering in its opening paragraph. The **compound interest
+calculator** runs the arithmetic forwards: a balance is left alone and grows. The
+**loan calculator** runs it backwards: a balance is retired by level instalments, and
+the page is mostly about where each instalment goes and what it does not cover. The
+**mortgage calculator** is the loan calculator's case with collateral attached, so it
+adds the costs that travel with a property and keeps them visibly apart from principal
+and interest. A reader who lands on the wrong one should be able to tell within a
+paragraph, which is why the related lists on all three link sideways rather than
+merely listing siblings.
+
 What goes *on* a tool page is governed by `TOOL-TIERS.md`. Every tool is classified
 `SIMPLE`, `MODERATE`, or `DEEP` before it is built, and the tier fixes the minimum
 sections the page must carry. The mortgage calculator is the canonical `DEEP` page;
-read the standard before adding a tool, not after. Both published tools are `DEEP`,
-which is a fact about what has been built so far rather than a default: a tool whose
-result is hard to misread belongs in a lower tier and should stay there.
+read the standard before adding a tool, not after. Every tool published so far is
+`DEEP`, which is a fact about what has been built rather than a default: a tool whose
+result is hard to misread belongs in a lower tier and should stay there. The loan
+calculator departs from the standard's own example list, which files a loan payment
+calculator under `MODERATE`; its tier comment argues the case rather than leaving the
+discrepancy for someone to find.
 
 Each tool page records its own tier. The classification and a map from every required
 area of that tier to the section that satisfies it sit in an HTML comment at the top of
@@ -305,6 +324,11 @@ them:
   the `GTAG_ID` constant at the top of the script — change it there and re-run, or pass
   a different one as an argument. `-n` reports what would change without writing.
 
-`docs/assets/og.png` is 1200×630 and is referenced by absolute URL, because crawlers do
-not resolve relative `og:image` values. If the wordmark or palette changes, that
-image has to be regenerated to match.
+Every indexable page carries its own 1200×630 share card in `docs/assets/`, referenced
+by absolute URL because crawlers do not resolve relative `og:image` values. The cards
+are committed, since Pages serves what is in the repository; `node scripts/build-og.mjs`
+re-renders them from `scripts/og-card.html`, which is where the design lives. A new
+page needs an entry in that script's `CARDS` list and its own `og:image`, and the test
+suite fails if two pages share one or if a card's real dimensions disagree with the
+meta tags that describe it. `docs/404.html` has no card on purpose: it is `noindex` and
+there is nothing to share.
