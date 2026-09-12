@@ -28,7 +28,20 @@ const PAGES = [
   'docs/privacy.html',
   'docs/tools/index.html',
   'docs/tools/mortgage-calculator.html',
-  'docs/tools/compound-interest-calculator.html'
+  'docs/tools/compound-interest-calculator.html',
+  'docs/tools/loan-calculator.html'
+];
+
+/*
+ * The tool pages, each with the script that drives it and the number of forms it
+ * is allowed to have. One list, because every assertion below that used to name
+ * the compound page now runs over all three: a check written for one tool is a
+ * check the next tool silently does not get.
+ */
+const TOOLS = [
+  { page: 'docs/tools/mortgage-calculator.html', script: 'docs/js/mortgage.js', forms: 2 },
+  { page: 'docs/tools/compound-interest-calculator.html', script: 'docs/js/compound.js', forms: 1 },
+  { page: 'docs/tools/loan-calculator.html', script: 'docs/js/loan.js', forms: 1 }
 ];
 
 /* ------------------------------------------------------- stored choice */
@@ -180,7 +193,7 @@ const FORBIDDEN = [
 
 test('no calculator has a route to analytics or to the network', () => {
   /* Every tool that takes a number from a reader, not just the first one. */
-  for (const path of ['docs/js/mortgage.js', 'docs/js/compound.js']) {
+  for (const { script: path } of TOOLS) {
     const js = code(path);
     for (const forbidden of FORBIDDEN) {
       assert.ok(!js.includes(forbidden), `${path} must not reference ${forbidden}`);
@@ -191,10 +204,7 @@ test('no calculator has a route to analytics or to the network', () => {
 test('no calculator form can put its fields into the URL', () => {
   /* The form count is asserted per page rather than in general: a page growing a
      form nobody wrote a rule for is exactly the regression this catches. */
-  for (const [page, script, expected] of [
-    ['docs/tools/mortgage-calculator.html', 'docs/js/mortgage.js', 2],
-    ['docs/tools/compound-interest-calculator.html', 'docs/js/compound.js', 1]
-  ]) {
+  for (const { page, script, forms: expected } of TOOLS) {
     const html = read(page);
     const forms = html.match(/<form[^>]*>/g) || [];
     assert.equal(forms.length, expected, `${page}: expected exactly the known forms`);
@@ -218,69 +228,209 @@ test('no calculator form can put its fields into the URL', () => {
  * the maths, and neither is visible on the page with JavaScript switched on.
  */
 
-test('every element the compound calculator reaches for exists in its page', () => {
-  const js = read('docs/js/compound.js');
-  const html = read('docs/tools/compound-interest-calculator.html');
-  const wanted = [...js.matchAll(/\$\('([^']+)'\)/g)].map((m) => m[1]);
-  assert.ok(wanted.length > 40, `expected a full ui map, found ${wanted.length}`);
-  for (const id of new Set(wanted)) {
-    assert.ok(html.includes(`id="${id}"`),
-      `compound.js looks up #${id}, which the page does not contain`);
+test('every element a calculator reaches for exists in its page', () => {
+  for (const { page, script } of TOOLS) {
+    const js = read(script);
+    const html = read(page);
+    const wanted = [...js.matchAll(/\$\('([^']+)'\)/g)].map((m) => m[1]);
+    assert.ok(wanted.length > 40, `${script}: expected a full ui map, found ${wanted.length}`);
+    for (const id of new Set(wanted)) {
+      assert.ok(html.includes(`id="${id}"`),
+        `${script} looks up #${id}, which ${page} does not contain`);
+    }
   }
 });
 
-test('the compound page ships the figures its own code produces', () => {
+test('no page uses an id twice', () => {
   /*
-   * The default scenario is written into the markup so the page is complete and
+   * getElementById returns the first match in document order, so a duplicate id
+   * does not fail loudly: it silently hands the script the wrong element. On the
+   * loan page a <select id="frequency"> shared a name with the <h2 id="frequency">
+   * it linked to, and two <tbody> ids matched the <h3> headings above them, so
+   * the first render emptied the real tables and appended their rows into a
+   * heading. Nothing threw, the unit tests stayed green, and the only visible
+   * symptom was 19px of horizontal scroll at 400px.
+   */
+  for (const page of PAGES) {
+    const seen = new Set();
+    for (const [, id] of read(page).matchAll(/\sid="([^"]+)"/g)) {
+      assert.ok(!seen.has(id), `${page} uses id="${id}" more than once`);
+      seen.add(id);
+    }
+  }
+});
+
+/*
+ * Each tool declares how to rebuild its own default scenario and which strings
+ * that scenario must put into the markup. Written as data rather than as one
+ * test per page, so a fourth tool is a fourth entry rather than a fourth test
+ * nobody remembers to write.
+ */
+/*
+ * The text of one element, by id. `html.includes(value)` is too weak for a
+ * figure the page prints in several places: corrupting the headline payment from
+ * $495.03 to $495.04 leaves the string present in the explanation, the parameter
+ * table and the FAQ, and a presence check waves it through. This reads the one
+ * element that is supposed to carry it.
+ */
+const elementText = (html, id) => {
+  const open = html.search(new RegExp(`<[a-z]+[^>]*\\sid="${id}"`));
+  if (open === -1) return null;
+  const gt = html.indexOf('>', open);
+  const close = html.indexOf('<', gt);
+  return html.slice(gt + 1, close).trim();
+};
+
+const ARTEFACTS = [
+  {
+    page: 'docs/tools/mortgage-calculator.html',
+    build: () => {
+      const M = require('../docs/js/mortgage.js');
+      const m = M.buildModel({
+        loanAmount: 320000, homePrice: 400000, downPayment: 80000, pinned: false,
+        ratePct: 6, years: 30, costs: { tax: null, insurance: null, pmi: null, hoa: null }
+      });
+      const balances = [m.principal].concat(m.yearly.map((y) => M.fromCents(y.endingBalanceCents)));
+      return {
+        lib: M,
+        model: m,
+        values: [
+          M.money(m.payment),
+          M.money(M.fromCents(m.schedule.totalInterestCents)),
+          M.money(M.fromCents(m.schedule.totalPaidCents)),
+          M.money(M.fromCents(m.schedule.finalPaymentCents))
+        ],
+        paths: [M.seriesArea(balances, m.principal), M.seriesLine(balances, m.principal)]
+      };
+    }
+  },
+  {
+    page: 'docs/tools/compound-interest-calculator.html',
+    build: () => {
+      const C = require('../docs/js/compound.js');
+      const m = C.buildModel({
+        principal: 1000, ratePct: 5, frequencyKey: '12', years: 10,
+        unit: 'years', inflationPct: null
+      });
+      const balances = [m.principal].concat(m.yearly.map((y) => y.balance));
+      const max = Math.max(m.principal, m.amount);
+      return {
+        lib: C,
+        model: m,
+        values: [
+          C.money(m.amount),                    /* $1,647.01 */
+          C.money(m.interest),                  /* $647.01   */
+          C.pctTrim(m.ear),                     /* 5.116%    */
+          C.multiple(m.growth),                 /* 1.65x     */
+          C.pctSig(m.periodicRate),             /* 0.4167%   */
+          'Balance after ' + m.durationText
+        ],
+        paths: [
+          C.seriesLine(balances, max),
+          C.seriesBand(balances.map(() => m.principal), balances, max)
+        ]
+      };
+    }
+  },
+  {
+    page: 'docs/tools/loan-calculator.html',
+    build: () => {
+      const L = require('../docs/js/loan.js');
+      const m = L.buildModel({
+        principal: 25000, ratePct: 7, years: 5, frequencyKey: '12', extra: null
+      });
+      const balances = [m.principal].concat(m.yearly.map((y) => L.fromCents(y.endingBalanceCents)));
+      const interest = m.yearly.map((y) => L.fromCents(y.interestCents));
+      const totals = m.yearly.map((y) => L.fromCents(y.interestCents + y.principalCents));
+      const compMax = Math.max.apply(null, totals);
+      return {
+        lib: L,
+        model: m,
+        values: [
+          L.money(m.payment),                            /* $495.03    */
+          L.moneyCents(m.totalInterestCents),            /* $4,701.82  */
+          L.moneyCents(m.totalPaidCents),                /* $29,701.82 */
+          L.moneyCents(m.finalPaymentCents),             /* $495.05    */
+          L.pctSig(m.periodicRate) + ' ' + m.freq.each,  /* 0.5833% each month */
+          L.integer(m.n) + ' ' + m.freq.adjective + ' payments',
+          L.chartDescription(m),
+          L.rateCaptionText(m, L.sensitivity(m).rates),
+          L.termCaptionText(m, L.sensitivity(m).terms)
+        ],
+        elements: {
+          'result-amount': L.money(m.payment),
+          'result-interest': L.moneyCents(m.totalInterestCents),
+          'result-total': L.moneyCents(m.totalPaidCents),
+          'result-count': L.integer(m.count),
+          'result-final': L.moneyCents(m.finalPaymentCents),
+          'result-label': L.capitalize(m.freq.adjective) + ' payment',
+          'p-principal': L.moneyNatural(m.principal),
+          'p-periodic': L.pctSig(m.periodicRate) + ' ' + m.freq.each,
+          'p-count': L.integer(m.n) + ' ' + L.plural(m.n, 'payment'),
+          'p-payment': L.money(m.payment),
+          'term-readout': L.integer(m.n) + ' ' + m.freq.adjective + ' ' + L.plural(m.n, 'payment'),
+          'chart-balance-ymax': L.moneyWhole(m.principal),
+          'chart-balance-desc': L.chartDescription(m)
+        },
+        paths: [
+          L.seriesArea(balances, m.principal),
+          L.seriesLine(balances, m.principal),
+          L.seriesBand(interest.map(() => 0), interest, compMax),
+          L.seriesBand(interest, totals, compMax)
+        ]
+      };
+    }
+  }
+];
+
+test('every tool page ships the figures its own code produces', () => {
+  /*
+   * The default scenario is written into the markup so each page is complete and
    * correct without JavaScript. This asserts the markup is what the shipped
    * functions actually return, rather than what someone typed while looking at
-   * them.
+   * them. The chart paths matter most: they are the one artefact nobody would
+   * ever notice had drifted.
    */
-  const C = require('../docs/js/compound.js');
-  const html = read('docs/tools/compound-interest-calculator.html');
-  const m = C.buildModel({
-    principal: 1000, ratePct: 5, frequencyKey: '12', years: 10,
-    unit: 'years', inflationPct: null
-  });
+  for (const { page, build } of ARTEFACTS) {
+    const html = read(page);
+    const { lib, model, values, paths } = build();
 
-  for (const value of [
-    C.money(m.amount),                    /* $1,647.01 */
-    C.money(m.interest),                  /* $647.01   */
-    C.pctTrim(m.ear),                     /* 5.116%    */
-    C.multiple(m.growth),                 /* 1.65x     */
-    C.pctSig(m.periodicRate),             /* 0.4167%   */
-    'Balance after ' + m.durationText
-  ]) {
-    assert.ok(html.includes(value), `the page should carry ${value}`);
-  }
-
-  /* Both chart paths, generated by the same functions that redraw them. */
-  const balances = [m.principal].concat(m.yearly.map((y) => y.balance));
-  const max = Math.max(m.principal, m.amount);
-  assert.ok(html.includes(C.seriesLine(balances, max)), 'balance line path has drifted');
-  assert.ok(html.includes(C.seriesBand(balances.map(() => m.principal), balances, max)),
-    'interest band path has drifted');
-
-  /* And the explanation, sentence for sentence. */
-  for (const paragraph of C.explainParagraphs(m)) {
-    if (!paragraph) continue;
-    const escaped = paragraph.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    assert.ok(html.includes(escaped), `explanation has drifted: ${paragraph.slice(0, 60)}...`);
+    for (const value of values) {
+      assert.ok(html.includes(value), `${page} should carry ${value}`);
+    }
+    for (const [id, expected] of Object.entries(build().elements || {})) {
+      assert.equal(elementText(html, id), expected,
+        `${page}: #${id} has drifted from what the code produces`);
+    }
+    for (const d of paths) {
+      assert.ok(html.includes(d), `${page}: a chart path has drifted from its generator`);
+    }
+    for (const paragraph of lib.explainParagraphs(model)) {
+      if (!paragraph) continue;
+      const escaped = paragraph.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      assert.ok(html.includes(escaped),
+        `${page}: explanation has drifted: ${paragraph.slice(0, 60)}...`);
+    }
   }
 });
 
-test('the compound page declares its tier and links only to pages that exist', () => {
-  const html = read('docs/tools/compound-interest-calculator.html');
-  assert.match(html, /CONTENT COMPLEXITY TIER: DEEP/);
+test('every tool page declares its tier, and every page links only to pages that exist', () => {
+  for (const { page } of TOOLS) {
+    assert.match(read(page), /CONTENT COMPLEXITY TIER: (SIMPLE|MODERATE|DEEP)/, page);
+  }
+
   /* Every internal link must resolve to a file that is actually published. */
   const published = new Set([
     '/', '/tools/', '/privacy.html',
     '/tools/mortgage-calculator.html', '/tools/compound-interest-calculator.html',
     '/tools/loan-calculator.html'
   ]);
-  for (const href of [...html.matchAll(/href="(\/[^"#]*)(#[^"]*)?"/g)].map((m) => m[1])) {
-    if (href.startsWith('/css/') || href.startsWith('/js/') || href.startsWith('/assets/')) continue;
-    if (href === '/site.webmanifest' || href === '/favicon.ico') continue;
-    assert.ok(published.has(href), `links to ${href}, which is not a published page`);
+  for (const page of PAGES) {
+    const html = read(page);
+    for (const href of [...html.matchAll(/href="(\/[^"#]*)(#[^"]*)?"/g)].map((m) => m[1])) {
+      if (href.startsWith('/css/') || href.startsWith('/js/') || href.startsWith('/assets/')) continue;
+      if (href === '/site.webmanifest' || href === '/favicon.ico') continue;
+      assert.ok(published.has(href), `${page} links to ${href}, which is not a published page`);
+    }
   }
 });
