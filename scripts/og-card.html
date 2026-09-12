@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+  The Open Graph card template. One file, parameterised through the query string,
+  rendered to PNG by scripts/build-og.sh.
+
+  It deliberately does NOT load the site's stylesheets. A share card is a fixed
+  1200x630 raster with no reader, no theme, and no viewport, so the cascade that
+  serves the site would be answering questions this file does not have. The few
+  token values it needs are copied in literally, and they are checked against
+  docs/css/tokens.css by the test suite.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Open Graph card</title>
+<style>
+  :root {
+    --ink-950: #02090e;
+    --green-300: #b9e87f;
+    --ink-100: #d6dade;
+    --ink-300: #9aa0a6;
+    --paper-050: #ffffff;
+    --font-display: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative;
+    background: var(--ink-950);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* The faint survey grid, and a soft green glow off centre. Both are background
+     layers rather than elements, so nothing here can reflow the type. */
+  .ground {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(34rem 40rem at 58% 46%, rgba(97, 140, 60, 0.26), transparent 72%),
+      linear-gradient(to right, rgba(214, 218, 222, 0.042) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(214, 218, 222, 0.042) 1px, transparent 1px);
+    background-size: 100% 100%, 75px 75px, 75px 75px;
+  }
+  .wordmark {
+    position: absolute;
+    inset-block-start: 44px;
+    inset-inline-start: 52px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .wordmark svg { display: block; }
+  .wordmark__text { display: flex; flex-direction: column; gap: 3px; }
+  .wordmark__line {
+    font-family: var(--font-body);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    line-height: 1;
+    color: var(--paper-050);
+  }
+  .wordmark__line--wide {
+    font-weight: 400;
+    letter-spacing: 0.30em;
+    color: var(--ink-300);
+  }
+  .stack {
+    position: absolute;
+    inset-inline: 80px;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--green-300);
+  }
+  .title {
+    margin-block-start: 30px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    color: var(--paper-050);
+    /* Stepped down below if the name would run past two lines; see the script at
+       the foot of this file. Two lines is the budget because the stack is
+       vertically centred, so a third line starts crowding the wordmark. */
+    font-size: 92px;
+  }
+  .subtitle {
+    margin-block-start: 30px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 33px;
+    line-height: 1.42;
+    color: var(--ink-100);
+  }
+  .domain {
+    position: absolute;
+    inset-block-end: 52px;
+    inset-inline: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    letter-spacing: 0.22em;
+    color: var(--ink-300);
+  }
+</style>
+</head>
+<body>
+<div class="ground"></div>
+
+<div class="wordmark">
+  <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M6 23C12 23 12 18 17 17 22 16 22 10 26 8" fill="none"
+          stroke="#b9e87f" stroke-width="2.2" stroke-linecap="round"></path>
+    <circle cx="6" cy="23" r="2.4" fill="#b9e87f"></circle>
+    <circle cx="26" cy="8" r="2.4" fill="#b9e87f"></circle>
+  </svg>
+  <span class="wordmark__text">
+    <span class="wordmark__line">CURIOSITY</span>
+    <span class="wordmark__line wordmark__line--wide">MAPPED</span>
+  </span>
+</div>
+
+<div class="stack">
+  <p class="eyebrow" id="eyebrow"></p>
+  <p class="title" id="title"></p>
+  <p class="subtitle" id="subtitle"></p>
+</div>
+
+<p class="domain">curiositymapped.com</p>
+
+<script>
+  /*
+   * Content comes from the query string so the template is one file rather than
+   * six near-copies. Written with textContent: this page is rendered locally and
+   * never served, but a template that builds markup from a URL is a habit worth
+   * not having.
+   */
+  var q = new URLSearchParams(location.search);
+  document.getElementById('eyebrow').textContent = q.get('eyebrow') || '';
+  var title = q.get('title') || 'Curiosity Mapped';
+  document.getElementById('title').textContent = title;
+
+  /* The subtitle breaks where the caller says, so a two-line subtitle balances
+     rather than wrapping wherever 1040px happens to fall. */
+  var subtitle = document.getElementById('subtitle');
+  (q.get('subtitle') || '').split('|').forEach(function (line, i) {
+    if (i) subtitle.appendChild(document.createElement('br'));
+    subtitle.appendChild(document.createTextNode(line));
+  });
+
+  /*
+   * Long titles step down until they fit in two lines. Measured by height rather
+   * than by width: the title is a block that wraps, so its scrollWidth is the
+   * width of its container no matter how long the text is, and a width test
+   * would never fire. "Compound Interest Calculator" takes its two lines at the
+   * full size; the rule is here for the name after that one.
+   */
+  var el = document.getElementById('title');
+  var size = 92;
+  var twoLines = function (px) { return px * 1.02 * 2 + 4; };
+  while (size > 46 && el.getBoundingClientRect().height > twoLines(size)) {
+    size -= 2;
+    el.style.fontSize = size + 'px';
+  }
+  document.documentElement.dataset.ready = '1';
+</script>
+</body>
+</html>

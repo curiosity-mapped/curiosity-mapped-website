@@ -119,7 +119,8 @@
     font-size: var(--t--1);
     color: var(--text-dim);
   }
-  .field__unpin {
+  .field__unpin,
+  .calc__reset {
     min-height: 44px;
     padding: var(--s-1) var(--s-3);
     border: 1px solid var(--rule);
@@ -131,7 +132,19 @@
     cursor: pointer;
     transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
   }
-  .field__unpin:hover { border-color: var(--accent); color: var(--accent); }
+  .field__unpin:hover,
+  .calc__reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /*
+   * The loan page's "reset to the example" control is the same object as the
+   * mortgage page's unpin control: a quiet pill button that undoes something.
+   * Added to the selector group above rather than given declarations of its own,
+   * for the reason set out at .result__housing below.
+   */
+  .calc__reset {
+    align-self: start;
+    margin-block-start: var(--s-2);
+  }
 
   /* ---------- results ---------- */
 
@@ -219,15 +232,20 @@
    * they share the treatment -- but not the name, because "housing" on a
    * compound interest page would be a lie and a second copy of these
    * declarations would be a worse fix than a second selector.
+   *
+   * The loan page's extra-payment block is the third of them: what the schedule
+   * becomes once the reader adds money the formula above never asked for.
    */
   .result__housing,
-  .result__real {
+  .result__real,
+  .result__early {
     margin-block-start: var(--s-5);
     padding-block-start: var(--s-5);
     border-block-start: 1px dashed var(--edge);
   }
   .result__housing-amount,
-  .result__real-amount {
+  .result__real-amount,
+  .result__early-amount {
     display: block;
     margin-block-start: var(--s-1);
     font-size: var(--t-2);
@@ -236,7 +254,28 @@
     color: var(--text-dim);
   }
   .result__housing-note,
-  .result__real-note { margin-block-start: var(--s-2); font-size: var(--t--1); color: var(--text-dim); }
+  .result__real-note,
+  .result__early-note { margin-block-start: var(--s-2); font-size: var(--t--1); color: var(--text-dim); }
+
+  /*
+   * The one warning that belongs on the result rather than on a field, because it
+   * is not about an input being wrong: every figure is correct and the schedule
+   * is absurd. Border and glyph as well as colour, on the same rule as
+   * .field__error, so it survives forced-colors mode and greyscale.
+   */
+  .result__warn {
+    margin-block-start: var(--s-4);
+    padding: var(--s-2) var(--s-3);
+    border-inline-start: 3px solid var(--danger);
+    background: var(--surface-sunk);
+    font-size: var(--t--1);
+    color: var(--text);
+  }
+  .result__warn::before {
+    content: "! ";
+    font-weight: 700;
+    color: var(--danger);
+  }
 
   /* ---------- the explanation ---------- */
 
@@ -267,7 +306,11 @@
   }
   /* 5 columns is the ceiling: at 320px the monthly table is then only mildly
      wider than the viewport, and it scrolls inside its own focusable region. */
-  .amort--monthly .table { min-inline-size: 34rem; }
+  .amort--monthly .table,
+  .amort--payments .table { min-inline-size: 34rem; }
+  /* The loan page's yearly table carries a payment-count column the mortgage
+     page's does not, so it is the one place a sixth column appears. */
+  .amort .table :is(th, td):nth-child(2) { inline-size: 5rem; }
 
   /* ---------- sensitivity ---------- */
 
