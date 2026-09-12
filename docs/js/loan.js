@@ -936,4 +936,702 @@
       termCaptionText: termCaptionText
     };
   }
+  /* ================================================================
+   * The DOM layer. Everything above this line is testable in Node;
+   * everything below it touches the page.
+   *
+   * Every lookup is guarded, in the same way and for the same reason as
+   * /js/main.js: nothing here may throw on a page that does not contain the
+   * calculator, and a missing element must degrade to "that part does not
+   * update" rather than to "the script died on line one".
+   * ================================================================ */
+
+  /*
+   * Everything from here down is browser-only, and it sits AFTER the export
+   * block above for exactly that reason: Node loads this file to test the maths,
+   * and `document` does not exist there. In a browser without the calculator on
+   * the page, any other page that happened to include this script, the same
+   * guard returns before touching anything.
+   */
+  if (typeof document === 'undefined') return;
+
+  function $(id) { return document.getElementById(id); }
+
+  var form = $('calc-form');
+  if (!form) return;
+
+  var ui = {
+    principal: $('principal'),
+    rate: $('rate'),
+    term: $('term'),
+    termOtherWrap: $('term-other-wrap'),
+    termOther: $('term-other'),
+    termReadout: $('term-readout'),
+    frequency: $('frequency'),
+    extra: $('extra'),
+    reset: $('reset'),
+
+    status: $('calc-status'),
+    resultPanel: $('result-panel'),
+    resultLabel: $('result-label'),
+    resultAmount: $('result-amount'),
+    staleNote: $('result-stale-note'),
+    totalInterest: $('result-interest'),
+    totalPaid: $('result-total'),
+    paymentCount: $('result-count'),
+    finalPayment: $('result-final'),
+    early: $('result-early'),
+    earlyAmount: $('result-early-amount'),
+    earlyNote: $('result-early-note'),
+    resultWarn: $('result-warn'),
+
+    pPrincipal: $('p-principal'),
+    pRate: $('p-rate'),
+    pFreq: $('p-freq'),
+    pTerm: $('p-term'),
+    pPeriodic: $('p-periodic'),
+    pCount: $('p-count'),
+    pPayment: $('p-payment'),
+
+    explain: $('explain'),
+    substitution: $('substitution-math'),
+    substitutionCaption: $('substitution-caption'),
+    finalSentence: $('final-sentence'),
+
+    freqBody: $('freq-table'),
+    freqCaption: $('freq-caption'),
+
+    sensRateBody: $('sens-rate'),
+    sensRateCaption: $('sens-rate-caption'),
+    sensTermBody: $('sens-term'),
+    sensTermCaption: $('sens-term-caption'),
+
+    yearlyBody: $('amort-yearly'),
+    yearlyCaption: $('amort-yearly-caption'),
+    paymentsDetails: $('payments-disclosure'),
+    paymentsBody: $('amort-payments'),
+    paymentsCaption: $('amort-payments-caption'),
+
+    balanceArea: $('chart-balance-area'),
+    balanceLine: $('chart-balance-line'),
+    balanceMax: $('chart-balance-ymax'),
+    balanceEnd: $('chart-balance-xmax'),
+    balanceDesc: $('chart-balance-desc'),
+    compInterest: $('chart-comp-interest'),
+    compInterestHatch: $('chart-comp-interest-hatch'),
+    compPrincipal: $('chart-comp-principal'),
+    compMax: $('chart-comp-ymax'),
+    compEnd: $('chart-comp-xmax'),
+    compDesc: $('chart-comp-desc')
+  };
+
+  /*
+   * The only interaction state on the page. Everything else is derived from the
+   * inputs on every keystroke, because recomputing even a 2,080-row schedule
+   * costs tens of microseconds and caching it would buy nothing but staleness.
+   */
+  var state = {
+    /*
+     * The per-payment table is the one place where doing the obvious thing on
+     * every keystroke would be felt: at 52 payments a year it reaches the 600-row
+     * cap, which is 3,000 elements. Rebuilt when the disclosure is open, marked
+     * dirty when it is not.
+     */
+    paymentsDirty: true,
+    lastModel: null
+  };
+
+  /* ---------------- reading the form ---------------- */
+
+  function fieldValue(input) {
+    return input ? parseNumber(input.value) : null;
+  }
+
+  /*
+   * Two levels, and the distinction is the whole validation policy: an error
+   * freezes the display, a warning computes anyway. Nothing is ever silently
+   * clamped, because a clamped figure is an answer to a question the reader did
+   * not ask, wearing the label of the one they did.
+   */
+  function readInputs() {
+    var errors = {};
+    var warnings = {};
+
+    var principal = fieldValue(ui.principal);
+    if (principal == null) {
+      errors.principal = 'Enter the amount you are borrowing.';
+    } else if (principal <= 0) {
+      errors.principal = 'The loan amount has to be more than zero.';
+    } else if (principal > HARD_MAX_MONEY) {
+      errors.principal = 'Enter an amount up to ' + moneyWhole(HARD_MAX_MONEY) + '.';
+    }
+
+    var ratePct = fieldValue(ui.rate);
+    if (ratePct == null) {
+      errors.rate = 'Enter the annual interest rate.';
+    } else if (ratePct < 0) {
+      errors.rate = 'The rate cannot be negative on a loan.';
+    } else if (ratePct > HARD_MAX_RATE) {
+      errors.rate = 'Enter a rate up to ' + HARD_MAX_RATE + '%.';
+    } else if (ratePct > WARN_RATE) {
+      warnings.rate = 'Above ' + WARN_RATE + '%, which is where United States consumer-lending convention places the responsible-lending ceiling. The arithmetic still holds.';
+    }
+
+    /* The select carries the term unless it is set to "other", in which case the
+       revealed text field does. One of the two is always the source. */
+    /*
+     * Keyed under 'term' whichever control supplied the value. The select and the
+     * "Other" field share one warn element and one error element, because both
+     * are the same question and both are named by the same aria-describedby
+     * chain. Keying a message under 'term-other' would write it to an element
+     * that does not exist, and the reader would be refused without being told.
+     */
+    var usingOther = ui.term && ui.term.value === 'other';
+    var years = usingOther ? fieldValue(ui.termOther) : (ui.term ? Number(ui.term.value) : null);
+    if (years == null || !isFinite(years) || years === 0 && !usingOther) {
+      errors.term = 'Enter the term in years.';
+    } else if (years <= 0) {
+      errors.term = 'The term has to be more than zero.';
+    } else if (years > HARD_MAX_YEARS) {
+      errors.term = 'Enter a term up to ' + HARD_MAX_YEARS + ' years.';
+    } else if (years > WARN_YEARS) {
+      warnings.term = 'Longer than ' + WARN_YEARS + ' years, which is unusual outside a mortgage.';
+    }
+
+    var frequencyKey = ui.frequency ? ui.frequency.value : '12';
+    if (!frequency(frequencyKey)) {
+      errors.frequency = 'Choose how often you pay.';
+      frequencyKey = '12';
+    }
+
+    /* Blank means no extra payment, which is different from zero only in that it
+       is what the field ships as. Both produce the same schedule. */
+    var extra = null;
+    if (ui.extra && ui.extra.value.trim() !== '') {
+      extra = fieldValue(ui.extra);
+      if (extra == null) {
+        errors.extra = 'Enter an amount, or leave this blank.';
+      } else if (extra < 0) {
+        errors.extra = 'An extra payment cannot be negative.';
+      } else if (extra > HARD_MAX_MONEY) {
+        errors.extra = 'Enter an amount up to ' + moneyWhole(HARD_MAX_MONEY) + '.';
+      }
+    }
+
+    return {
+      errors: errors,
+      warnings: warnings,
+      values: {
+        principal: principal,
+        ratePct: ratePct,
+        years: years,
+        frequencyKey: frequencyKey,
+        extra: extra
+      }
+    };
+  }
+
+  /* ---------------- validation UI ---------------- */
+
+  /*
+   * The message element is in the DOM from the start and referenced by
+   * aria-describedby from the start, so turning it on is a `hidden` toggle and
+   * not a change of accessible description. Toggled via the property rather than
+   * a style, so the attribute stays the single source of truth.
+   */
+  function setMessage(fieldId, suffix, body) {
+    var node = $(fieldId + '-' + suffix);
+    if (node) {
+      node.hidden = !body;
+      if (body) node.textContent = body;
+    }
+    if (suffix === 'error') {
+      /* aria-invalid belongs on the control the reader is actually using, which
+         for the term is whichever of the select and the "Other" field is live. */
+      var input = fieldId === 'term' && ui.term && ui.term.value === 'other' ? ui.termOther : $(fieldId);
+      if (input) {
+        if (body) input.setAttribute('aria-invalid', 'true');
+        else input.removeAttribute('aria-invalid');
+      }
+    }
+  }
+
+  var MESSAGE_FIELDS = ['principal', 'rate', 'term', 'extra'];
+
+  function paintMessages(errors, warnings) {
+    for (var k = 0; k < MESSAGE_FIELDS.length; k++) {
+      var id = MESSAGE_FIELDS[k];
+      setMessage(id, 'error', errors[id] || '');
+      setMessage(id, 'warn', warnings[id] || '');
+    }
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  function text(node, value) { if (node) node.textContent = value; }
+
+  /* A short decimal, for the parameter table and the substitution: 7% is 0.07,
+     not 0.07000000000000001. */
+  function decimalText(value) {
+    return String(Math.round(value * 1e10) / 1e10);
+  }
+
+  function renderParams(m) {
+    text(ui.pPrincipal, moneyNatural(m.principal));
+    text(ui.pRate, decimalText(m.rate) + ' (' + pctTrim(m.rate) + ')');
+    text(ui.pFreq, integer(m.f) + ' (' + m.freq.adverb + ')');
+    text(ui.pTerm, m.durationText);
+    text(ui.pPeriodic, pctSig(m.periodicRate) + ' ' + m.freq.each);
+    text(ui.pCount, integer(m.n) + ' ' + plural(m.n, 'payment'));
+    text(ui.pPayment, money(m.payment));
+  }
+
+  function renderResults(m) {
+    /* The label is the cadence, so it cannot be static markup the way the
+       mortgage page's is. "Monthly payment" is wrong the moment f changes. */
+    text(ui.resultLabel, capitalize(m.freq.adjective) + ' payment');
+    text(ui.resultAmount, money(m.payment));
+    text(ui.totalInterest, moneyCents(m.totalInterestCents));
+    text(ui.totalPaid, moneyCents(m.totalPaidCents));
+    text(ui.paymentCount, integer(m.count));
+    text(ui.finalPayment, moneyCents(m.finalPaymentCents));
+
+    if (ui.early) {
+      ui.early.hidden = m.extraCents === 0;
+      if (m.extraCents > 0) {
+        text(ui.earlyAmount, moneyCents(m.duePerPeriodCents) + ' ' + m.freq.each);
+        text(ui.earlyNote, 'Retired in ' + m.payoffText + ' rather than ' +
+          payoffText(m.baseSchedule.count, m.f) + ', with ' +
+          moneyCents(m.interestSavedCents) + ' less interest. The extra costs ' +
+          moneyCents(m.extraCents * m.f) + ' a year.');
+      }
+    }
+
+    /*
+     * Two warnings, and both describe a schedule that is technically correct and
+     * practically absurd. Saying so is better than printing it deadpan.
+     */
+    if (ui.resultWarn) {
+      var warning = '';
+      if (m.doesNotAmortize) {
+        warning = 'This loan does not amortize: the payment does not cover the first period’s interest, so the whole balance falls due on the last payment.';
+      } else if (m.finalPaymentOutsized) {
+        warning = 'The final payment is more than twice the others, because the level payment barely covers the interest.';
+      }
+      ui.resultWarn.hidden = !warning;
+      if (warning) text(ui.resultWarn, warning);
+    }
+
+    text(ui.termReadout, integer(m.n) + ' ' + m.freq.adjective + ' ' + plural(m.n, 'payment'));
+
+    if (ui.finalSentence) {
+      text(ui.finalSentence, m.finalPaymentCents === m.duePerPeriodCents
+        ? moneyCents(m.finalPaymentCents) + ', the same as the others this time'
+        : moneyCents(m.finalPaymentCents) + ' rather than ' + moneyCents(m.duePerPeriodCents));
+    }
+  }
+
+  /*
+   * Rebuilt in full on every input event. Five short strings is free, and
+   * diffing them would buy nothing except the possibility of a stale fragment
+   * surviving a branch change. A paragraph whose sentences all filtered out is
+   * hidden rather than left standing as an empty line, and no node is ever added
+   * or removed, so the accessible description never changes shape.
+   */
+  function renderExplanation(m) {
+    if (!ui.explain) return;
+    var paragraphs = explainParagraphs(m);
+    var nodes = ui.explain.getElementsByTagName('p');
+    for (var k = 0; k < nodes.length; k++) {
+      var body = paragraphs[k] || '';
+      nodes[k].hidden = !body;
+      if (body) nodes[k].textContent = body;
+    }
+  }
+
+  /* ---------------- the worked substitution ---------------- */
+
+  /*
+   * The formula with the reader's own figures in it, rebuilt as real MathML
+   * rather than as a string of characters that resemble mathematics. Built with
+   * createElementNS and textContent throughout: this file has no route to
+   * innerHTML, and the test suite fails if it grows one.
+   */
+  var MATHML = 'http://www.w3.org/1998/Math/MathML';
+
+  function mel(tag, value) {
+    var node = document.createElementNS(MATHML, tag);
+    if (value != null) node.appendChild(document.createTextNode(value));
+    return node;
+  }
+
+  function mrow(parts) {
+    var row = mel('mrow');
+    for (var k = 0; k < parts.length; k++) row.appendChild(parts[k]);
+    return row;
+  }
+
+  function mfrac(numerator, denominator) {
+    var frac = mel('mfrac');
+    frac.appendChild(numerator);
+    frac.appendChild(denominator);
+    return frac;
+  }
+
+  function renderSubstitution(m) {
+    if (!ui.substitution) return;
+
+    var body;
+    if (m.periodicRate === 0) {
+      /*
+       * At a zero rate the discount form is 0/0 and the page uses the limit it
+       * tends to. Showing the reader the undefined expression with their figures
+       * in it would be showing them the wrong equation.
+       */
+      body = [mel('mi', 'M'), mel('mo', '='),
+        mfrac(mel('mn', moneyNatural(m.principal)), mel('mn', integer(m.n)))];
+    } else {
+      var periodic = mfrac(mel('mn', decimalText(m.rate)), mel('mn', integer(m.f)));
+      var periodicAgain = mfrac(mel('mn', decimalText(m.rate)), mel('mn', integer(m.f)));
+      var numerator = mrow([mel('mn', moneyNatural(m.principal)), mel('mo', '⁢'), periodic]);
+      var base = mrow([mel('mo', '('), mel('mn', '1'), mel('mo', '+'), periodicAgain, mel('mo', ')')]);
+      var power = mel('msup');
+      power.appendChild(base);
+      power.appendChild(mrow([mel('mo', '−'), mel('mn', integer(m.n))]));
+      var denominator = mrow([mel('mn', '1'), mel('mo', '−'), power]);
+      body = [mel('mi', 'M'), mel('mo', '='), mfrac(numerator, denominator)];
+    }
+    body.push(mel('mo', '≈'));
+    body.push(mel('mn', money(m.payment)));
+
+    var math = document.createElementNS(MATHML, 'math');
+    math.setAttribute('display', 'block');
+    math.appendChild(mrow(body));
+    replace(ui.substitution, math);
+
+    /* The figure's caption is its accessible name, so it has to be regenerated
+       alongside the expression rather than left describing the default. */
+    text(ui.substitutionCaption, m.periodicRate === 0
+      ? 'At a zero rate the formula is the loan divided by the number of payments.'
+      : 'The formula with your figures in it.');
+  }
+
+  /* ---------------- tables ---------------- */
+
+  function cell(tag, value, scope) {
+    var td = document.createElement(tag);
+    if (scope) td.setAttribute('scope', scope);
+    td.appendChild(document.createTextNode(value));
+    return td;
+  }
+
+  /* replaceChildren is the one-call version; the loop is the fallback for an
+     engine that predates it, and both are a single reflow. */
+  function replace(parent, node) {
+    if (parent.replaceChildren) parent.replaceChildren(node);
+    else {
+      while (parent.firstChild) parent.removeChild(parent.firstChild);
+      parent.appendChild(node);
+    }
+  }
+
+  function renderYearly(m) {
+    if (!ui.yearlyBody) return;
+    var frag = document.createDocumentFragment();
+    for (var k = 0; k < m.yearly.length; k++) {
+      var y = m.yearly[k];
+      var tr = document.createElement('tr');
+      tr.appendChild(cell('th', integer(y.year), 'row'));
+      tr.appendChild(cell('td', integer(y.payments)));
+      tr.appendChild(cell('td', moneyCents(y.interestCents)));
+      tr.appendChild(cell('td', moneyCents(y.principalCents)));
+      tr.appendChild(cell('td', moneyCents(y.endingBalanceCents)));
+      frag.appendChild(tr);
+    }
+    replace(ui.yearlyBody, frag);
+    text(ui.yearlyCaption, scenarioLead(m) +
+      ', summarised a year at a time. Interest and principal are the totals for the year; the balance is what stands at the end of it.');
+  }
+
+  function renderPayments(m) {
+    if (!ui.paymentsBody) return;
+    var shown = Math.min(m.schedule.rows.length, PAYMENT_ROWS);
+    var frag = document.createDocumentFragment();
+    for (var k = 0; k < shown; k++) {
+      var r = m.schedule.rows[k];
+      var tr = document.createElement('tr');
+      tr.appendChild(cell('th', integer(r.n), 'row'));
+      tr.appendChild(cell('td', moneyCents(r.paymentCents)));
+      tr.appendChild(cell('td', moneyCents(r.interestCents)));
+      tr.appendChild(cell('td', moneyCents(r.principalCents)));
+      tr.appendChild(cell('td', moneyCents(r.balanceCents)));
+      frag.appendChild(tr);
+    }
+    replace(ui.paymentsBody, frag);
+    /* The cap is disclosed in the caption rather than left for the reader to
+       discover by counting. At 52 payments a year over 40 years the full
+       schedule is 2,080 rows, which is a page that stops responding. */
+    text(ui.paymentsCaption, shown < m.schedule.rows.length
+      ? 'The first ' + integer(shown) + ' of ' + integer(m.schedule.rows.length) +
+        ' payments, one row each. The rest are summarised in the yearly table above.'
+      : 'All ' + integer(shown) + ' ' + plural(shown, 'payment') + ', one row each.');
+    state.paymentsDirty = false;
+  }
+
+  function renderFrequency(m) {
+    if (!ui.freqBody) return;
+    var rows = frequencyTable(m.principal, m.ratePct, m.years);
+    var frag = document.createDocumentFragment();
+    for (var k = 0; k < rows.length; k++) {
+      var r = rows[k];
+      var tr = document.createElement('tr');
+      if (r.key === m.freq.key) {
+        tr.setAttribute('aria-current', 'true');
+        tr.className = 'sens__row--current';
+      }
+      tr.appendChild(cell('th', r.freq.label, 'row'));
+      tr.appendChild(cell('td', integer(r.n)));
+      tr.appendChild(cell('td', moneyCents(r.paymentCents)));
+      tr.appendChild(cell('td', moneyCents(r.paidPerYearCents)));
+      tr.appendChild(cell('td', moneyCents(r.totalInterestCents)));
+      tr.appendChild(cell('td', pctEar(r.ear)));
+      frag.appendChild(tr);
+    }
+    replace(ui.freqBody, frag);
+    text(ui.freqCaption, 'The same ' + moneyNatural(m.principal) + ' at ' + pctTrim(m.rate) +
+      ' over ' + m.durationText + ', at each cadence the calculator offers. Read the paid per year column before the interest column.');
+  }
+
+  function sensRows(rows, kind) {
+    var frag = document.createDocumentFragment();
+    for (var k = 0; k < rows.length; k++) {
+      var r = rows[k];
+      var tr = document.createElement('tr');
+      var th = cell('th', kind === 'rate' ? pctTrim(r.ratePct / 100) : durationText(r.years), 'row');
+      if (r.current) {
+        /*
+         * The marker is a word, not a tint. Colour alone would not survive
+         * forced-colors mode, a monochrome print, or a reader who cannot see
+         * it, and this row is the one every other row is measured against.
+         */
+        tr.setAttribute('aria-current', 'true');
+        tr.className = 'sens__row--current';
+        var tag = document.createElement('span');
+        tag.className = 'sens__tag';
+        tag.appendChild(document.createTextNode('yours'));
+        th.appendChild(document.createTextNode(' '));
+        th.appendChild(tag);
+      }
+      tr.appendChild(th);
+      tr.appendChild(cell('td', moneyCents(r.paymentCents)));
+      tr.appendChild(cell('td', moneySigned(r.paymentDeltaCents)));
+      tr.appendChild(cell('td', moneyCents(r.totalInterestCents)));
+      tr.appendChild(cell('td', moneySigned(r.interestDeltaCents)));
+      frag.appendChild(tr);
+    }
+    return frag;
+  }
+
+  function renderSensitivity(m) {
+    if (!ui.sensRateBody && !ui.sensTermBody) return;
+    var s = sensitivity(m);
+    if (ui.sensRateBody) {
+      replace(ui.sensRateBody, sensRows(s.rates, 'rate'));
+      text(ui.sensRateCaption, rateCaptionText(m, s.rates));
+    }
+    if (ui.sensTermBody) {
+      replace(ui.sensTermBody, sensRows(s.terms, 'term'));
+      text(ui.sensTermCaption, termCaptionText(m, s.terms));
+    }
+  }
+
+  function scenarioLead(m) {
+    return 'A ' + moneyNatural(m.principal) + ' loan at ' + pctTrim(m.rate) + ' over ' +
+      m.durationText + ', paid ' + m.freq.adverb;
+  }
+
+  /* ---------------- charts ---------------- */
+
+  function setPath(node, d) { if (node) node.setAttribute('d', d); }
+
+  function renderCharts(m) {
+    var balances = [m.principal];
+    var interest = [];
+    var totals = [];
+    var k, y;
+    for (k = 0; k < m.yearly.length; k++) {
+      y = m.yearly[k];
+      balances.push(fromCents(y.endingBalanceCents));
+      interest.push(fromCents(y.interestCents));
+      totals.push(fromCents(y.interestCents + y.principalCents));
+    }
+
+    var balanceMax = m.principal;
+    setPath(ui.balanceArea, seriesArea(balances, balanceMax));
+    setPath(ui.balanceLine, seriesLine(balances, balanceMax));
+    text(ui.balanceMax, moneyWhole(balanceMax));
+    text(ui.balanceEnd, 'Year ' + integer(m.yearly.length));
+    text(ui.balanceDesc, chartDescription(m));
+
+    var compMax = 0;
+    for (k = 0; k < totals.length; k++) if (totals[k] > compMax) compMax = totals[k];
+    var zeros = [];
+    for (k = 0; k < interest.length; k++) zeros.push(0);
+    var interestBand = seriesBand(zeros, interest, compMax);
+    setPath(ui.compInterest, interestBand);
+    /* The hatch overlay is the same geometry drawn twice: once tinted, once with
+       the pattern fill, so the band survives greyscale and forced-colors mode. */
+    setPath(ui.compInterestHatch, interestBand);
+    setPath(ui.compPrincipal, seriesBand(interest, totals, compMax));
+    text(ui.compMax, moneyWhole(compMax) + ' a year');
+    text(ui.compEnd, 'Year ' + integer(m.yearly.length));
+
+    if (ui.compDesc && m.yearly.length) {
+      var first = m.yearly[0];
+      var last = m.yearly[m.yearly.length - 1];
+      text(ui.compDesc, 'In year ' + first.year + ', ' + moneyCents(first.interestCents) +
+        ' of the year’s payments is interest and ' + moneyCents(first.principalCents) +
+        ' is principal. In year ' + last.year + ', ' + moneyCents(last.interestCents) +
+        ' is interest and ' + moneyCents(last.principalCents) +
+        ' is principal. The total stays the same; only the split moves.');
+    }
+  }
+
+  /* ---------------- the live region ---------------- */
+
+  /*
+   * The computation is never debounced: it is arithmetic, and a sighted reader
+   * should see the number move as they type. The announcement is, on a 500ms
+   * trailing delay, because a live region that fires on every keystroke is a
+   * live region nobody can use.
+   */
+  var announceTimer = null;
+  function announceText(body) {
+    if (!ui.status) return;
+    if (announceTimer) clearTimeout(announceTimer);
+    announceTimer = setTimeout(function () {
+      ui.status.textContent = body;
+    }, 500);
+  }
+
+  /* ---------------- the update cycle ---------------- */
+
+  function update() {
+    var read = readInputs();
+    paintMessages(read.errors, read.warnings);
+
+    var failures = [];
+    for (var key in read.errors) {
+      if (Object.prototype.hasOwnProperty.call(read.errors, key)) failures.push(key);
+    }
+
+    if (failures.length) {
+      /*
+       * Freeze rather than blank. The previous figures stay on screen, dimmed,
+       * under a sentence saying they are waiting, because $NaN is useless and a
+       * stale number that still looks current is worse than either.
+       */
+      if (ui.resultPanel) ui.resultPanel.classList.add('result--stale');
+      if (ui.staleNote) {
+        ui.staleNote.hidden = false;
+        text(ui.staleNote, 'Waiting for a valid entry. The figures shown are from your last complete entry.');
+      }
+      announceText('Waiting for a valid entry. The figures shown are from your last complete entry.');
+      return;
+    }
+
+    if (ui.resultPanel) ui.resultPanel.classList.remove('result--stale');
+    if (ui.staleNote) ui.staleNote.hidden = true;
+
+    var m = buildModel(read.values);
+    state.lastModel = m;
+
+    renderParams(m);
+    renderResults(m);
+    renderExplanation(m);
+    renderSubstitution(m);
+    renderYearly(m);
+    renderFrequency(m);
+    renderCharts(m);
+    renderSensitivity(m);
+
+    /* Up to 3,000 elements. Built when the disclosure is open, deferred when it
+       is not. */
+    if (ui.paymentsDetails && ui.paymentsDetails.open) renderPayments(m);
+    else state.paymentsDirty = true;
+
+    announceText(summarySentence(m));
+  }
+
+  /* ---------------- wiring ---------------- */
+
+  /*
+   * One listener on the form rather than one per control. `input` fires for text
+   * fields and selects alike; `change` is here for the two selects, whose own
+   * handlers must not run twice.
+   */
+  form.addEventListener('input', onInput);
+  form.addEventListener('change', onInput);
+
+  /*
+   * The form cannot submit today: it lacks an action and a submit button, and
+   * the spec suppresses implicit submission for a form with several text fields
+   * and no submit button. That is a guarantee resting on an absence. Adding one
+   * button would turn Enter into a GET of this same page with every field in the
+   * query string, and page_location is the one thing analytics records verbatim.
+   * Two lines, and the numbers stay in the tab.
+   */
+  function blockSubmit(event) { event.preventDefault(); }
+  form.addEventListener('submit', blockSubmit);
+
+  function onInput(event) {
+    /*
+     * Gated to `change`, and that gate is load-bearing. A select fires `input`
+     * AND `change` for one interaction, and this handler moves focus and shows a
+     * field; running it on both events would fight the reader for the caret.
+     */
+    if (event.type === 'change' && event.target === ui.term) paintTermOther();
+    update();
+  }
+
+  function paintTermOther() {
+    if (!ui.termOtherWrap || !ui.term) return;
+    var other = ui.term.value === 'other';
+    ui.termOtherWrap.hidden = !other;
+    /* Moving focus is right here: the reader picked "Other" in order to type a
+       number, and the field they need did not exist a moment ago. */
+    if (other && ui.termOther) ui.termOther.focus();
+  }
+
+  if (ui.reset) {
+    ui.reset.addEventListener('click', function () {
+      if (ui.principal) ui.principal.value = '25000';
+      if (ui.rate) ui.rate.value = '7';
+      if (ui.term) ui.term.value = '5';
+      if (ui.termOther) ui.termOther.value = '5';
+      if (ui.frequency) ui.frequency.value = '12';
+      if (ui.extra) ui.extra.value = '';
+      paintTermOther();
+      update();
+      if (ui.principal) ui.principal.focus();
+    });
+  }
+
+  if (ui.paymentsDetails) {
+    ui.paymentsDetails.addEventListener('toggle', function () {
+      if (ui.paymentsDetails.open && state.paymentsDirty && state.lastModel) {
+        renderPayments(state.lastModel);
+      }
+    });
+  }
+
+  /*
+   * The page already carries the default scenario's real figures as static text,
+   * so this first pass changes nothing visible. It runs anyway, because the
+   * reader may have arrived with values restored by the browser's own form
+   * restoration after a reload, and those have to be honoured.
+   */
+  paintTermOther();
+  update();
+
 })();
