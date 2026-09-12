@@ -414,6 +414,56 @@ test('every tool page ships the figures its own code produces', () => {
   }
 });
 
+test('every page points at a share card that exists and is the size it claims', () => {
+  /*
+   * A wrong og:image is invisible until someone shares a link, and then it is
+   * wrong in front of an audience. The PNG header carries the real dimensions,
+   * so the declared width and height can be checked against the file rather than
+   * against each other.
+   */
+  const { readFileSync, existsSync } = require('node:fs');
+  const seen = new Map();
+
+  for (const page of PAGES) {
+    const html = read(page);
+    const image = html.match(/<meta property="og:image" content="([^"]+)">/);
+    if (page.endsWith('404.html')) {
+      /* Deliberately carries no card: it is noindex and there is nothing to
+         share. If it grows one, this branch should grow an assertion. */
+      assert.equal(image, null, '404.html is not shared and needs no card');
+      continue;
+    }
+    assert.ok(image, `${page}: no og:image`);
+
+    const url = image[1];
+    assert.ok(url.startsWith('https://curiositymapped.com/assets/'),
+      `${page}: og:image must be absolute; crawlers do not resolve relative ones`);
+
+    const file = 'docs/assets/' + url.split('/').pop();
+    assert.ok(existsSync(join(ROOT, file)), `${page}: og:image points at ${file}, which does not exist`);
+
+    /* PNG: 8-byte signature, then the IHDR length and type, then width and
+       height as big-endian 32-bit integers. */
+    const bytes = readFileSync(join(ROOT, file));
+    assert.equal(bytes.toString('ascii', 12, 16), 'IHDR', `${file}: not a PNG`);
+    const width = bytes.readUInt32BE(16);
+    const height = bytes.readUInt32BE(20);
+    assert.equal(width, Number(html.match(/<meta property="og:image:width" content="(\d+)">/)[1]),
+      `${page}: og:image:width does not match ${file}`);
+    assert.equal(height, Number(html.match(/<meta property="og:image:height" content="(\d+)">/)[1]),
+      `${page}: og:image:height does not match ${file}`);
+    assert.equal(width, 1200, `${file}: share cards are 1200 wide`);
+    assert.equal(height, 630, `${file}: share cards are 630 tall`);
+
+    const alt = html.match(/<meta property="og:image:alt" content="([^"]+)">/);
+    assert.ok(alt && alt[1].length > 20, `${page}: og:image:alt should describe the card`);
+
+    /* Two pages sharing one card is a card that describes at most one of them. */
+    assert.ok(!seen.has(file), `${page} and ${seen.get(file)} share ${file}`);
+    seen.set(file, page);
+  }
+});
+
 test('no tool page or tool script uses an em dash in copy', () => {
   /*
    * A house rule, enforced because a prose rule nobody can check rots on the next
