@@ -700,17 +700,17 @@
             </div>
 
             <div class="field">
-              <label class="field__label" for="frequency">Payment frequency: the <em>f</em> in the formula</label>
+              <label class="field__label" for="payment-frequency">Payment frequency: the <em>f</em> in the formula</label>
               <div class="field__control">
-                <select class="field__input" id="frequency" name="frequency" autocomplete="off"
-                        aria-describedby="frequency-hint">
+                <select class="field__input" id="payment-frequency" name="frequency" autocomplete="off"
+                        aria-describedby="payment-frequency-hint">
                   <option value="12" selected>Monthly (12 a year)</option>
                   <option value="24">Semimonthly (24 a year)</option>
                   <option value="26">Biweekly (26 a year)</option>
                   <option value="52">Weekly (52 a year)</option>
                 </select>
               </div>
-              <p class="field__hint" id="frequency-hint">
+              <p class="field__hint" id="payment-frequency-hint">
                 Semimonthly is twice a month, 24 a year. Biweekly is every two weeks,
                 26 a year. They are not the same thing, and the difference is worth
                 more than it looks:
@@ -767,7 +767,7 @@
               one, #calc-status below, because two of them on one page talk over
               each other and neither gets heard.
             -->
-            <output class="result__amount" id="result-amount" for="principal rate term frequency extra" aria-live="off">$495.03</output>
+            <output class="result__amount" id="result-amount" for="principal rate term payment-frequency extra" aria-live="off">$495.03</output>
             <p class="result__stale-note" id="result-stale-note" hidden></p>
 
             <div class="result__grid">
@@ -1287,7 +1287,7 @@
               <th scope="col">Difference</th>
             </tr>
           </thead>
-          <tbody id="sens-rate">
+          <tbody id="sens-rate-body">
             <tr><th scope="row">5%</th><td>$471.78</td><td>&minus;$23.25</td><td>$3,306.88</td><td>&minus;$1,394.94</td></tr>
             <tr><th scope="row">6%</th><td>$483.32</td><td>&minus;$11.71</td><td>$3,999.23</td><td>&minus;$702.59</td></tr>
             <tr class="sens__row--current"><th scope="row">7% <span class="sens__tag">yours</span></th><td>$495.03</td><td>$0.00</td><td>$4,701.82</td><td>$0.00</td></tr>
@@ -1311,7 +1311,7 @@
               <th scope="col">Difference</th>
             </tr>
           </thead>
-          <tbody id="sens-term">
+          <tbody id="sens-term-body">
             <tr><th scope="row">3 years</th><td>$771.93</td><td>+$276.90</td><td>$2,789.42</td><td>&minus;$1,912.40</td></tr>
             <tr class="sens__row--current"><th scope="row">5 years <span class="sens__tag">yours</span></th><td>$495.03</td><td>$0.00</td><td>$4,701.82</td><td>$0.00</td></tr>
             <tr><th scope="row">7 years</th><td>$377.32</td><td>&minus;$117.71</td><td>$6,694.46</td><td>+$1,992.64</td></tr>

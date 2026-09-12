@@ -967,7 +967,7 @@
     termOtherWrap: $('term-other-wrap'),
     termOther: $('term-other'),
     termReadout: $('term-readout'),
-    frequency: $('frequency'),
+    frequency: $('payment-frequency'),
     extra: $('extra'),
     reset: $('reset'),
 
@@ -1001,9 +1001,9 @@
     freqBody: $('freq-table'),
     freqCaption: $('freq-caption'),
 
-    sensRateBody: $('sens-rate'),
+    sensRateBody: $('sens-rate-body'),
     sensRateCaption: $('sens-rate-caption'),
-    sensTermBody: $('sens-term'),
+    sensTermBody: $('sens-term-body'),
     sensTermCaption: $('sens-term-caption'),
 
     yearlyBody: $('amort-yearly'),
