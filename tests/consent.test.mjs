@@ -85,6 +85,87 @@ test('reading fails closed', () => {
   }
 });
 
+/* ------------------------------------------------------- the deferral */
+
+/*
+ * The record of the question having been asked and not answered. It is not a
+ * choice and must never be able to pass for one, which is what most of these
+ * assert. Fails closed in the same direction as the choice above -- anything
+ * unreadable means ask -- so the failure mode of every one of these is an extra
+ * prompt, never a silenced one.
+ */
+
+test('a deferral reads back', () => {
+  assert.equal(C.parseDefer(C.serializeDefer('shown', now), now), 'shown');
+  assert.equal(C.parseDefer(C.serializeDefer('dismissed', now), now), 'dismissed');
+});
+
+test('the deferral carries no choice and no identifier', () => {
+  const raw = C.serializeDefer('shown', now);
+  assert.deepEqual(Object.keys(JSON.parse(raw)).sort(), ['defer', 'ts', 'v']);
+  for (const word of ['analytics', 'granted', 'denied']) {
+    assert.ok(!raw.includes(word), `a deferral must not contain ${word}`);
+  }
+});
+
+test('a deferral cannot be mistaken for a choice, or a choice for a deferral', () => {
+  /* The two records live in one storage area under two keys, and the only thing
+     keeping them apart is that neither parser accepts the other's output. */
+  assert.equal(C.parseDefer(C.serialize('granted', now), now), null);
+  assert.equal(C.parseDefer(C.serialize('denied', now), now), null);
+  assert.equal(C.parse(C.serializeDefer('shown', now), now), null);
+  assert.equal(C.parse(C.serializeDefer('dismissed', now), now), null);
+});
+
+test('a shown panel is quiet for a day, a dismissal for a month', () => {
+  const shown = (age) => C.parseDefer(C.serializeDefer('shown', now - age), now);
+  const gone = (age) => C.parseDefer(C.serializeDefer('dismissed', now - age), now);
+  assert.equal(shown(C.DEFER_SHOWN_AGE), 'shown');
+  assert.equal(shown(C.DEFER_SHOWN_AGE + 1), null);
+  assert.equal(gone(C.DEFER_DISMISSED_AGE), 'dismissed');
+  assert.equal(gone(C.DEFER_DISMISSED_AGE + 1), null);
+  /* Each kind is read against its own window, not the longer of the two. */
+  assert.equal(shown(C.DEFER_SHOWN_AGE + 1000), null);
+  assert.equal(gone(C.DEFER_SHOWN_AGE + 1000), 'dismissed');
+});
+
+test('reading a deferral fails closed', () => {
+  for (const raw of [
+    null,
+    undefined,
+    '',
+    '{',
+    '[]',
+    'null',
+    '"shown"',
+    JSON.stringify({ v: 0, defer: 'shown', ts: now }),
+    JSON.stringify({ v: C.VERSION, defer: 'maybe', ts: now }),
+    JSON.stringify({ v: C.VERSION, defer: 'shown' }),
+    JSON.stringify({ v: C.VERSION, defer: 'shown', ts: String(now) }),
+    JSON.stringify({ defer: 'shown', ts: now }),
+    /* A clock set forward, or a hand-edited value. The choice record can afford
+       to be lax about this because it grants something; a deferral suppresses a
+       prompt, so a timestamp in the future would silence the panel for good. */
+    JSON.stringify({ v: C.VERSION, defer: 'shown', ts: now + 1 }),
+    JSON.stringify({ v: C.VERSION, defer: 'dismissed', ts: now + 1 })
+  ]) {
+    assert.equal(C.parseDefer(raw, now), null, `expected null for ${JSON.stringify(raw)}`);
+  }
+});
+
+test('a non-answer is never honoured longer than an answer', () => {
+  assert.ok(C.DEFER_SHOWN_AGE < C.DEFER_DISMISSED_AGE);
+  assert.ok(C.DEFER_DISMISSED_AGE < C.MAX_AGE);
+  /* The deferral rides the consent VERSION, so bumping it to force a re-prompt
+     cannot be quietly suppressed by a deferral written under the old one. */
+  assert.equal(JSON.parse(C.serializeDefer('shown', now)).v, C.VERSION);
+});
+
+test('the deferral is its own key', () => {
+  assert.notEqual(C.DEFER_KEY, C.KEY);
+  assert.ok(C.DEFER_KEY.startsWith('cm-'));
+});
+
 /* --------------------------------------------------- the published pages */
 
 test('every page queues the consent defaults before gtag.js is fetched', () => {
@@ -169,6 +250,63 @@ test('the inline block and consent.js agree on the stored format', () => {
     assert.ok(html.includes(`var KEY = '${C.KEY}';`), page);
     assert.ok(html.includes(`var VERSION = ${C.VERSION};`), page);
     assert.ok(html.includes(`var MAX_AGE = ${C.MAX_AGE};`), page);
+  }
+});
+
+/*
+ * The load-bearing one. The deferral means nothing to Google -- "asked and
+ * unanswered" and "asked, unanswered, and not being re-asked" are the same
+ * consent state -- so the block that speaks to Google must never learn the key.
+ * Sliced rather than searched whole, because the policy page names both keys in
+ * its prose on purpose, and that is exactly where they should be named.
+ */
+const googleBlock = (html) => {
+  const start = html.indexOf('<!-- Google tag (gtag.js) -->');
+  const end = html.indexOf('<!-- End Google tag -->');
+  assert.ok(start !== -1 && end > start, 'the Google tag block must be findable');
+  return html.slice(start, end);
+};
+
+test('the Google block never learns about the deferral', () => {
+  for (const page of PAGES) {
+    const block = googleBlock(read(page));
+    assert.ok(!block.includes(C.DEFER_KEY), `${page}: block must not name ${C.DEFER_KEY}`);
+    assert.ok(!block.includes('defer'), `${page}: block must not mention the deferral`);
+  }
+  /* The pages are only its output; this is the file it comes from. */
+  const script = read('scripts/apply-gtag.sh');
+  assert.ok(!script.includes(C.DEFER_KEY));
+  assert.ok(!script.includes('DEFER_'));
+});
+
+test('the interface never grows a second way to signal Google', () => {
+  /* Comments stripped: this file explains at length what it does not do. */
+  const js = code('docs/js/consent.js');
+  assert.equal((js.match(/consent\.set\(/g) || []).length, 1,
+    'exactly one call site may record a choice');
+  for (const forbidden of ['gtag', 'dataLayer', 'ga-disable']) {
+    assert.ok(!js.includes(forbidden), `consent.js must not reference ${forbidden}`);
+  }
+});
+
+test('the dismiss control exists in both files', () => {
+  assert.match(read('docs/js/consent.js'), /'consent__dismiss'/);
+  assert.match(read('docs/css/components.css'), /\.consent__dismiss\s*\{/);
+});
+
+test('Escape is scoped to the panel', () => {
+  /* The panel is not modal -- it traps no focus and leaves the page usable --
+     so a document-level key handler would be claiming Escape from whatever the
+     reader is actually in, and the calculators are full of number inputs. */
+  const js = code('docs/js/consent.js');
+  assert.ok(js.includes("panel.addEventListener('keydown'"));
+  assert.ok(!js.includes("document.addEventListener('keydown'"));
+});
+
+test('the policy names every consent key the code writes', () => {
+  const html = read('docs/privacy.html');
+  for (const key of [C.KEY, C.DEFER_KEY]) {
+    assert.ok(html.includes(key), `privacy.html must disclose ${key}`);
   }
 });
 
