@@ -44,7 +44,7 @@ docs/.nojekyll           serve files as-is instead of running them through Jekyl
 tests/mortgage.test.mjs  the mortgage calculator's unit tests; repository furniture, never served
 tests/compound.test.mjs  the compound interest calculator's, on the same pattern
 tests/loan.test.mjs      the loan calculator's, likewise
-tests/consent.test.mjs   the stored-choice logic, plus assertions over the built pages
+tests/consent.test.mjs   the stored-choice and deferral logic, plus assertions over the built pages
 scripts/apply-gtag.sh    inserts or replaces the Google Analytics tag in every page
 scripts/build-og.mjs     re-renders the share cards from scripts/og-card.html
 scripts/og-card.html     the share card design; never served, rendered to PNG
@@ -256,9 +256,55 @@ mean, or when the policy changes the basis of the choice. **Do not bump it** for
 styling: re-prompting without cause teaches people to dismiss the panel. A choice also
 lapses after twelve months (`MAX_AGE`).
 
+### Deferring the question
+
+A reader does not have to answer, and one who does not should not be asked again on
+every page. The panel carries a **Not now** button and an Escape binding, and a second
+key records that the question was put:
+
+```json
+{ "v": 1, "defer": "shown",     "ts": 1757337600000 }
+{ "v": 1, "defer": "dismissed", "ts": 1757337600000 }
+```
+
+`cm-consent-deferred`, same convention, same `try`/`catch`, same fail-closed reading --
+and here that points the same way it does for a choice: anything unreadable means *ask*.
+
+**Deferring is not consenting and not declining.** This extends the distinction above:
+"not answered yet" and "not answered yet, and not being re-asked" are byte-identical
+from Google's side. The regional default is untouched, no signal is sent, and the record
+governs one thing only -- whether the panel opens itself on the next page.
+
+Which is why it lives entirely in `consent.js` and not in the inline block. The block's
+job is to be the only thing that knows what Google was told, and this is a fact about
+the interface rather than about consent. `apply-gtag.sh` and the seven heads are not
+touched by it; a test slices the tag block out of every page and fails if the key ever
+appears inside one.
+
+Two windows, because being shown a question and saying nothing is weaker evidence than
+closing it on purpose: `DEFER_SHOWN_AGE` is a day, `DEFER_DISMISSED_AGE` a month. A day
+covers a visit with margin and gives a reader who never noticed the panel -- it sits at
+the foot of the viewport, plenty of people never look there -- another chance tomorrow.
+The ordering is the rule and has its own test: `shown` < `dismissed` < `MAX_AGE`, since
+**a non-answer must never be honoured for longer than an answer.**
+
+The record rides the consent `VERSION`, so a bump invalidates outstanding deferrals and
+a deliberate re-prompt can never be suppressed by a stale dismissal. The converse is the
+part that is easy to get wrong later: changing *this* record's own format needs **no**
+bump, because an unrecognised deferral already fails closed and costs one prompt.
+Bumping `VERSION` for it would re-prompt everyone who has already answered, which the
+paragraph above forbids.
+
+Two degradations worth knowing. In a private window the write throws and is swallowed,
+so the panel re-prompts per page exactly as it did before this existed. And
+`sessionStorage` was considered and rejected: it is per-tab, so a link opened in a new
+tab asks again; it cannot express a dismissal that outlives the tab; and its writes fire
+no `storage` event, which would make the cross-tab behaviour impossible.
+
 `VERSION`, `KEY`, and `MAX_AGE` appear in both the inline block and `consent.js`. They
 are held together by a test, not by shared code, because the inline copy has to run
-before anything can be fetched and so cannot be a module.
+before anything can be fetched and so cannot be a module. The deferral constants appear
+in `consent.js` alone, and a test keeps it that way.
 
 ### One thing the calculator must never do
 

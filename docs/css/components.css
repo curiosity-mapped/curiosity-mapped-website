@@ -973,6 +973,34 @@
   .js .consent-manage:hover { color: var(--accent); border-color: var(--accent); }
 
   /*
+   * The non-answer, and the one control on the panel that is deliberately not
+   * the others' equal. The rule above keeps accept and decline identical to
+   * each other; this keeps the way out of answering from being the prettiest
+   * thing in the row, which is the same principle approached from the other
+   * side. It stays a full 44px target -- subordinate is not the same as hard to
+   * hit -- and the transparent border rather than none keeps it the exact
+   * height of the two pills, so the flex row does not shift.
+   */
+  .consent__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: var(--s-2) var(--s-4);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-dim);
+    font: inherit;
+    font-size: var(--t--1);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .consent__dismiss:hover { color: var(--accent); }
+
+  /*
    * Hidden without scripting rather than present and dead, the same way the
    * theme toggle is: neither control can do anything if consent.js never ran.
    */
