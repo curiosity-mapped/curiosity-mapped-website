@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <!-- Google tag (gtag.js) -->
@@ -174,10 +174,10 @@
      can never depend on the order rules happen to appear in. -->
 <style>@layer tokens, base, components, utilities;</style>
 
-<title>Tools | Curiosity Mapped</title>
-<meta name="description" content="Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.">
+<title>About | Curiosity Mapped</title>
+<meta name="description" content="Curiosity Mapped is an exploration platform for understanding the things that shape our world: useful first, deeper if you want it.">
 
-<link rel="canonical" href="https://curiositymapped.com/tools/">
+<link rel="canonical" href="https://curiositymapped.com/about.html">
 
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#fbfcfa" media="(prefers-color-scheme: light)">
@@ -185,16 +185,16 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Curiosity Mapped">
-<meta property="og:title" content="Tools | Curiosity Mapped">
-<meta property="og:description" content="Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.">
-<meta property="og:url" content="https://curiositymapped.com/tools/">
+<meta property="og:title" content="About | Curiosity Mapped">
+<meta property="og:description" content="Curiosity Mapped is an exploration platform for understanding the things that shape our world: useful first, deeper if you want it.">
+<meta property="og:url" content="https://curiositymapped.com/about.html">
 <meta property="og:locale" content="en_US">
 <!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
-<meta property="og:image" content="https://curiositymapped.com/assets/og-tools.png">
+<meta property="og:image" content="https://curiositymapped.com/assets/og-about.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Tools from Curiosity Mapped: calculators that show their working, not only their answers.">
+<meta property="og:image:alt" content="About Curiosity Mapped: useful first, deeper if you want it.">
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- Preference order, not a fallback chain: a browser that reads SVG icons takes
@@ -223,27 +223,29 @@
 <script src="/js/main.js" defer></script>
 <script src="/js/consent.js" defer></script>
 
+<!-- References the home page's #website and #org nodes by @id; never redefines them. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "CollectionPage",
-      "@id": "https://curiositymapped.com/tools/#page",
-      "url": "https://curiositymapped.com/tools/",
-      "name": "Tools",
-      "description": "Calculators and converters from Curiosity Mapped. Every one runs entirely in your browser, shows the arithmetic it used, and is honest about what it leaves out.",
+      "@type": "AboutPage",
+      "@id": "https://curiositymapped.com/about.html#page",
+      "url": "https://curiositymapped.com/about.html",
+      "name": "About Curiosity Mapped",
+      "description": "Curiosity Mapped is an exploration platform for understanding the things that shape our world: useful first, deeper if you want it.",
       "isPartOf": { "@id": "https://curiositymapped.com/#website" },
+      "about": { "@id": "https://curiositymapped.com/#org" },
       "publisher": { "@id": "https://curiositymapped.com/#org" },
-      "breadcrumb": { "@id": "https://curiositymapped.com/tools/#breadcrumb" },
+      "breadcrumb": { "@id": "https://curiositymapped.com/about.html#breadcrumb" },
       "inLanguage": "en"
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "https://curiositymapped.com/tools/#breadcrumb",
+      "@id": "https://curiositymapped.com/about.html#breadcrumb",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://curiositymapped.com/" },
-        { "@type": "ListItem", "position": 2, "name": "Tools" }
+        { "@type": "ListItem", "position": 2, "name": "About" }
       ]
     }
   ]
@@ -269,9 +271,9 @@
     <p class="visually-hidden">Some of the map is still blank. Tools is the first area to take shape; Journal and Reference will follow.</p>
     <ul class="nav__list">
       <li><span class="nav__item">Journal</span></li>
-      <li><a class="nav__item nav__item--link" href="/tools/" aria-current="page">Tools</a></li>
+      <li><a class="nav__item nav__item--link" href="/tools/">Tools</a></li>
       <li><span class="nav__item">Reference</span></li>
-      <li><a class="nav__item nav__item--link" href="/about.html">About</a></li>
+      <li><a class="nav__item nav__item--link" href="/about.html" aria-current="page">About</a></li>
     </ul>
   </nav>
 
@@ -289,81 +291,219 @@
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <ol class="breadcrumb__list">
       <li class="breadcrumb__item"><a href="/">Home</a></li>
-      <li class="breadcrumb__item"><span aria-current="page">Tools</span></li>
+      <li class="breadcrumb__item"><span aria-current="page">About</span></li>
     </ol>
   </nav>
 
-  <article class="prose" aria-labelledby="tools-title">
-    <h1 class="prose__title rise" id="tools-title" style="--i:0">Tools</h1>
+  <!--
+    The copy is the author's draft, verbatim. Only the markup is editorial: the
+    draft's stacked one-line runs are single paragraphs broken with <br>, so they
+    read as one thought rather than as a column of fragments, and the entrance
+    animation stops after the lede, as it does on every other prose page.
+  -->
+  <article class="prose" aria-labelledby="about-title">
+    <h1 class="prose__title rise" id="about-title" style="--i:0">About Curiosity Mapped</h1>
 
-    <p class="prose__lede rise" style="--i:1">
-      Calculators and converters that run entirely in your browser. There is no
-      server to send anything to.
-    </p>
+    <p class="prose__lede rise" style="--i:1">Curiosity is where it starts.</p>
 
-    <p>
-      Every tool here is built the same way. It shows the arithmetic it used rather
-      than only the answer, it says plainly what it does not account for, and it
-      never invents a number it cannot actually derive from what you typed. Where a
-      figure depends on something the page cannot know, such as your lender&rsquo;s
-      rate card or your county&rsquo;s assessor, the tool asks for it instead of
-      guessing on your behalf.
-    </p>
+    <p>Curiosity Mapped is an exploration platform for understanding the things that shape our world.</p>
 
-    <h2 id="published">Published</h2>
+    <p>It began with a simple question:</p>
 
-    <ul class="cards">
-      <li>
-        <a class="card card--tools card--link" href="/tools/compound-interest-calculator.html">
-          <span class="card__label">Calculator</span>
-          <span class="card__title">Compound Interest Calculator</span>
-          <span class="card__text">What a balance grows to when its interest starts earning interest: the formula, the periodic rate against the effective annual rate, and an honest account of what compound interest does not include.</span>
-          <span class="card__go">Open the calculator &rarr;</span>
-        </a>
-      </li>
-      <li>
-        <a class="card card--tools card--link" href="/tools/loan-calculator.html">
-          <span class="card__label">Calculator</span>
-          <span class="card__title">Loan Calculator</span>
-          <span class="card__text">The amortization engine without the housing-specific parts, for car loans, personal loans, and anything else repaid in level instalments. The payment, where each one goes, and what changing the cadence really does.</span>
-          <span class="card__go">Open the calculator &rarr;</span>
-        </a>
-      </li>
-      <li>
-        <a class="card card--tools card--link" href="/tools/mortgage-calculator.html">
-          <span class="card__label">Calculator</span>
-          <span class="card__title">Mortgage Calculator</span>
-          <span class="card__text">The monthly payment, the formula that produced it, and the full amortization schedule. Taxes, insurance, mortgage insurance, and association dues are kept visibly separate from principal and interest.</span>
-          <span class="card__go">Open the calculator &rarr;</span>
-        </a>
-      </li>
-    </ul>
-
-    <h2 id="planned">Planned</h2>
+    <p class="about__question">What happens when curiosity doesn&rsquo;t stop at the question?</p>
 
     <p>
-      These are the next squares on this part of the map. They are listed because the
-      tools above already border on them, not as a roadmap with dates.
+      A question can lead to an explanation.<br>
+      An explanation can reveal a system.<br>
+      A system can reveal connections.<br>
+      And sometimes, understanding those connections gives us the ability to build something better.
     </p>
 
-    <ul class="cards">
-      <li class="card card--tools">
-        <span class="card__label">Calculator</span>
-        <span class="card__title">Savings Growth</span>
-        <span class="card__text">Compound interest with regular contributions, on the annuity formula the compound interest calculator deliberately leaves out.</span>
-        <span class="card__soon">Coming soon</span>
-      </li>
-      <li class="card card--tools">
-        <span class="card__label">Calculator</span>
-        <span class="card__title">Refinance Break-Even</span>
-        <span class="card__text">How many months of a lower payment it takes to recover what the refinance cost to close.</span>
-        <span class="card__soon">Coming soon</span>
-      </li>
+    <p>That is the space Curiosity Mapped is interested in.</p>
+
+    <h2 id="from-curiosity-to-investigation">From curiosity to investigation</h2>
+
+    <p>I tend to have a hard time encountering something without eventually wanting to understand what is underneath it.</p>
+
+    <p>Not just <em>what</em> something does, but <strong>why it works, what assumptions it depends on, what influences it, where it breaks, and what happens when the variables change.</strong></p>
+
+    <p>That way of thinking is at the heart of Curiosity Mapped.</p>
+
+    <p>A calculator should not only give you a number. It should help you understand where the number came from.</p>
+
+    <p>A reference should not only give you a definition. It should help you understand the thing behind the word.</p>
+
+    <p>A research question should not only produce an answer. It should lead to better questions.</p>
+
+    <p>And a useful idea should not necessarily remain an idea. Sometimes it should become something that can be built, tested, used, and improved.</p>
+
+    <p>Curiosity Mapped exists to explore that entire process.</p>
+
+    <h2 id="mapping-the-systems-underneath-things">Mapping the systems underneath things</h2>
+
+    <p>The world is full of systems that are easy to interact with and surprisingly difficult to understand.</p>
+
+    <ul class="about__systems">
+      <li>Money.</li>
+      <li>Technology.</li>
+      <li>Nature.</li>
+      <li>Infrastructure.</li>
+      <li>Energy.</li>
+      <li>Information.</li>
+      <li>Computation.</li>
+      <li>Human behavior.</li>
+      <li>The systems we build to organize all of them.</li>
     </ul>
 
-    <p class="visually-hidden">
-      The planned tools above are not yet published and are shown as plain text
-      rather than as links, because there is nowhere for a link to go.
+    <p>We often encounter these systems through simplified interfaces. A number on a screen. A button. A chart. A rule. A product. A website.</p>
+
+    <p>Those abstractions are useful, but they can also hide what is actually happening.</p>
+
+    <p>Curiosity Mapped tries to pull some of those layers back.</p>
+
+    <p>That might mean explaining the mathematics behind a financial calculation, examining how a technology works, exploring a scientific concept, investigating a real-world system, or building an interactive tool that lets you experiment with the variables yourself.</p>
+
+    <p>The goal isn&rsquo;t to make everything complicated.</p>
+
+    <p>It is to make the important complexity <strong>visible when it matters.</strong></p>
+
+    <h2 id="useful-first-deeper-if-you-want-it">Useful first. Deeper if you want it.</h2>
+
+    <p>Not every question needs a research paper.</p>
+
+    <p>Sometimes you just need the answer.</p>
+
+    <p>That&rsquo;s why Curiosity Mapped includes practical tools, calculators, references, explanations, and other resources designed to be useful immediately.</p>
+
+    <p>But there should always be somewhere deeper to go.</p>
+
+    <p>You might come here looking for a mortgage calculation and leave understanding amortization.</p>
+
+    <p>You might look up a term and end up exploring the system it belongs to.</p>
+
+    <p>You might use a conversion tool and become curious about why the conversion works in the first place.</p>
+
+    <p>That transition from <strong>use &rarr; understanding &rarr; curiosity</strong> is intentional.</p>
+
+    <p>Curiosity Mapped is meant to reward going one question further.</p>
+
+    <h2 id="science-technology-nature-and-what-comes-next">Science, technology, nature, and what comes next</h2>
+
+    <p>The subjects here are intentionally broad.</p>
+
+    <p>Science helps us understand the world.</p>
+
+    <p>Technology gives us new ways to interact with it.</p>
+
+    <p>Nature reminds us that we are part of systems much larger than ourselves.</p>
+
+    <p>And imagination gives us a way to explore what those systems could become.</p>
+
+    <p>That means Curiosity Mapped can move between practical calculations, technical tools, scientific concepts, research, data, emerging technology, speculative ideas, and stories.</p>
+
+    <p>The subjects may look different.</p>
+
+    <p>The underlying question is usually the same:</p>
+
+    <p class="about__question">How does this work, and what could we do with a better understanding of it?</p>
+
+    <h2 id="building-better-questions">Building better questions</h2>
+
+    <p>I don&rsquo;t think curiosity is valuable simply because knowing more is valuable.</p>
+
+    <p>I think curiosity becomes powerful when it changes what we are capable of seeing and doing.</p>
+
+    <p>Understanding a system can reveal an opportunity.</p>
+
+    <p>Understanding a constraint can reveal a different approach.</p>
+
+    <p>Understanding a problem can reveal that we were asking the wrong question in the first place.</p>
+
+    <p>Sometimes the most interesting discovery isn&rsquo;t an answer.</p>
+
+    <p>It&rsquo;s realizing that the map we were using was incomplete.</p>
+
+    <p>That&rsquo;s what the name <strong>Curiosity Mapped</strong> means to me.</p>
+
+    <p>We are constantly creating mental maps of the world.</p>
+
+    <p>
+      Some are mathematical.<br>
+      Some are scientific.<br>
+      Some are technological.<br>
+      Some are personal.<br>
+      Some are completely wrong.
+    </p>
+
+    <p>The purpose isn&rsquo;t to create a perfect map.</p>
+
+    <p>It&rsquo;s to keep exploring, keep testing the map against reality, and keep expanding it.</p>
+
+    <h2 id="what-curiosity-mapped-is-becoming">What Curiosity Mapped is becoming</h2>
+
+    <p>Curiosity Mapped is still being built.</p>
+
+    <p>The long-term vision is broader than a collection of web pages or utilities.</p>
+
+    <p>It is a place where tools, knowledge, research, data, experiments, ideas, and eventually people can connect.</p>
+
+    <p>A place where someone can arrive with a practical problem and discover something deeper.</p>
+
+    <p>A place where someone can arrive with a strange question and find a path toward investigating it.</p>
+
+    <p>A place where useful knowledge doesn&rsquo;t have to be separated from wonder.</p>
+
+    <p>And eventually, a place where curiosity can become collaborative.</p>
+
+    <p>Because I don&rsquo;t think exploration has to be solitary.</p>
+
+    <p>
+      Someone asks a question.<br>
+      Someone else knows something.<br>
+      Someone builds a tool.<br>
+      Someone finds a connection.<br>
+      Someone challenges an assumption.<br>
+      Someone discovers that the original question wasn&rsquo;t quite the right one.
+    </p>
+
+    <p>The map gets a little larger.</p>
+
+    <h2 id="reimagining-what-we-can-build">Reimagining what we can build</h2>
+
+    <p>There is a broader reason I am building this.</p>
+
+    <p>I think we have become very good at building systems that optimize for what can be measured, sold, scaled, or extracted.</p>
+
+    <p>I&rsquo;m more interested in what happens when we also optimize for <strong>understanding, usefulness, resilience, exploration, and the quality of human life.</strong></p>
+
+    <p>
+      Clean water matters.<br>
+      Food matters.<br>
+      Shelter matters.<br>
+      Medicine matters.<br>
+      Reliable infrastructure matters.<br>
+      Knowledge matters.<br>
+      The technology we create around those things matters.
+    </p>
+
+    <p>I don&rsquo;t have a single answer for how all of those systems should work.</p>
+
+    <p>I don&rsquo;t think anyone does.</p>
+
+    <p>But I think understanding the systems we have is a good place to start.</p>
+
+    <p>Then we can ask better questions about what comes next.</p>
+
+    <p><strong>Curiosity Mapped is my attempt to build a place for that process.</strong></p>
+
+    <p class="about__close">
+      Explore something useful.<br>
+      Follow the question.<br>
+      Understand the system.<br>
+      Find the connection.<br>
+      Build something.<br>
+      Then ask:<br>
+      <strong>What if?</strong>
     </p>
   </article>
 </main>
@@ -373,7 +513,7 @@
     <p class="footer__tagline">Mapping knowledge. Empowering curiosity. Inspiring discovery.</p>
     <nav class="footer__legal" aria-label="Footer">
       <p class="visually-hidden">Anything here shown as plain text rather than as a link is not yet published.</p>
-      <a href="/about.html">About</a>
+      <a href="/about.html" aria-current="page">About</a>
       <span>Contact</span>
       <a href="/privacy.html">Privacy</a>
       <span>Accessibility</span>

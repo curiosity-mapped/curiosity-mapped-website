@@ -45,6 +45,8 @@ const CARDS = [
     subtitle: 'Calculators that show their working,\nnot only their answers.' },
   { name: 'og-privacy', eyebrow: 'Privacy', title: 'Privacy Policy',
     subtitle: 'What is collected, what is not,\nand the choices you have.' },
+  { name: 'og-about', eyebrow: 'About', title: 'About',
+    subtitle: 'Useful first.\nDeeper if you want it.' },
   { name: 'og-mortgage-calculator', eyebrow: 'Calculator', title: 'Mortgage Calculator',
     subtitle: 'The payment, the formula that produced it,\nand the costs kept separate from it.' },
   { name: 'og-compound-interest-calculator', eyebrow: 'Calculator', title: 'Compound Interest Calculator',
