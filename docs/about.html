@@ -190,8 +190,8 @@
 <meta property="og:url" content="https://curiositymapped.com/about.html">
 <meta property="og:locale" content="en_US">
 <!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
-<meta property="og:image" content="https://curiositymapped.com/assets/og-about.png">
-<meta property="og:image:type" content="image/png">
+<meta property="og:image" content="https://curiositymapped.com/assets/og-about.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="About Curiosity Mapped: useful first, deeper if you want it.">
@@ -200,10 +200,10 @@
 <!-- Preference order, not a fallback chain: a browser that reads SVG icons takes
      the first and ignores the PNGs. The mark carries its own tile, so unlike the
      wordmark it needs no light and dark variant. -->
-<link rel="icon" type="image/svg+xml" href="/assets/cm-icon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/assets/cm-icon.svg?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png?v=2">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png?v=2">
 <link rel="manifest" href="/site.webmanifest">
 
 <script>
@@ -259,8 +259,7 @@
 <header class="header">
   <a class="wordmark" href="/">
     <!-- Decorative: the wordmark beside it already names the site. -->
-    <img class="wordmark__mark" src="/assets/cm-icon.svg" alt=""
-         width="36" height="36" decoding="async">
+    <span class="wordmark__mark" aria-hidden="true"></span>
     <span class="wordmark__text">
       <span class="wordmark__line">Curiosity</span>
       <span class="wordmark__line wordmark__line--wide">Mapped</span>
@@ -302,6 +301,25 @@
     animation stops after the lede, as it does on every other prose page.
   -->
   <article class="prose" aria-labelledby="about-title">
+    <!-- Decorative: the heading below names the page. One image per theme; CSS
+         shows one, and the hidden lazy one is never fetched. -->
+    <figure class="about__board brand-art rise" style="--i:0">
+      <img class="about__board-img--light"
+           src="/assets/brand/board-light-1600.webp"
+           srcset="/assets/brand/board-light-960.webp 960w,
+                   /assets/brand/board-light-1600.webp 1600w,
+                   /assets/brand/board-light-2400.webp 2400w"
+           sizes="(min-width: 72rem) 67rem, 94vw" width="2400" height="800"
+           alt="" loading="lazy" decoding="async">
+      <img class="about__board-img--dark"
+           src="/assets/brand/board-dark-1600.webp"
+           srcset="/assets/brand/board-dark-960.webp 960w,
+                   /assets/brand/board-dark-1600.webp 1600w,
+                   /assets/brand/board-dark-2400.webp 2400w"
+           sizes="(min-width: 72rem) 67rem, 94vw" width="2400" height="800"
+           alt="" loading="lazy" decoding="async">
+    </figure>
+
     <h1 class="prose__title rise" id="about-title" style="--i:0">About Curiosity Mapped</h1>
 
     <p class="prose__lede rise" style="--i:1">Curiosity is where it starts.</p>

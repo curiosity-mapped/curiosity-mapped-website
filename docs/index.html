@@ -190,8 +190,8 @@
 <meta property="og:url" content="https://curiositymapped.com/">
 <meta property="og:locale" content="en_US">
 <!-- Absolute by requirement: crawlers do not resolve relative og:image URLs. -->
-<meta property="og:image" content="https://curiositymapped.com/assets/og.png">
-<meta property="og:image:type" content="image/png">
+<meta property="og:image" content="https://curiositymapped.com/assets/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Curiosity Mapped: follow the curiosity, map what you find, see where it leads.">
@@ -201,11 +201,11 @@
 <!-- Preference order, not a fallback chain: a browser that reads SVG icons takes
      the first and ignores the PNGs. The mark carries its own tile, so unlike the
      wordmark it needs no light and dark variant. -->
-<link rel="icon" type="image/svg+xml" href="/assets/cm-icon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="icon" type="image/svg+xml" href="/assets/cm-icon.svg?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png?v=2">
 <!-- iOS ignores rel=icon entirely and masks this into its own squircle. -->
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png?v=2">
 <link rel="manifest" href="/site.webmanifest">
 
 <script>
@@ -264,8 +264,7 @@
 <header class="header">
   <span class="wordmark">
     <!-- Decorative: the wordmark beside it already names the site. -->
-    <img class="wordmark__mark" src="/assets/cm-icon.svg" alt=""
-         width="36" height="36" decoding="async">
+    <span class="wordmark__mark" aria-hidden="true"></span>
     <span class="wordmark__text">
       <span class="wordmark__line">Curiosity</span>
       <span class="wordmark__line wordmark__line--wide">Mapped</span>
@@ -295,6 +294,25 @@
 <main id="main" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__sweep" aria-hidden="true"></div>
+
+    <!-- Decorative: the title below names the site. Not lazy, since this is the
+         largest thing on the page. The dark source is keyed to the OS scheme here
+         and re-pointed by js/main.js when a stored theme choice disagrees. -->
+    <div class="hero__art brand-art">
+      <picture>
+        <source data-theme-source="dark" media="(prefers-color-scheme: dark)"
+                srcset="/assets/brand/hero-dark-640.webp 640w,
+                        /assets/brand/hero-dark-1024.webp 1024w,
+                        /assets/brand/hero-dark-1440.webp 1440w"
+                sizes="(min-width: 36rem) 30rem, 90vw" width="1440" height="1036">
+        <img src="/assets/brand/hero-light-1024.webp"
+             srcset="/assets/brand/hero-light-640.webp 640w,
+                     /assets/brand/hero-light-1024.webp 1024w,
+                     /assets/brand/hero-light-1440.webp 1440w"
+             sizes="(min-width: 36rem) 30rem, 90vw" width="1440" height="958"
+             alt="" decoding="async" fetchpriority="high">
+      </picture>
+    </div>
 
     <p class="hero__kicker rise" style="--i:0">Survey in progress</p>
 

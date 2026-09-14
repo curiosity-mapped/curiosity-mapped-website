@@ -27,6 +27,29 @@
     for (var i = 0; i < metas.length; i++) {
       metas[i].setAttribute('content', dark ? '#02090e' : '#fbfcfa');
     }
+    /* The same trick for the hero's <picture>: its dark source is keyed to the OS
+       scheme in markup, so a stored choice that disagrees has to re-point it. */
+    var sources = document.querySelectorAll('source[data-theme-source="dark"]');
+    for (var j = 0; j < sources.length; j++) {
+      sources[j].setAttribute('media', dark ? 'all' : 'not all');
+    }
+  }
+
+  /*
+   * Brand art fades in once decoded instead of painting top-down as it arrives.
+   * The pending class is added here, by the script, never in markup: if this file
+   * fails to load, the art is simply visible. An image already in the cache can
+   * finish before a deferred script runs, so `complete` is checked first.
+   */
+  var art = document.querySelectorAll('.brand-art img');
+  for (var k = 0; k < art.length; k++) {
+    (function (img) {
+      if (img.complete && img.naturalWidth) return;
+      img.classList.add('brand-art--pending');
+      var done = function () { img.classList.remove('brand-art--pending'); };
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    })(art[k]);
   }
 
   /* Guarded per element rather than per script: this file is shared by every page,

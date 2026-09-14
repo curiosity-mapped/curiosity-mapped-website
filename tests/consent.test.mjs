@@ -556,12 +556,34 @@ test('every tool page ships the figures its own code produces', () => {
 test('every page points at a share card that exists and is the size it claims', () => {
   /*
    * A wrong og:image is invisible until someone shares a link, and then it is
-   * wrong in front of an audience. The PNG header carries the real dimensions,
-   * so the declared width and height can be checked against the file rather than
-   * against each other.
+   * wrong in front of an audience. The file header carries the real format and
+   * dimensions, so the declared type, width and height can be checked against
+   * the file rather than against each other.
    */
   const { readFileSync, existsSync } = require('node:fs');
   const seen = new Map();
+
+  /* PNG: signature, then IHDR with width and height as big-endian uint32s.
+     JPEG: walk the marker segments to the first start-of-frame (SOF0-SOF15,
+     less DHT/JPG/DAC, which share the range), whose payload holds the height
+     then the width as big-endian uint16s. */
+  const imageInfo = (bytes) => {
+    if (bytes.toString('ascii', 12, 16) === 'IHDR') {
+      return { type: 'image/png', width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+    }
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) {
+      let at = 2;
+      while (at + 9 < bytes.length) {
+        if (bytes[at] !== 0xff) { at++; continue; }
+        const marker = bytes[at + 1];
+        if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+          return { type: 'image/jpeg', height: bytes.readUInt16BE(at + 5), width: bytes.readUInt16BE(at + 7) };
+        }
+        at += 2 + bytes.readUInt16BE(at + 2);
+      }
+    }
+    return { type: null, width: 0, height: 0 };
+  };
 
   for (const page of PAGES) {
     const html = read(page);
@@ -581,12 +603,13 @@ test('every page points at a share card that exists and is the size it claims', 
     const file = 'docs/assets/' + url.split('/').pop();
     assert.ok(existsSync(join(ROOT, file)), `${page}: og:image points at ${file}, which does not exist`);
 
-    /* PNG: 8-byte signature, then the IHDR length and type, then width and
-       height as big-endian 32-bit integers. */
     const bytes = readFileSync(join(ROOT, file));
-    assert.equal(bytes.toString('ascii', 12, 16), 'IHDR', `${file}: not a PNG`);
-    const width = bytes.readUInt32BE(16);
-    const height = bytes.readUInt32BE(20);
+    const { type, width, height } = imageInfo(bytes);
+    assert.ok(type, `${file}: neither a PNG nor a JPEG`);
+    assert.equal(type, (html.match(/<meta property="og:image:type" content="([^"]+)">/) || [])[1],
+      `${page}: og:image:type does not match what ${file} actually is`);
+    /* Photographic cards balloon as PNG, and some scrapers drop large previews. */
+    assert.ok(bytes.length <= 400 * 1024, `${file}: ${bytes.length} bytes is over the 400KB card budget`);
     assert.equal(width, Number(html.match(/<meta property="og:image:width" content="(\d+)">/)[1]),
       `${page}: og:image:width does not match ${file}`);
     assert.equal(height, Number(html.match(/<meta property="og:image:height" content="(\d+)">/)[1]),
@@ -601,6 +624,40 @@ test('every page points at a share card that exists and is the size it claims', 
     assert.ok(!seen.has(file), `${page} and ${seen.get(file)} share ${file}`);
     seen.set(file, page);
   }
+});
+
+test('every asset a page, a stylesheet or the manifest names is published', () => {
+  /*
+   * The link check below skips /assets/ because it is about pages, and nothing
+   * else looks at src, srcset or CSS url(), so a mistyped image path would ship
+   * as a silent gap in the header or a hero that never arrives. Query strings
+   * (the ?v= on the icons) are cache-busting only and are stripped.
+   */
+  const { existsSync } = require('node:fs');
+  const missing = [];
+  let checked = 0;
+  const check = (where, ref) => {
+    if (!ref.startsWith('/')) return;
+    checked++;
+    if (!existsSync(join(ROOT, 'docs', ref.split(/[?#]/)[0]))) missing.push(`${where}: ${ref}`);
+  };
+
+  for (const page of PAGES) {
+    const html = read(page);
+    for (const m of html.matchAll(/\b(?:src|href)="(\/assets\/[^"]+)"/g)) check(page, m[1]);
+    for (const m of html.matchAll(/\bsrcset="([^"]+)"/g)) {
+      for (const candidate of m[1].split(',')) check(page, candidate.trim().split(/\s+/)[0]);
+    }
+  }
+  for (const sheet of ['docs/css/tokens.css', 'docs/css/components.css']) {
+    for (const m of read(sheet).matchAll(/url\(\s*['"]?(\/assets\/[^'")\s]+)/g)) check(sheet, m[1]);
+  }
+  for (const icon of JSON.parse(read('docs/site.webmanifest')).icons) {
+    check('docs/site.webmanifest', icon.src);
+  }
+
+  assert.ok(checked > 30, `only ${checked} asset references found; has a pattern stopped matching?`);
+  assert.deepEqual(missing, []);
 });
 
 test('no tool page or tool script uses an em dash in copy', () => {

@@ -378,36 +378,75 @@ them:
 Every indexable page carries its own 1200×630 share card in `docs/assets/`, referenced
 by absolute URL because crawlers do not resolve relative `og:image` values. The cards
 are committed, since Pages serves what is in the repository; `node scripts/build-og.mjs`
-re-renders them from `scripts/og-card.html`, which is where the design lives. A new
-page needs an entry in that script's `CARDS` list and its own `og:image`, and the test
-suite fails if two pages share one or if a card's real dimensions disagree with the
-meta tags that describe it. `docs/404.html` has no card on purpose: it is `noindex` and
-there is nothing to share.
+re-renders them from `scripts/og-card.html`, which is where the design lives. They are
+JPEG: the ground is a photographic render, and as PNG each card ran past a megabyte,
+which some link scrapers refuse to preview. A new page needs an entry in that script's
+`CARDS` list and its own `og:image`, and the test suite fails if two pages share one, if
+a card's real format or dimensions disagree with the meta tags that describe it, or if
+it is over 400KB. `docs/404.html` has no card on purpose: it is `noindex` and there is
+nothing to share.
 
 ## The mark
 
-Everything with the logo in it comes from the `curiosity-mapped-brand-v1` package, which
-is the source of truth and is not vendored here — only its output is. The mark is the
-C and M read as one figure: a cartographic C, an engineered M, and a wayfinding axis
-through the middle, in a violet-to-green gradient.
+The logo is the "Bonsai" monogram from the `cm-universe` 3D brand kit: a bonsai C whose
+trunk carries rivers and roots, beside a circuit-board M, joined at the foot by a spark.
+The kit lives outside this repository and is not vendored; only its output is. Its
+renders come in two different photographs rather than two colourways — the light one is
+mounted flat on a wall, the dark one stands on a floor and glows — so every place the
+mark appears on the site swaps the photograph with the theme.
 
-It reaches the site in three forms, and they are not interchangeable.
+Everything is generated from the kit's `renders4/` folder by scripts that, like the rest
+of the repository, need nothing installed beyond Node and Chrome. Point `CM_RENDERS` at
+the folder if it is not at `../cm-universe/renders4`.
 
-- `docs/assets/cm-icon.svg` is the square tile, and it does double duty as the favicon
-  and as the logo in every page header. It carries its own navy ground, which is why it
-  is the one piece of artwork on the site with no light and dark variant: a tile reads
-  against paper and against ink alike, and a theme-switching SVG would in any case have
-  disagreed with the fixed-colour PNGs sitting behind it in the `rel=icon` list.
-- The raster icons beside it — `favicon-16`, `favicon-32`, `apple-touch-icon`,
-  `icon-192`, `icon-512` — are the same tile, copied from the package for the browsers
-  and platforms that will not take an SVG. `docs/favicon.ico` wraps the 16 and 32px PNGs
-  in an icon directory; `node scripts/build-ico.mjs` rebuilds it after they change.
-- `scripts/og-card.html` inlines the *untiled* mark instead, because the tile's navy
-  would read as a panel against the card's near-black ground. It is the only copy of the
-  artwork that lives in markup rather than in a file, and it is inline because the card
-  is rasterised locally and never served.
+```sh
+node scripts/build-brand.mjs   # header mark, hero, About board, favicons, app icons
+node scripts/build-ico.mjs     # packs favicon-16 and -32 into docs/favicon.ico
+node scripts/build-og.mjs      # share cards
+```
 
-The brand package also ships a palette and full horizontal and stacked lockups. Neither
-is used: the site keeps its own colour tokens, and the header sets "Curiosity Mapped" in
-the site's own type next to the mark rather than dropping in a lockup whose wordmark
-would not follow the tokens or the dark theme.
+`build-brand.mjs` also writes `docs/assets/brand/contact-sheet.png` (gitignored): the
+small marks at 16–72px on both grounds. Look at it before committing new renders; at
+favicon sizes the detail is a handful of pixels, and that is where a render fails first.
+
+Only two kinds of render are used, and the choice is deliberate.
+
+- **The transparent cutouts** (`mark_reference`, `mark_reference_dark`) are trimmed to
+  their visible pixels and become everything that sits directly on the page: the header
+  mark, the home-page hero and the favicons. The kit's wall-backed hero, icon and
+  "simple" renders are not used for these, because their grey wall would show as a
+  rectangle against the site's own paper and ink.
+- **The legend board** (`board_reference`, `board_reference_dark`) opens the About page.
+  It keeps its wall, so it is framed as a photograph: a plate with a hairline border.
+
+The kit's `legend_*` and `mark_full_*` files are close-up intermediates, not finished
+art, and `portrait_reference` exists only in the light palette; none of them ship.
+
+How each form reaches the page:
+
+- **Header.** An empty `<span class="wordmark__mark">` painted by the `--brand-mark`
+  token in `docs/css/tokens.css`, which is defined in the light block and again in both
+  dark blocks. As a token it follows a stored theme choice, not only the OS, and only the
+  variant in use is downloaded. The box is a fixed 3:2 so the words beside it do not
+  shift when the narrower dark render swaps in.
+- **Home hero.** A `<picture>` whose dark `<source>` is keyed to the OS scheme in markup;
+  `js/main.js` re-points its `media` when a stored choice disagrees, the same way it
+  already forces the `theme-color` metas. It is not lazy-loaded, because it is the
+  largest thing on the page.
+- **About board.** Two lazy `<img>`s, one per theme, with CSS hiding one. A hidden lazy
+  image is never fetched.
+- **Favicons.** `docs/assets/cm-icon.svg` wraps both cutouts as embedded PNGs and picks
+  one with `prefers-color-scheme`, which follows the browser's own chrome — the right
+  signal for a tab strip, where the site's toggle means nothing. Safari ignores SVG
+  icons, so `favicon-16` and `favicon-32` carry the light mark. The `?v=2` on every icon
+  link is only there to break the aggressive caching browsers apply to favicons; bump it
+  when the icons change again.
+- **App icons.** `apple-touch-icon`, `icon-192`, `icon-512` and `maskable-512` put the
+  dark cutout on the manifest's own `#02090e`, opaque because iOS paints transparency
+  black. The maskable one fits the whole mark inside Android's 80% safe-zone circle.
+
+Both hero and board fade in once decoded (`.brand-art` in `components.css`). The pending
+state is added by `main.js`, never by markup, so if the script fails to load the art is
+simply visible; the fade is zeroed by the reduced-motion tokens like every other
+animation. A test checks that every `/assets/` path named in a page's `src`, `srcset` or
+`href`, in the stylesheets' `url()`s, and in the manifest actually exists.
