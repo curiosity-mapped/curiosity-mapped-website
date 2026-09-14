@@ -91,6 +91,19 @@
     --sweep: color-mix(in srgb, var(--green-700) 18%, transparent);
 
     --selection: var(--green-200);
+
+    /*
+     * The header mark. Two renders rather than one recoloured file: the light
+     * render is wall-mounted and the dark one stands and glows, so the swap is a
+     * different photograph, not a filter. A token, so it follows the stored
+     * theme and only the variant in use is ever fetched. The prefixed function
+     * is deliberate: every current engine reads it, including Safari before 17,
+     * which does not read the unprefixed one.
+     */
+    --brand-mark: -webkit-image-set(
+      url(/assets/brand/mark-light@1x.webp) 1x,
+      url(/assets/brand/mark-light@2x.webp) 2x,
+      url(/assets/brand/mark-light@3x.webp) 3x);
     color-scheme: light;
   }
 
@@ -124,6 +137,10 @@
       --sweep: color-mix(in srgb, var(--green-300) 14%, transparent);
 
       --selection: var(--green-800);
+      --brand-mark: -webkit-image-set(
+        url(/assets/brand/mark-dark@1x.webp) 1x,
+        url(/assets/brand/mark-dark@2x.webp) 2x,
+        url(/assets/brand/mark-dark@3x.webp) 3x);
       color-scheme: dark;
     }
   }
@@ -158,6 +175,10 @@
     --sweep: color-mix(in srgb, var(--green-300) 14%, transparent);
 
     --selection: var(--green-800);
+    --brand-mark: -webkit-image-set(
+      url(/assets/brand/mark-dark@1x.webp) 1x,
+      url(/assets/brand/mark-dark@2x.webp) 2x,
+      url(/assets/brand/mark-dark@3x.webp) 3x);
     color-scheme: dark;
   }
 

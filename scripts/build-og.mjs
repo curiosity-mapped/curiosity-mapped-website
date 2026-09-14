@@ -7,31 +7,31 @@
  *
  * The cards are committed, because the site has no build step and GitHub Pages
  * serves what is in the repository. This exists so they can be reproduced and
- * restyled rather than being six binaries nobody can regenerate. Nothing about
+ * restyled rather than being seven binaries nobody can regenerate. Nothing about
  * serving or testing the site depends on running it.
  *
- * Zero dependencies, like everything else here. It starts one Chrome and drives
- * it over the DevTools protocol using Node's built-in WebSocket.
+ * The card ground is the kit's og_reference_dark render, read from CM_RENDERS
+ * (default ../cm-universe/renders4). Cards are JPEG: over a photographic ground a
+ * PNG runs to a megabyte or more, and some link scrapers drop previews that large.
  *
- * WHY NOT `chrome --headless --screenshot`, which is one line per card: headless
- * Chrome does not reliably exit after writing a screenshot, so a shell loop over
- * six cards renders the first and then hangs forever on the second. One browser
- * driven over CDP renders all six and is told when to stop.
+ * Zero dependencies; the browser plumbing lives in scripts/chrome.mjs.
  */
 
-import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync, accessSync, constants } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, writeFileSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { launchChrome, sleep } from './chrome.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 const TEMPLATE = join(HERE, 'og-card.html');
+const RENDERS = process.env.CM_RENDERS || join(ROOT, '..', 'cm-universe', 'renders4');
+const GROUND = join(RENDERS, 'og_reference_dark.png');
 const OUT = join(ROOT, 'docs', 'assets');
 const WIDTH = 1200;
 const HEIGHT = 630;
 const PORT = 9333;
+const QUALITY = 85;
 
 /*
  * Every subtitle says what the page is for rather than repeating its title, and
@@ -66,118 +66,54 @@ if (!wanted.length) {
 }
 
 if (dryRun) {
-  for (const c of wanted) console.log(`would render: docs/assets/${c.name}.png  (${c.title})`);
+  for (const c of wanted) console.log(`would render: docs/assets/${c.name}.jpg  (${c.title})`);
   process.exit(0);
 }
 
-function findChrome() {
-  const candidates = [
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    '/usr/bin/google-chrome',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser'
-  ];
-  for (const c of candidates) {
-    try { accessSync(c, constants.X_OK); return c; } catch { /* keep looking */ }
+for (const file of [TEMPLATE, GROUND]) {
+  if (!existsSync(file)) {
+    console.error(`error: ${file} is missing`);
+    process.exit(1);
   }
-  return null;
 }
 
-const chromePath = findChrome();
-if (!chromePath) {
-  console.error('error: no Chrome or Chromium found; cannot rasterise.');
-  console.error('       The committed cards in docs/assets/ are unaffected.');
-  process.exit(1);
-}
-if (!existsSync(TEMPLATE)) {
-  console.error(`error: ${TEMPLATE} is missing`);
-  process.exit(1);
-}
+let browser;
+try {
+  browser = await launchChrome({ port: PORT, width: WIDTH, height: HEIGHT });
 
-const profile = mkdtempSync(join(tmpdir(), 'cm-og-'));
-const chrome = spawn(chromePath, [
-  '--headless', '--disable-gpu', '--no-sandbox', '--hide-scrollbars',
-  '--no-first-run', '--no-default-browser-check', '--force-device-scale-factor=1',
-  `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, 'about:blank'
-], { stdio: 'ignore' });
+  for (const card of wanted) {
+    const query = new URLSearchParams({
+      eyebrow: card.eyebrow,
+      title: card.title,
+      subtitle: card.subtitle.split('\n').join('|'),
+      ground: pathToFileURL(GROUND).href
+    });
+    await browser.send('Page.navigate', { url: `${pathToFileURL(TEMPLATE).href}?${query}` });
 
-let ws = null;
-const shutdown = () => {
-  try { ws && ws.close(); } catch { /* already gone */ }
-  try { chrome.kill('SIGTERM'); } catch { /* already gone */ }
-  try { rmSync(profile, { recursive: true, force: true }); } catch { /* nothing to clean */ }
-};
-process.on('exit', shutdown);
-process.on('SIGINT', () => { shutdown(); process.exit(130); });
+    /* The template sets data-ready once the ground has decoded and the title is
+       laid out; waiting for it beats waiting for a duration that is right on this
+       machine and wrong on the next one. */
+    let ready = false;
+    for (let attempt = 0; attempt < 60 && !ready; attempt++) {
+      await sleep(100);
+      ready = await browser.evaluate('document.documentElement.dataset.ready === "1"').catch(() => false);
+    }
+    if (!ready) throw new Error(`${card.name}: the template never finished laying out`);
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const shot = await browser.send('Page.captureScreenshot', { format: 'jpeg', quality: QUALITY });
+    const bytes = Buffer.from(shot.result.data, 'base64');
+    writeFileSync(join(OUT, `${card.name}.jpg`), bytes);
 
-/* Chrome takes a moment to open the port. Poll rather than guess at a delay. */
-async function target() {
-  for (let attempt = 0; attempt < 60; attempt++) {
-    try {
-      const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
-      const page = list.find((t) => t.type === 'page');
-      if (page) return page;
-    } catch { /* not listening yet */ }
-    await sleep(250);
+    /* The PNG cards this replaces; left behind they would still be served. */
+    const stale = join(OUT, `${card.name}.png`);
+    if (existsSync(stale)) unlinkSync(stale);
+
+    console.log(`rendered: docs/assets/${card.name}.jpg  (${bytes.length} bytes)`);
   }
-  throw new Error('Chrome did not open its debugging port');
+} catch (err) {
+  console.error(`error: ${err.message}`);
+  process.exitCode = 1;
+} finally {
+  if (browser) browser.close();
 }
-
-const page = await target();
-ws = new WebSocket(page.webSocketDebuggerUrl);
-await new Promise((resolve, reject) => {
-  ws.addEventListener('open', resolve);
-  ws.addEventListener('error', reject);
-});
-
-let nextId = 0;
-const pending = new Map();
-ws.addEventListener('message', (event) => {
-  const message = JSON.parse(event.data);
-  if (message.id && pending.has(message.id)) {
-    pending.get(message.id)(message);
-    pending.delete(message.id);
-  }
-});
-const send = (method, params = {}) => new Promise((resolve) => {
-  const id = ++nextId;
-  pending.set(id, resolve);
-  ws.send(JSON.stringify({ id, method, params }));
-});
-
-await send('Page.enable');
-await send('Emulation.setDeviceMetricsOverride',
-  { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
-
-for (const card of wanted) {
-  const query = new URLSearchParams({
-    eyebrow: card.eyebrow,
-    title: card.title,
-    subtitle: card.subtitle.split('\n').join('|')
-  });
-  await send('Page.navigate', { url: `${pathToFileURL(TEMPLATE).href}?${query}` });
-
-  /* The template sets data-ready once it has laid the title out; waiting for it
-     beats waiting for a duration that is right on this machine and wrong on the
-     next one. */
-  let ready = false;
-  for (let attempt = 0; attempt < 40 && !ready; attempt++) {
-    await sleep(100);
-    const r = await send('Runtime.evaluate',
-      { expression: 'document.documentElement.dataset.ready === "1"', returnByValue: true });
-    ready = r.result && r.result.result && r.result.result.value === true;
-  }
-  if (!ready) throw new Error(`${card.name}: the template never finished laying out`);
-
-  const shot = await send('Page.captureScreenshot', { format: 'png' });
-  const bytes = Buffer.from(shot.result.data, 'base64');
-  const target = join(OUT, `${card.name}.png`);
-  writeFileSync(target, bytes);
-  console.log(`rendered: docs/assets/${card.name}.png  (${bytes.length} bytes)`);
-}
-
-shutdown();
-process.exit(0);
+process.exit(process.exitCode || 0);

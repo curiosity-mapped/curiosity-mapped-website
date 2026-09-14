@@ -60,14 +60,21 @@
   }
   /*
    * Sized in rem so it tracks the type beside it rather than a device pixel, and
-   * given both dimensions so the row never reflows while the SVG is fetched. The
-   * artwork carries its own tile and rounded corners, which is why this is the
-   * one brand asset on the page with no light and dark variant.
+   * given both dimensions so the row never reflows while the image is fetched.
+   * The box is 3:2, the wider of the two renders' proportions: the dark render
+   * is a little narrower, and a box that followed each one would nudge the words
+   * sideways every time the theme is toggled. `contain` centres the narrower one.
+   * The image itself is the --brand-mark token, so it follows the stored theme.
    */
   .wordmark__mark {
     flex: none;
-    inline-size: 2.25rem;
+    inline-size: 3.375rem;
     block-size: 2.25rem;
+    background: var(--brand-mark) center / contain no-repeat;
+  }
+  /* Background images are dropped from print by default; this one is the logo. */
+  @media print {
+    .wordmark__mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
   .wordmark__text { display: grid; }
   .wordmark__line { font-weight: 600; letter-spacing: var(--track-wide); }
@@ -123,9 +130,28 @@
     align-items: center;
     justify-content: center;
     gap: var(--s-5);
-    padding: var(--s-8) var(--gutter);
+    /* Less above than below: the art now leads the column, and the title has to
+       stay above the fold on a phone and on a 768px-tall laptop. */
+    padding: var(--s-6) var(--gutter) var(--s-8);
     text-align: center;
     flex: 1 0 auto;
+  }
+
+  /*
+   * The monogram. A transparent cutout rather than one of the kit's wall-backed
+   * renders, so it sits on the page's own ground in both themes instead of
+   * arriving as a grey rectangle. Capped by height as well as width, because on a
+   * short landscape screen it is the height that would push the title down.
+   * `auto` on both axes plus the width and height attributes keeps the box its
+   * final shape before a byte has arrived, so nothing below it moves.
+   */
+  .hero__art { margin-block-end: calc(-1 * var(--s-3)); }
+  .hero__art img {
+    display: block;
+    inline-size: auto;
+    block-size: auto;
+    max-inline-size: min(100%, 30rem);
+    max-block-size: min(34svh, 20rem);
   }
 
   /*
@@ -518,6 +544,47 @@
   }
 
   .prose__title { font-size: var(--t-3); }
+
+  /*
+   * The legend board that opens About. Unlike the home-page cutout it is a
+   * photograph with its own wall behind it, so it is framed as one: a plate with
+   * a hairline and a radius, the full width of the column rather than the
+   * reading measure. 2:1 on a phone, where 3:1 would shrink the monogram to a
+   * thumbnail; the crop is centred and the monogram sits in the middle two
+   * thirds of the render, so nothing of it is lost.
+   *
+   * Two <img>s rather than a <picture>, because the theme has to follow a stored
+   * choice and not only the OS. Both are loading="lazy", and a lazy image with
+   * display:none is never fetched, so only the visible one costs anything.
+   */
+  .about__board {
+    /* All four sides: a <figure> carries a 40px inline margin by default, which
+       would pull the plate off the column's start edge the text shares. */
+    margin: 0 0 var(--s-6);
+    aspect-ratio: 2 / 1;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface-sunk);
+  }
+  @media (min-width: 40rem) {
+    .about__board { aspect-ratio: 3 / 1; }
+  }
+  .about__board img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  /* Scoped under .about__board so they outrank the `display: block` above; at
+     equal footing the hidden image would show, and be fetched. */
+  .about__board .about__board-img--dark { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .about__board .about__board-img--light { display: none; }
+    :root:not([data-theme='light']) .about__board .about__board-img--dark { display: block; }
+  }
+  :root[data-theme='dark'] .about__board .about__board-img--light { display: none; }
+  :root[data-theme='dark'] .about__board .about__board-img--dark { display: block; }
 
   /* Set like .hero__kicker, minus the accent and its glow: a stamp, not a signal. */
   .prose__meta {
@@ -924,6 +991,23 @@
   @keyframes rise {
     from { opacity: 0; transform: translate3d(0, 8px, 0); }
     to   { opacity: 1; transform: none; }
+  }
+
+  /*
+   * Brand art settles in once it has decoded, rather than painting in bands as
+   * it downloads. js/main.js adds the pending class and removes it on load, so
+   * without the script the art is simply there. Three times --dur rather than
+   * --dur-slow: a photograph fading for over a second reads as a slow network.
+   * Both durations are zeroed by the reduced-motion tokens.
+   */
+  .brand-art img {
+    transition:
+      opacity calc(var(--dur) * 3) var(--ease),
+      transform calc(var(--dur) * 3) var(--ease);
+  }
+  .brand-art img.brand-art--pending {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
   }
 
   /* ---------- 404 ---------- */
