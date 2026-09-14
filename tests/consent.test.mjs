@@ -26,6 +26,7 @@ const PAGES = [
   'docs/index.html',
   'docs/404.html',
   'docs/privacy.html',
+  'docs/about.html',
   'docs/tools/index.html',
   'docs/tools/mortgage-calculator.html',
   'docs/tools/compound-interest-calculator.html',
@@ -660,7 +661,7 @@ test('every tool page declares its tier, and every page links only to pages that
 
   /* Every internal link must resolve to a file that is actually published. */
   const published = new Set([
-    '/', '/tools/', '/privacy.html',
+    '/', '/tools/', '/privacy.html', '/about.html',
     '/tools/mortgage-calculator.html', '/tools/compound-interest-calculator.html',
     '/tools/loan-calculator.html'
   ]);

@@ -602,6 +602,57 @@
     font-size: var(--t--1);
   }
 
+  /* ---------- about page ---------- */
+
+  /*
+   * The About page is running text inside .prose, with three moments that are not
+   * paragraphs. Each carries a class, so the :not([class]) guards above leave it
+   * alone and it states its own treatment here. All three stay start-aligned on
+   * the prose column's edge, for the reason given above .prose: a centred block
+   * of a different width would make the column wander.
+   */
+
+  /* The question the page turns on: the motto's italic display face, at reading measure. */
+  .about__question {
+    max-width: var(--measure);
+    margin-block: var(--s-5);
+    font-family: var(--font-display);
+    font-size: var(--t-2);
+    font-style: italic;
+    line-height: var(--leading-snug);
+    color: var(--text);
+  }
+
+  /* A roll call of systems, not a set of points: inset like .note, no bullets. */
+  .about__systems {
+    display: grid;
+    gap: var(--s-1);
+    max-width: var(--measure);
+    margin-block-end: var(--s-4);
+    padding-inline-start: var(--s-4);
+    border-inline-start: 3px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: var(--t--1);
+    color: var(--text-dim);
+  }
+
+  /* The closing sequence, with its last line set apart as the page's final word. */
+  .about__close {
+    max-width: var(--measure);
+    margin-block: var(--s-6) 0;
+    font-family: var(--font-display);
+    font-size: var(--t-1);
+    line-height: var(--leading-snug);
+    color: var(--text);
+  }
+  .about__close strong {
+    display: inline-block;
+    margin-block-start: var(--s-3);
+    font-size: var(--t-2);
+    font-weight: 600;
+    color: var(--accent);
+  }
+
   /* ---------- breadcrumb ---------- */
 
   /*

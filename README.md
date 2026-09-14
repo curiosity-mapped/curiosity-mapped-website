@@ -337,9 +337,12 @@ them:
   `docs/tools/compound-interest-calculator.html` — their own `canonical`, `og:url`, and
   the absolute URLs throughout their JSON-LD graphs, including every `BreadcrumbList`
   item.
-- Every page with the primary nav shares it: `index.html`, `tools/index.html`, and both
-  calculators. Publishing one of its remaining spans means turning it into an
-  `<a class="nav__item nav__item--link">` in all three and rewording the
+- `docs/about.html` — its own `canonical`, `og:url`, and the absolute URLs in its
+  JSON-LD graph, including its `BreadcrumbList`.
+- Every page with the primary nav shares it: `index.html`, `about.html`,
+  `tools/index.html`, and every calculator. Publishing one of its remaining spans
+  means turning it into an `<a class="nav__item nav__item--link">` on every one of
+  them and rewording the
   visually-hidden line above them, which explains why the rest are inert. The same
   applies to the `.footer__legal` nav, which every page carries.
 - The Tools hub lists planned calculators as inert `.card__soon` tiles. Publishing one
