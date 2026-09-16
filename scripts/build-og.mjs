@@ -10,9 +10,12 @@
  * restyled rather than being seven binaries nobody can regenerate. Nothing about
  * serving or testing the site depends on running it.
  *
- * The card ground is the kit's og_reference_dark render, read from CM_RENDERS
- * (default ../cm-universe/renders4). Cards are JPEG: over a photographic ground a
- * PNG runs to a megabyte or more, and some link scrapers drop previews that large.
+ * The art is the kit's transparent hero_dark render, read from CM_RENDERS (default
+ * ../cm-universe/renders5/kit), and the card is laid out to match the kit's own
+ * social card (cm-universe/source/pipeline/cm5_compose/kit.html), so a link
+ * preview and the kit's og-image are the same picture. Cards are JPEG: over a
+ * photographic render a PNG runs to a megabyte or more, and some link scrapers
+ * drop previews that large.
  *
  * Zero dependencies; the browser plumbing lives in scripts/chrome.mjs.
  */
@@ -25,8 +28,8 @@ import { launchChrome, sleep } from './chrome.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 const TEMPLATE = join(HERE, 'og-card.html');
-const RENDERS = process.env.CM_RENDERS || join(ROOT, '..', 'cm-universe', 'renders4');
-const GROUND = join(RENDERS, 'og_reference_dark.png');
+const RENDERS = process.env.CM_RENDERS || join(ROOT, '..', 'cm-universe', 'renders5', 'kit');
+const ART = join(RENDERS, 'front_dark.png');
 const OUT = join(ROOT, 'docs', 'assets');
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -70,7 +73,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-for (const file of [TEMPLATE, GROUND]) {
+for (const file of [TEMPLATE, ART]) {
   if (!existsSync(file)) {
     console.error(`error: ${file} is missing`);
     process.exit(1);
@@ -86,11 +89,11 @@ try {
       eyebrow: card.eyebrow,
       title: card.title,
       subtitle: card.subtitle.split('\n').join('|'),
-      ground: pathToFileURL(GROUND).href
+      art: pathToFileURL(ART).href
     });
     await browser.send('Page.navigate', { url: `${pathToFileURL(TEMPLATE).href}?${query}` });
 
-    /* The template sets data-ready once the ground has decoded and the title is
+    /* The template sets data-ready once the art has decoded and the title is
        laid out; waiting for it beats waiting for a duration that is right on this
        machine and wrong on the next one. */
     let ready = false;

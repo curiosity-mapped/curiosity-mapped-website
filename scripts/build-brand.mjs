@@ -1,11 +1,19 @@
 /*
  * Builds the brand rasters in docs/assets/ from the Blender renders in the
- * cm-universe kit (renders4, "Bonsai").
+ * cm-universe kit (the v5 component rebuild): the header mark, the home hero and
+ * the About board.
  *
  *   node scripts/build-brand.mjs
- *   CM_RENDERS=/path/to/renders4 node scripts/build-brand.mjs
+ *   CM_RENDERS=/path/to/renders5/assembly CM_KIT_RENDERS=/path/to/renders5/kit node scripts/build-brand.mjs
  *
- * Then run `node scripts/build-ico.mjs`, which packs the new 16 and 32px PNGs.
+ * Two folders, because the art comes from two of the kit's render modes. The mark
+ * and the hero use the kit's frontal `front_*` cutouts: the letters stand upright
+ * and fill the frame, where the 3/4 view spreads them across a receding ground.
+ * The About board is a wall-backed photograph and only `assembly` has one.
+ *
+ * The icons and the About detail plates are NOT built here. The kit composes its
+ * own, from art drawn for those jobs, and `node scripts/sync-kit.mjs` copies them
+ * in; this file and that one never write the same path.
  *
  * Zero dependencies, like everything else here: the resizing and encoding is done
  * by headless Chrome (createImageBitmap for the resample, OffscreenCanvas for the
@@ -14,10 +22,13 @@
  * multi-megabyte data URL has to cross the DevTools socket; the page PUTs each
  * finished file back to the same server, which writes it into docs/assets/.
  *
- * Only the transparent cutouts and the legend board are used. The kit's
- * wall-backed hero, icon and "simple" renders carry a grey ground that shows as
- * a rectangle against the site's own background, and its legend_* and mark_full_*
- * files are close-up intermediates rather than finished art.
+ * Two kinds of render are used. The site_* cutouts are transparent and rendered
+ * for the home hero slot, and they also yield the header mark and the icons. The
+ * board_* and the canopy/falls/cooling details are wall-backed photographs,
+ * shown whole in framed plates on About. The kit's hero, front, portrait, og and
+ * icon renders carry a grey ground that shows as a rectangle against the site's
+ * own background; the _page, _480 and site_mock files are the kit's previews of
+ * this site, not art for it.
  */
 
 import { createServer } from 'node:http';
@@ -28,18 +39,21 @@ import { launchChrome, sleep } from './chrome.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
-const RENDERS = process.env.CM_RENDERS || join(ROOT, '..', 'cm-universe', 'renders4');
+const RENDERS = process.env.CM_RENDERS || join(ROOT, '..', 'cm-universe', 'renders5', 'assembly');
+const KIT = process.env.CM_KIT_RENDERS || join(ROOT, '..', 'cm-universe', 'renders5', 'kit');
 const OUT = join(ROOT, 'docs', 'assets');
 const HTTP_PORT = 9345;
 const CDP_PORT = 9334;
 
-const SOURCES = [
-  'mark_reference.png', 'mark_reference_dark.png',
-  'board_reference.png', 'board_reference_dark.png'
-];
-for (const s of SOURCES) {
-  if (!existsSync(join(RENDERS, s))) {
-    console.error(`error: ${join(RENDERS, s)} is missing (point CM_RENDERS at the renders folder)`);
+/* Render name -> the folder it lives in, so /src/ can serve both. */
+const SOURCES = {};
+for (const theme of ['light', 'dark']) {
+  SOURCES[`front_${theme}.png`] = KIT;
+  SOURCES[`board_${theme}.png`] = RENDERS;
+}
+for (const [name, folder] of Object.entries(SOURCES)) {
+  if (!existsSync(join(folder, name))) {
+    console.error(`error: ${join(folder, name)} is missing (point CM_RENDERS / CM_KIT_RENDERS at the renders folders)`);
     process.exit(1);
   }
 }
@@ -67,31 +81,34 @@ function page() {
   }
 
   /*
-   * The box holding every pixel more than `threshold` opaque. Not > 0: the
-   * lightning and mist trail off into near-invisible wisps that would widen the
-   * box without adding anything a reader can see. A 1% margin keeps the glow from
-   * being cut flush.
+   * The box holding every pixel more than `threshold` opaque. The site cutouts
+   * carry their bloom, contact shadows and the faint outer contours of the survey
+   * ground in the alpha channel, right out to the frame's edge, so only a high
+   * threshold isolates the letters: the box is the monogram, not the frame. A 1%
+   * margin keeps the edge from being cut flush.
    */
   function alphaBox(bmp, threshold) {
     const [, ctx] = surface(bmp.width, bmp.height);
     ctx.drawImage(bmp, 0, 0);
     const { data, width, height } = ctx.getImageData(0, 0, bmp.width, bmp.height);
-    const corners = [0, width - 1, (height - 1) * width, height * width - 1]
-      .map((i) => data[i * 4 + 3]);
-    if (corners.some((a) => a !== 0)) {
-      throw new Error(`expected a transparent cutout; corner alpha is ${corners.join(',')}`);
-    }
+    let clear = 0;
     let x0 = width, y0 = height, x1 = -1, y1 = -1;
     for (let y = 0; y < height; y++) {
       const row = y * width;
       for (let x = 0; x < width; x++) {
-        if (data[(row + x) * 4 + 3] > threshold) {
+        const a = data[(row + x) * 4 + 3];
+        if (a === 0) clear++;
+        if (a > threshold) {
           if (x < x0) x0 = x;
           if (x > x1) x1 = x;
           if (y < y0) y0 = y;
           if (y > y1) y1 = y;
         }
       }
+    }
+    /* A wall-backed render passed by mistake has no clear pixels at all. */
+    if (clear < width * height / 4) {
+      throw new Error(`expected a transparent cutout; only ${Math.round(100 * clear / (width * height))}% of it is clear`);
     }
     const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.01);
     x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
@@ -129,15 +146,6 @@ function page() {
     if (!r.ok) throw new Error(`${path}: upload failed (${r.status})`);
   }
 
-  async function base64(blob) {
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    let s = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(s);
-  }
-
   return async function run() {
     const written = [];
     const save = async (path, c, type, quality) => {
@@ -147,9 +155,9 @@ function page() {
     };
 
     const marks = {};
-    for (const [theme, file] of [['light', 'mark_reference.png'], ['dark', 'mark_reference_dark.png']]) {
-      const bmp = await bitmap(file);
-      marks[theme] = { bmp, box: alphaBox(bmp, 8) };
+    for (const theme of ['light', 'dark']) {
+      const bmp = await bitmap(`front_${theme}.png`);
+      marks[theme] = { bmp, box: alphaBox(bmp, 250) };
     }
 
     for (const theme of ['light', 'dark']) {
@@ -162,21 +170,29 @@ function page() {
         await save(`brand/mark-${theme}@${k}x.webp`, await place(bmp, box, w, h, w, h), 'image/webp', 0.9);
       }
 
-      /* Home hero. Never upscaled past the trimmed source. */
+      /* Home hero: the whole frame, untrimmed. The kit renders it at the hero
+         slot's own proportions with its margin, contact shadows and bloom already
+         placed, so trimming would crop the halo the frame was sized to hold.
+         Never upscaled past the source. */
+      const frame = { x: 0, y: 0, w: bmp.width, h: bmp.height };
       for (const nominal of [640, 1024, 1440]) {
-        const w = Math.min(nominal, box.w);
-        const h = Math.round(w * box.h / box.w);
-        await save(`brand/hero-${theme}-${nominal}.webp`, await place(bmp, box, w, h, w, h), 'image/webp', 0.86);
+        const w = Math.min(nominal, frame.w);
+        const h = Math.round(w * frame.h / frame.w);
+        await save(`brand/hero-${theme}-${nominal}.webp`, await place(bmp, frame, w, h, w, h), 'image/webp', 0.86);
       }
     }
 
-    /* About board: a framed wall render, used whole. */
-    for (const [theme, file] of [['light', 'board_reference.png'], ['dark', 'board_reference_dark.png']]) {
-      const bmp = await bitmap(file);
-      const box = { x: 0, y: 0, w: bmp.width, h: bmp.height };
-      for (const w of [960, 1600, 2400]) {
-        const h = Math.round(w * box.h / box.w);
-        await save(`brand/board-${theme}-${w}.webp`, await place(bmp, box, w, h, w, h), 'image/webp', 0.82);
+    /* The board that opens About: a wall-backed photograph, used whole (3:1). The
+       detail plates below it come from the kit, through sync-kit.mjs. */
+    const photos = [['board', [960, 1600, 2400]]];
+    for (const [name, widths] of photos) {
+      for (const theme of ['light', 'dark']) {
+        const bmp = await bitmap(`${name}_${theme}.png`);
+        const box = { x: 0, y: 0, w: bmp.width, h: bmp.height };
+        for (const w of widths) {
+          const h = Math.round(w * box.h / box.w);
+          await save(`brand/${name}-${theme}-${w}.webp`, await place(bmp, box, w, h, w, h), 'image/webp', 0.82);
+        }
       }
     }
 
@@ -186,39 +202,9 @@ function page() {
        handful of pixels and read as mud without it. */
     const small = 'contrast(1.12) saturate(1.15)';
 
-    /* The PNG favicons are what Safari uses, and Safari ignores the SVG's media
-       query, so they carry the light mark: the default browser chrome is light. */
-    for (const n of [16, 32]) {
-      await save(`favicon-${n}.png`, await place(light.bmp, light.box, n, n, n, n, { filter: small }), 'image/png');
-    }
-
-    /* The SVG favicon holds both marks and lets the browser's own colour scheme
-       pick, which is the right signal for a tab strip (the site toggle is not). */
-    const favicon = async (m) => base64(await encode(
-      await place(m.bmp, m.box, 64, 64, 64, 64, { filter: small }), 'image/png'));
-    const svg = [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
-      '<style>.d{display:none}@media (prefers-color-scheme:dark){.l{display:none}.d{display:inline}}</style>',
-      `<image class="l" width="64" height="64" href="data:image/png;base64,${await favicon(light)}"/>`,
-      `<image class="d" width="64" height="64" href="data:image/png;base64,${await favicon(dark)}"/>`,
-      '</svg>',
-      ''
-    ].join('\n');
-    await put('cm-icon.svg', svg);
-    written.push({ path: 'cm-icon.svg', width: 64, height: 64, bytes: svg.length });
-
-    /* Launcher icons are opaque (iOS paints transparency black) and use the glowing
-       dark mark on the manifest's own background colour, so no seam shows where
-       the platform pads or masks the tile. */
-    for (const [path, n] of [['apple-touch-icon.png', 180], ['icon-192.png', 192], ['icon-512.png', 512]]) {
-      const inner = Math.round(n * 0.76);
-      await save(path, await place(dark.bmp, dark.box, n, n, inner, inner, { bg: INK }), 'image/png');
-    }
-    /* Maskable: the whole mark inside the 80% safe-zone circle, so its diagonal,
-       not its width, is what has to fit. */
-    const diag = 512 * 0.78 / Math.hypot(dark.box.w, dark.box.h);
-    await save('maskable-512.png',
-      await place(dark.bmp, dark.box, 512, 512, dark.box.w * diag, dark.box.h * diag, { bg: INK }), 'image/png');
+    /* The favicons, the SVG icon and the launcher icons used to be trimmed from these
+       same cutouts. They now come from the kit's simplified icon mark instead, which
+       is drawn to survive 16px, and sync-kit.mjs copies them in. */
 
     /* Contact sheet for review; gitignored. Rows: light mark on paper, dark mark
        on ink, and the light PNG favicons on ink (Safari in a dark tab strip). */
@@ -261,9 +247,9 @@ const server = createServer((req, res) => {
   }
   if (req.method === 'GET' && url.pathname.startsWith('/src/')) {
     const name = decodeURIComponent(url.pathname.slice(5));
-    if (!SOURCES.includes(name)) { res.writeHead(404); res.end(); return; }
+    if (!Object.hasOwn(SOURCES, name)) { res.writeHead(404); res.end(); return; }
     res.writeHead(200, { 'content-type': 'image/png' });
-    res.end(readFileSync(join(RENDERS, name)));
+    res.end(readFileSync(join(SOURCES[name], name)));
     return;
   }
   if (req.method === 'PUT' && url.pathname.startsWith('/out/')) {
@@ -304,7 +290,6 @@ try {
     console.log(`trimmed ${theme}: ${b.w}x${b.h}  ratio ${(b.w / b.h).toFixed(4)}`);
   }
   console.log('wrote: docs/assets/brand/contact-sheet.png  (review only; gitignored)');
-  console.log('next: node scripts/build-ico.mjs');
 } catch (err) {
   console.error(`error: ${err.message}`);
   process.exitCode = 1;

@@ -8,10 +8,16 @@
   serves the site would be answering questions this file does not have. The few
   token values it needs are copied in literally.
 
-  The ground is the brand kit's og_reference_dark render (2400x1260, exactly 2x
-  the card), passed in as `ground`. The monogram occupies its left half, so the
-  words take the right half, over a scrim: the render's right side is lit by a
-  pale sweep of light that white type would otherwise sit on.
+  The art is the brand kit's hero_dark render (2400x1500), passed in as `art`: a
+  transparent 3/4 view lit and bloomed for the site's own ink ground, so the card
+  is that ground and graticule with the monogram on the left and the words on
+  the right.
+
+  This layout mirrors the kit's own social card
+  (cm-universe/source/pipeline/cm5_compose/kit.html, LAYOUT.social) down to the
+  type sizes and colours, so a link preview of the site and the kit's og-image
+  are one design. What this file adds is the per-page eyebrow, title and
+  subtitle, which the kit's fixed card has no need of.
 -->
 <html lang="en">
 <head>
@@ -28,9 +34,10 @@
     --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    /* Where the words start. The M's right edge sits at about 54% of the render. */
+    /* Where the words start. The M's right edge sits at about 92% of the art. */
     --column: 700px;
     --edge: 64px;
+    --art-width: 672px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1200px; height: 630px; overflow: hidden; }
@@ -40,21 +47,25 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
   }
-  .ground {
+  /* The hero's 64px graticule, at its dark-theme strength, fading out before
+     it reaches the words. */
+  .grid {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    opacity: 0.09;
+    background:
+      repeating-linear-gradient(0deg, var(--ink-100) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, var(--ink-100) 0 1px, transparent 1px 64px);
+    -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent 62%);
+    mask-image: linear-gradient(90deg, #000 30%, transparent 62%);
   }
-  /* Clear over the monogram, then deepening to ink across the text column. */
-  .scrim {
+  .art {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg,
-      rgb(2 9 14 / 0) 50%,
-      rgb(2 9 14 / 0.86) 60%,
-      rgb(2 9 14 / 0.92) 100%);
+    top: 50%;
+    left: 16px;
+    width: var(--art-width);
+    height: auto;
+    transform: translateY(-50%);
   }
   .column {
     position: absolute;
@@ -64,16 +75,21 @@
     flex-direction: column;
   }
   .wordmark { display: flex; flex-direction: column; gap: 4px; }
+  /* The site header's wordmark, at the kit's card size: a semibold tracked first
+     line over a lighter, wider-tracked dim second. The negative end margin claws
+     back the trailing gap the last letter's tracking leaves behind, as the
+     header does. */
   .wordmark__line {
     font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.18;
     color: var(--paper-050);
   }
   .wordmark__line--wide {
     font-weight: 400;
-    letter-spacing: 0.30em;
+    letter-spacing: 0.22em;
+    margin-inline-end: -0.22em;
     color: var(--ink-300);
   }
   .stack { margin-block: auto; }
@@ -84,6 +100,8 @@
     letter-spacing: 0.26em;
     text-transform: uppercase;
     color: var(--green-300);
+    /* The site's emissive accent, which on the ink ground is a faint halo. */
+    text-shadow: 0 0 12px rgb(185 232 127 / 0.35);
   }
   .title {
     margin-block-start: 22px;
@@ -99,8 +117,8 @@
     margin-block-start: 22px;
     font-family: var(--font-display);
     font-style: italic;
-    line-height: 1.4;
-    color: var(--ink-100);
+    line-height: 1.35;
+    color: var(--paper-050);
     /* Stepped down below until the widest caller-supplied line fits. */
     font-size: 25px;
     white-space: nowrap;
@@ -114,8 +132,8 @@
 </style>
 </head>
 <body>
-<img class="ground" id="ground" alt="">
-<div class="scrim"></div>
+<div class="grid"></div>
+<img class="art" id="art" alt="">
 
 <div class="column">
   <div class="wordmark">
@@ -171,9 +189,9 @@
     }
   }
 
-  var ground = document.getElementById('ground');
-  ground.src = q.get('ground') || '';
-  Promise.all([ground.decode(), document.fonts.ready])
+  var art = document.getElementById('art');
+  art.src = q.get('art') || '';
+  Promise.all([art.decode(), document.fonts.ready])
     .then(fit)
     .then(function () { document.documentElement.dataset.ready = '1'; });
 </script>
