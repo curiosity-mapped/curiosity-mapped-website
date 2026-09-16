@@ -61,14 +61,14 @@
   /*
    * Sized in rem so it tracks the type beside it rather than a device pixel, and
    * given both dimensions so the row never reflows while the image is fetched.
-   * The box is 3:2, the wider of the two renders' proportions: the dark render
-   * is a little narrower, and a box that followed each one would nudge the words
-   * sideways every time the theme is toggled. `contain` centres the narrower one.
-   * The image itself is the --brand-mark token, so it follows the stored theme.
+   * The box is 5:3, which is the frontal mark's own proportion in both themes;
+   * `contain` absorbs the pixel or two they differ by, so the words never shift
+   * when the theme is toggled. The image itself is the --brand-mark token, so it
+   * follows the stored theme.
    */
   .wordmark__mark {
     flex: none;
-    inline-size: 3.375rem;
+    inline-size: 3.75rem;
     block-size: 2.25rem;
     background: var(--brand-mark) center / contain no-repeat;
   }
@@ -570,21 +570,50 @@
   @media (min-width: 40rem) {
     .about__board { aspect-ratio: 3 / 1; }
   }
-  .about__board img {
+  /*
+   * Three details of the mark further down the page, framed like the board. In
+   * a row from 40rem; on a phone the falls, the hinge between the other two,
+   * takes the full width above them rather than shrinking all three to stamps.
+   */
+  .about__details {
+    margin: var(--s-5) 0 var(--s-6);
+    display: grid;
+    gap: var(--s-3);
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 'falls falls' 'canopy cooling';
+  }
+  @media (min-width: 40rem) {
+    .about__details {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-areas: 'canopy falls cooling';
+    }
+  }
+  .about__detail {
+    aspect-ratio: 8 / 5;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--surface-sunk);
+  }
+  .about__detail--canopy { grid-area: canopy; }
+  .about__detail--falls { grid-area: falls; }
+  .about__detail--cooling { grid-area: cooling; }
+
+  :is(.about__board, .about__detail) img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
   }
-  /* Scoped under .about__board so they outrank the `display: block` above; at
+  /* Scoped under the plates so they outrank the `display: block` above; at
      equal footing the hidden image would show, and be fetched. */
-  .about__board .about__board-img--dark { display: none; }
+  :is(.about__board, .about__detail) .theme-img--dark { display: none; }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) .about__board .about__board-img--light { display: none; }
-    :root:not([data-theme='light']) .about__board .about__board-img--dark { display: block; }
+    :root:not([data-theme='light']) :is(.about__board, .about__detail) .theme-img--light { display: none; }
+    :root:not([data-theme='light']) :is(.about__board, .about__detail) .theme-img--dark { display: block; }
   }
-  :root[data-theme='dark'] .about__board .about__board-img--light { display: none; }
-  :root[data-theme='dark'] .about__board .about__board-img--dark { display: block; }
+  :root[data-theme='dark'] :is(.about__board, .about__detail) .theme-img--light { display: none; }
+  :root[data-theme='dark'] :is(.about__board, .about__detail) .theme-img--dark { display: block; }
 
   /* Set like .hero__kicker, minus the accent and its glow: a stamp, not a signal. */
   .prose__meta {
